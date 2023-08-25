@@ -8,5 +8,4 @@ import (
 type Backend interface {
 	AddAbsence(ctx context.Context, absence entity.Absence) error
 	RemoveAbsence(ctx context.Context, absence entity.Absence) error
-	ListAbsOn(ctx context.Context, raid entity.Raid) ([]string, error)
 }

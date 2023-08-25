@@ -2,13 +2,8 @@ package discord
 
 import (
 	"context"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
-)
-
-var (
-	integerOptionMinValue          = 1.0
-	dmPermission                   = false
-	defaultMemberPermissions int64 = discordgo.PermissionManageServer
 )
 
 type Discord struct {
@@ -49,6 +44,7 @@ func (d *Discord) Run(ctx context.Context) error {
 		}
 		if h, ok := d.commandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
+			return
 		}
 	})
 
@@ -60,21 +56,22 @@ func (d *Discord) Run(ctx context.Context) error {
 		}
 		registeredCommands[i] = cmd
 	}
-	defer d.s.Close()
+	defer func(s *discordgo.Session) {
+		err := s.Close()
+		if err != nil {
+			fmt.Print(err)
+		}
+	}(d.s)
 
-	for {
-		select {
-		case <-ctx.Done():
-			if d.removeCommands {
-				for _, v := range registeredCommands {
-					err := d.s.ApplicationCommandDelete(d.s.State.User.ID, d.guildID, v.ID)
-					if err != nil {
-						return err
-					}
-				}
+	<-ctx.Done()
+	if d.removeCommands {
+		for _, v := range registeredCommands {
+			err := d.s.ApplicationCommandDelete(d.s.State.User.ID, d.guildID, v.ID)
+			if err != nil {
+				return err
 			}
-			return nil
 		}
 	}
+	return nil
 
 }

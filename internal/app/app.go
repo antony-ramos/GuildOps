@@ -18,16 +18,16 @@ func Run(cfg *config.Config) {
 
 	mapHandler := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
 
-	absenceusecase := usecase.NewAbsenceUseCase(bk)
+	auc := usecase.NewAbsenceUseCase(bk)
 	d := discordHandler.Discord{
-		absenceusecase,
+		AbsenceUseCase: auc,
 	}
 
 	mapHandler["absence"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		d.AbsenceHandler(s, i)
 	}
 
-	handlers := []*discordgo.ApplicationCommand{}
+	var handlers []*discordgo.ApplicationCommand
 	handlers = append(handlers, &discordHandler.AbsenceDescriptor)
 
 	serve := discord.New(discord.CommandHandlers(mapHandler), discord.Token(cfg.Discord.Token), discord.Command(handlers), discord.GuildID(cfg.Discord.GuildID))

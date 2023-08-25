@@ -121,10 +121,13 @@ func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCr
 		message = "Sorry, backend takes too much time to respond"
 	}
 
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf(message),
+			Content: message,
 		},
 	})
+	if err != nil {
+		fmt.Print(err)
+	}
 }
