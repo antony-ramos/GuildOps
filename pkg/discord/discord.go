@@ -1,0 +1,80 @@
+package discord
+
+import (
+	"context"
+	"github.com/bwmarrin/discordgo"
+)
+
+var (
+	integerOptionMinValue          = 1.0
+	dmPermission                   = false
+	defaultMemberPermissions int64 = discordgo.PermissionManageServer
+)
+
+type Discord struct {
+	token           string
+	guildID         string
+	removeCommands  bool
+	commands        []*discordgo.ApplicationCommand
+	commandHandlers map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	s               *discordgo.Session
+}
+
+func New(opts ...Option) *Discord {
+	d := &Discord{}
+	for _, opt := range opts {
+		opt(d)
+	}
+	return d
+}
+
+func (d *Discord) Run(ctx context.Context) error {
+
+	var err error
+	d.s, err = discordgo.New("Bot " + d.token)
+	if err != nil {
+		return err
+	}
+
+	d.s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+	})
+	err = d.s.Open()
+	if err != nil {
+		return err
+	}
+
+	d.s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if i.GuildID != d.guildID {
+			return
+		}
+		if h, ok := d.commandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	})
+
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(d.commands))
+	for i, v := range d.commands {
+		cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, d.guildID, v)
+		if err != nil {
+			return err
+		}
+		registeredCommands[i] = cmd
+	}
+	defer d.s.Close()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if d.removeCommands {
+				for _, v := range registeredCommands {
+					err := d.s.ApplicationCommandDelete(d.s.State.User.ID, d.guildID, v.ID)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}
+	}
+
+}
