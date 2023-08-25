@@ -19,6 +19,9 @@ func (a AbsenceUseCase) AddAbsence(ctx context.Context, absence entity.Absence) 
 		return ctx.Err()
 	default:
 		err := absence.Validate()
+		if err != nil {
+			return err
+		}
 		err = a.backend.AddAbsence(ctx, absence)
 		if err != nil {
 			return err
@@ -33,9 +36,12 @@ func (a AbsenceUseCase) RemoveAbsence(ctx context.Context, absence entity.Absenc
 		return ctx.Err()
 	default:
 		err := absence.Validate()
+		if err != nil {
+			return err
+		}
 		err = a.backend.RemoveAbsence(ctx, absence)
 		if err != nil {
-			//TODO
+			return err
 		}
 		return nil
 	}
