@@ -12,6 +12,7 @@ type (
 		App     `yaml:"app"`
 		Discord `yaml:"discord"`
 		Log     `yaml:"logger"`
+		Metrics `yaml:"metrics"`
 		Backend `yaml:"backend"`
 	}
 
@@ -19,6 +20,7 @@ type (
 	App struct {
 		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
 		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
+		Env     string `env-required:"true" yaml:"environment" env:"APP_ENV"`
 	}
 
 	// Discord -.
@@ -29,7 +31,12 @@ type (
 
 	// Log -.
 	Log struct {
-		Level string `env-required:"true" yaml:"log_level"   env:"LOG_LEVEL"`
+		Level string `env-required:"true" yaml:"level"   env:"LOG_LEVEL"`
+	}
+
+	// Metrics -.
+	Metrics struct {
+		Port string `env-required:"true" yaml:"port"   env:"METRICS_PORT"`
 	}
 
 	// Backend -.

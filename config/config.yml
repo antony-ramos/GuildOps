@@ -1,9 +1,13 @@
 app:
   name: 'coven-bot'
   version: '0.0.1'
+  environment: "development"
 
 logger:
-  log_level: info
+  level: debug
+
+metrics:
+  port: 2213
 
 backend:
   url: ":50531"

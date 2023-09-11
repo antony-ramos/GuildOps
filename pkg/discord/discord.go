@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+	"time"
 )
 
 type Discord struct {
@@ -24,6 +27,8 @@ func New(opts ...Option) *Discord {
 }
 
 func (d *Discord) Run(ctx context.Context) error {
+	_, span := otel.Tracer("").Start(ctx, "Run", trace.WithTimestamp(time.Now()))
+	defer span.End()
 
 	var err error
 	d.s, err = discordgo.New("Bot " + d.token)

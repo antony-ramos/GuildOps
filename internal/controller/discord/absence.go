@@ -2,10 +2,14 @@ package discordHandler
 
 import (
 	"context"
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/coven-discord-bot/internal/entity"
 	"github.com/coven-discord-bot/internal/usecase"
+	"github.com/coven-discord-bot/pkg/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"strings"
 	"sync"
 	"time"
@@ -39,7 +43,7 @@ var AbsenceDescriptor = discordgo.ApplicationCommand{
 		{
 			Type:        discordgo.ApplicationCommandOptionString,
 			Name:        "date",
-			Description: "(ex: 11-05-23 | ou 11-05-23 au 13-05-23)",
+			Description: "(ex: 11/0523 ou 11/05/23 au 13/05/23)",
 			Required:    true,
 		},
 		{
@@ -51,8 +55,15 @@ var AbsenceDescriptor = discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+// TODO : Function is too long. Should be cut into pieces
+func (d Discord) AbsenceHandler(ctx context.Context, l logger.Logger, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	_, span := otel.Tracer("").Start(ctx, "Controller is handling request", trace.WithTimestamp(time.Now()), trace.WithAttributes(attribute.KeyValue{
+		Key:   "HandlerType",
+		Value: attribute.StringValue("absence"),
+	}))
+	defer span.End(trace.WithTimestamp(time.Now()))
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	options := i.ApplicationCommandData().Options
@@ -61,7 +72,8 @@ func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCr
 	resultCh := make(chan bool)
 	errorCh := make(chan error)
 	go func() {
-
+		_, span := otel.Tracer("").Start(ctx, "InteractWithBackend", trace.WithTimestamp(time.Now()))
+		defer span.End(trace.WithTimestamp(time.Now()))
 		for _, opt := range options {
 			optionMap[opt.Name] = opt
 		}
@@ -73,7 +85,20 @@ func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCr
 			user = i.User.Username
 		}
 
+		l = l.With(zap.String("Date", optionMap["date"].StringValue()))
+		l.Info("Checking date validity")
+		_, s := otel.Tracer("").Start(ctx, "Controller is checking date validity", trace.WithTimestamp(time.Now()), trace.WithAttributes(attribute.KeyValue{
+			Key:   "HandlerType",
+			Value: attribute.StringValue("absence"),
+		}))
 		dates, err := parseDate(optionMap["date"].StringValue())
+		if err != nil {
+			s.RecordError(err)
+			errorCh <- err
+			return
+		}
+		s.End(trace.WithTimestamp(time.Now()))
+
 		var wg sync.WaitGroup
 		for _, date := range dates {
 			wg.Add(1)
@@ -88,13 +113,15 @@ func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCr
 						Date: date,
 					}
 					if optionMap["annuler"] != nil {
-						err = d.RemoveAbsence(ctx, abs)
+						l = l.With(zap.String("Cancel", "true"))
+						l.Info("Absence request is a cancellation")
+						err = d.RemoveAbsence(ctx, l, abs)
 						if err != nil {
 							errorCh <- err
 							return
 						}
 					} else {
-						err = d.AddAbsence(ctx, abs)
+						err = d.AddAbsence(ctx, l, abs)
 						if err != nil {
 							errorCh <- err
 							return
@@ -117,6 +144,8 @@ func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCr
 		}
 	case err := <-errorCh:
 		message = err.Error()
+		l.Error(err.Error())
+		span.RecordError(err)
 	case <-ctx.Done():
 		message = "Sorry, backend takes too much time to respond"
 	}
@@ -128,6 +157,9 @@ func (d Discord) AbsenceHandler(s *discordgo.Session, i *discordgo.InteractionCr
 		},
 	})
 	if err != nil {
-		fmt.Print(err)
+		l.Error(err.Error())
+		span.RecordError(err)
+		return err
 	}
+	return nil
 }

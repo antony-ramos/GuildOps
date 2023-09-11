@@ -14,3 +14,6 @@
 ### Done ✓
 - [X] Add CI linter and everything to make my next night... sleepless!
 - [X] Implement Validate on entities
+- [X] Implement tracing
+- [X] Must add more logs, but what the best way to propagate logger to sub functions ?
+
