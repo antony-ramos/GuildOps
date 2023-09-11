@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"github.com/coven-discord-bot/internal/entity"
 	"github.com/sony/gobreaker"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 )
 
@@ -31,18 +34,24 @@ func NewRPC(url string) *RPC {
 }
 
 func (r RPC) AddAbsence(ctx context.Context, absence entity.Absence) error {
+	_, span := otel.Tracer("").Start(ctx, "Backend Connector send add absence request to backend", trace.WithTimestamp(time.Now()))
+	defer span.End(trace.WithTimestamp(time.Now()))
+
 	select {
 	case <-ctx.Done():
+		span.RecordError(errors.New("context time has exceeded"))
 		return ctx.Err()
 	default:
-		conn, err := grpc.DialContext(ctx, r.url)
+		conn, err := grpc.DialContext(ctx, r.url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
+			err := fmt.Errorf("cannot dial backend %e", err)
+			span.RecordError(err)
 			return err
 		}
 		defer func(conn *grpc.ClientConn) {
 			err := conn.Close()
 			if err != nil {
-				fmt.Print(err)
+				span.RecordError(err)
 			}
 		}(conn)
 
@@ -53,30 +62,39 @@ func (r RPC) AddAbsence(ctx context.Context, absence entity.Absence) error {
 			Date:   []int64{absence.Date.Unix()}, // Exemple de dates Unix timestamp
 		})
 		if err != nil {
+			span.RecordError(err)
 			return err
 		}
 
 		if addResponse.Success {
 			return nil
 		} else {
-			return errors.New(addResponse.Message)
+			err := errors.New(addResponse.Message)
+			span.RecordError(err)
+			return err
 		}
 	}
 }
 
 func (r RPC) RemoveAbsence(ctx context.Context, absence entity.Absence) error {
+	_, span := otel.Tracer("").Start(ctx, "Backend Connector send cancel absence request to backend", trace.WithTimestamp(time.Now()))
+	defer span.End(trace.WithTimestamp(time.Now()))
+
 	select {
 	case <-ctx.Done():
+		span.RecordError(errors.New("context time has exceeded"))
 		return ctx.Err()
 	default:
 		conn, err := grpc.DialContext(ctx, r.url)
 		if err != nil {
+			err := fmt.Errorf("cannot dial backend %e", err)
+			span.RecordError(err)
 			return err
 		}
 		defer func(conn *grpc.ClientConn) {
 			err := conn.Close()
 			if err != nil {
-				fmt.Print(err)
+				span.RecordError(err)
 			}
 		}(conn)
 
@@ -84,16 +102,19 @@ func (r RPC) RemoveAbsence(ctx context.Context, absence entity.Absence) error {
 
 		removeResponse, err := absenceClient.Remove(context.Background(), &AbsenceRequest{
 			Pseudo: absence.Name,
-			Date:   []int64{absence.Date.Unix()}, // Exemple de dates Unix timestamp
+			Date:   []int64{absence.Date.Unix()},
 		})
 		if err != nil {
+			span.RecordError(err)
 			return err
 		}
 
 		if removeResponse.Success {
 			return nil
 		} else {
-			return errors.New(removeResponse.Message)
+			err := errors.New(removeResponse.Message)
+			span.RecordError(err)
+			return err
 		}
 	}
 }
