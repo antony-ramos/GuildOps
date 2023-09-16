@@ -1,95 +1,150 @@
 package discordHandler
 
-//
-//import (
-//	"fmt"
-//	"github.com/bwmarrin/discordgo"
-//)
-//
-//var RaidDescriptor = discordgo.ApplicationCommand{
-//	Name:        "raid",
-//	Description: "Lister les absences pour un raid",
-//	Options: []*discordgo.ApplicationCommandOption{
-//		{
-//			Type:        discordgo.ApplicationCommandOptionString,
-//			Name:        "date",
-//			Description: "(ex: 11-05-23 | ou 11-05-23 au 13-05-23)",
-//			Required:    true,
-//		},
-//	},
-//}
-//
-//func RaidHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//
-//	options := i.ApplicationCommandData().Options
-//	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-//	for _, opt := range options {
-//		optionMap[opt.Name] = opt
-//	}
-//
-//	// Créer le thread avec le message parent
-//	_, err := s.ThreadStart(i.ChannelID, "toto", discordgo.ChannelTypeGuildPublicThread, 60)
-//	if err != nil {
-//		// Gérer l'erreur
-//		return
-//	}
-//
-//	discordMessage := "Unknown Error"
-//
-//	beginDate, _, err := utils.ExtractDates(optionMap["date"].StringValue())
-//	if err != nil {
-//		discordMessage = fmt.Sprintf("date format is invalid : %s", err.Error())
-//	} else {
-//		id, err := b.Pub(adapters.GetRaidAbs, beginDate)
-//		err = b.Sub(id, func(message adapters.BusMessage) bool {
-//			if tmp, ok := message.Data.([]interface{}); ok {
-//				var abs []string
-//				for _, v := range tmp {
-//					if str, ok := v.(string); ok {
-//						abs = append(abs, str)
-//					}
-//				}
-//
-//				if abs[0] == "NO_ABS" {
-//					discordMessage = fmt.Sprintf("Aucune absence au raid du %s %d %s %d \n", utils.GetDay(beginDate), beginDate.Day(), utils.GetMonthFR(beginDate), beginDate.Year())
-//				} else {
-//					discordMessage = fmt.Sprintf("Absences au raid du %s %d %s %d :\n", utils.GetDay(beginDate), beginDate.Day(), utils.GetMonthFR(beginDate), beginDate.Year())
-//					for _, pseudo := range abs {
-//						discordMessage += fmt.Sprintf("- %s\n", pseudo)
-//					}
-//				}
-//				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//					// Ignore type for now, they will be discussed in "responses"
-//					Type: discordgo.InteractionResponseChannelMessageWithSource,
-//					Data: &discordgo.InteractionResponseData{
-//						Content: fmt.Sprintf(
-//							discordMessage,
-//						),
-//					},
-//				})
-//				return false
-//			}
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				// Ignore type for now, they will be discussed in "responses"
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: fmt.Sprintf(discordMessage),
-//					Flags:   discordgo.MessageFlagsEphemeral,
-//				},
-//			})
-//			return true
-//		})
-//		if err != nil {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				// Ignore type for now, they will be discussed in "responses"
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: fmt.Sprintf(discordMessage),
-//					Flags:   discordgo.MessageFlagsEphemeral,
-//				},
-//			})
-//			//TODO log
-//			return
-//		}
-//	}
-//}
+import (
+	"context"
+	"github.com/bwmarrin/discordgo"
+	"strconv"
+)
+
+func (d Discord) InitRaid() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
+		"coven-raid-create": d.CreateRaidHandler,
+		"coven-raid-del":    d.DeleteRaidHandler,
+	}
+}
+
+var RaidDescriptors = []discordgo.ApplicationCommand{
+	{
+		Name:        "coven-raid-create",
+		Description: "Créer un raid",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "name",
+				Description: "ex: Raid Milo",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "date",
+				Description: "ex: 11/05/23",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "difficulté",
+				Description: "ex: HM",
+				Required:    true,
+			},
+		},
+	},
+	{
+		Name:        "coven-raid-list",
+		Description: "Lister les raids",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "name",
+				Description: "ex: Milowenn",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "date",
+				Description: "ex: Milowenn",
+				Required:    false,
+			},
+		},
+	},
+	{
+		Name:        "coven-raid-del",
+		Description: "Supprimer un raid",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "id",
+				Description: "ex: 4444-4444-4444",
+				Required:    true,
+			},
+		},
+	},
+}
+
+func (d Discord) CreateRaidHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	var returnErr error
+	var msg string
+
+	options := i.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+
+	name := optionMap["name"].StringValue()
+	date, err := parseDate(optionMap["date"].StringValue())
+	if err != nil {
+		msg = "Erreur lors de la création du raid: " + err.Error()
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+		return returnErr
+	}
+	difficulty := optionMap["difficulté"].StringValue()
+
+	raid, err := d.CreateRaid(ctx, name, difficulty, date[0])
+	if err != nil {
+		msg = "Erreur lors de la création du raid: " + err.Error()
+		returnErr = err
+	} else {
+		msg = "Raid " + strconv.Itoa(raid.ID) + " créé avec succès"
+	}
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: msg,
+		},
+	})
+	return returnErr
+}
+
+func (d Discord) DeleteRaidHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	//defer cancel()
+	//
+	//var returnErr error
+	//var msg string
+	//
+	//options := i.ApplicationCommandData().Options
+	//optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+	//
+	//for _, opt := range options {
+	//	optionMap[opt.Name] = opt
+	//}
+	//
+	//id, err := uuid.Parse(optionMap["id"].StringValue())
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = d.DeleteRaid(ctx, id)
+	//if err != nil {
+	//	msg = "Erreur lors de la suppression du joueur: " + err.Error()
+	//	returnErr = err
+	//} else {
+	//	msg = "Joueur " + id.String() + " supprimé avec succès"
+	//}
+	//
+	//_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	//	Type: discordgo.InteractionResponseChannelMessageWithSource,
+	//	Data: &discordgo.InteractionResponseData{
+	//		Content: msg,
+	//	},
+	//})
+	//return returnErr
+	return nil
+}

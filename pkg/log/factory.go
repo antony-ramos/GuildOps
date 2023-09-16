@@ -54,7 +54,7 @@ func (b Factory) For(ctx context.Context) Logger {
 	return b.Bg()
 }
 
-// With creates a child logger, and optionally adds some context fields to that logger.
+// With creates a child logger, and optionally Creates some context fields to that logger.
 func (b Factory) With(fields ...zapcore.Field) Factory {
 	return Factory{logger: b.logger.With(fields...)}
 }

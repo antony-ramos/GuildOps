@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -13,7 +14,7 @@ type (
 		Discord `yaml:"discord"`
 		Log     `yaml:"logger"`
 		Metrics `yaml:"metrics"`
-		Backend `yaml:"backend"`
+		PG      `yaml:"postgres"`
 	}
 
 	// App -.
@@ -26,7 +27,7 @@ type (
 	// Discord -.
 	Discord struct {
 		Token   string `env-required:"true" yaml:"token" env:"DISCORD_TOKEN"`
-		GuildID string `env-required:"true" yaml:"guild_id" env:"DISCORD_GUILD_ID"`
+		GuildID int    `env-required:"true" yaml:"guild_id" env:"DISCORD_GUILD_ID"`
 	}
 
 	// Log -.
@@ -39,9 +40,12 @@ type (
 		Port string `env-required:"true" yaml:"port"   env:"METRICS_PORT"`
 	}
 
-	// Backend -.
-	Backend struct {
-		URL string `env-required:"true"   yaml:"url"              env:"COVEN_BACKEND_URL"`
+	// PG -.
+	PG struct {
+		PoolMax      int           `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
+		URL          string        `env-required:"true" yaml:"url"                env:"PG_URL"`
+		ConnAttempts int           `env-required:"true"   yaml:"conn_attempts"              env:"PG_CONN_ATTEMPTS"`
+		ConnTimeOut  time.Duration `env-required:"true"  yaml:"conn_timeout"               env:"PG_CONN_TIMEOUT"`
 	}
 )
 
