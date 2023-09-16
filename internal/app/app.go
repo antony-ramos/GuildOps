@@ -6,74 +6,61 @@ import (
 	"github.com/coven-discord-bot/config"
 	discordHandler "github.com/coven-discord-bot/internal/controller/discord"
 	"github.com/coven-discord-bot/internal/usecase"
-	"github.com/coven-discord-bot/internal/usecase/backend"
+	"github.com/coven-discord-bot/internal/usecase/backend_pg"
 	"github.com/coven-discord-bot/pkg/discord"
-	"github.com/coven-discord-bot/pkg/log"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/coven-discord-bot/pkg/postgres"
 	"go.uber.org/zap"
-	"time"
 )
 
-var (
-	eventsProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "coven_processed_total",
-		Help: "The total number of discord webhooks processed",
-	})
-	eventsSucceededProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "coven_event_succeeded_total",
-		Help: "The total number of discord succeeded events",
-	})
-	eventsFailedProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "coven_event_failed_total",
-		Help: "The total number of discord failed events",
-	})
-)
+func Run(ctx context.Context, cfg *config.Config) {
 
-func Run(ctx context.Context, cfg *config.Config, log *logger.Factory) {
-	l := log.For(ctx).With(zap.String("backend", cfg.Backend.URL))
+	zap.L().Info("loading backend")
 
-	l.Info("loading backend")
-	bk := backend.NewRPC(cfg.Backend.URL)
-
-	mapHandler := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
-
-	auc := usecase.NewAbsenceUseCase(bk)
-	d := discordHandler.Discord{
-		AbsenceUseCase: auc,
+	pg, err := postgres.New(cfg.URL, postgres.MaxPoolSize(cfg.PoolMax), postgres.ConnAttempts(cfg.ConnAttempts), postgres.ConnTimeout(cfg.ConnTimeOut))
+	if err != nil {
+		zap.L().Fatal(err.Error())
 	}
 
-	mapHandler["absence"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		eventsProcessed.Inc()
-		_, span := otel.Tracer("Discord").Start(ctx, "Receiving a webhook from Discord", trace.WithTimestamp(time.Now()), trace.WithAttributes(attribute.KeyValue{
-			Key:   "Member",
-			Value: attribute.StringValue(i.Member.User.Username),
-		}))
-		defer span.End(trace.WithTimestamp(time.Now()))
-		l = l.With(zap.String("Member", i.Member.User.Username))
-		l.Info("Receive request")
-		err := d.AbsenceHandler(ctx, l, s, i)
-		if err != nil {
-			l.Error("Failed to proceed request", zap.Error(err))
-			span.RecordError(err)
-			eventsFailedProcessed.Inc()
-			return
+	db := backend_pg.PG{Postgres: pg}
+	db.Init(cfg.URL)
+
+	mapHandler := map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{}
+
+	auc := usecase.NewAbsenceUseCase(&db)
+	puc := usecase.NewPlayerUseCase(&db)
+	luc := usecase.NewLootUseCase(&db)
+	ruc := usecase.NewRaidUseCase(&db)
+	suc := usecase.NewStrikeUseCase(&db)
+
+	d := discordHandler.Discord{
+		AbsenceUseCase: auc,
+		PlayerUseCase:  puc,
+		LootUseCase:    luc,
+		RaidUseCase:    ruc,
+		StrikeUseCase:  suc,
+	}
+
+	var inits []func() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error
+	inits = append(inits, d.InitAbsence, d.InitLoot, d.InitPlayer, d.InitRaid, d.InitStrike)
+	for _, v := range inits {
+		for k, v := range v() {
+			mapHandler[k] = v
 		}
-		eventsSucceededProcessed.Inc()
 	}
 
 	var handlers []*discordgo.ApplicationCommand
-	handlers = append(handlers, &discordHandler.AbsenceDescriptor)
+	handlers = append(handlers, &discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
+	handlers = append(handlers, &discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1], &discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
+	handlers = append(handlers, &discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1], &discordHandler.PlayerDescriptors[2])
+	handlers = append(handlers, &discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
+	handlers = append(handlers, &discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
 
 	serve := discord.New(discord.CommandHandlers(mapHandler), discord.Token(cfg.Discord.Token), discord.Command(handlers), discord.GuildID(cfg.Discord.GuildID))
 
-	l.Info("starting to serve to discord webhooks")
-	err := serve.Run(ctx)
+	zap.L().Info("starting to serve to discord webhooks")
+	err = serve.Run(ctx)
 	if err != nil {
-		l.Error(err.Error())
+		zap.L().Error(err.Error())
 		return
 	}
 }

@@ -9,5 +9,7 @@ logger:
 metrics:
   port: 2213
 
-backend:
-  url: ":50531"
+postgres:
+  pool_max: 10
+  conn_attempts: 10
+  conn_timeout: 5s

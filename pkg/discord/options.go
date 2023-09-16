@@ -1,6 +1,9 @@
 package discord
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"context"
+	"github.com/bwmarrin/discordgo"
+)
 
 // Option -.
 type Option func(discord *Discord)
@@ -11,13 +14,13 @@ func Token(token string) Option {
 	}
 }
 
-func GuildID(guildID string) Option {
+func GuildID(guildID int) Option {
 	return func(d *Discord) {
 		d.guildID = guildID
 	}
 }
 
-func CommandHandlers(m map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)) Option {
+func CommandHandlers(m map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error) Option {
 	return func(d *Discord) {
 		d.commandHandlers = m
 	}

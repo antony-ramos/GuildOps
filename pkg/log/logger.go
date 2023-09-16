@@ -63,7 +63,7 @@ func (l wrapper) Fatal(msg string, fields ...zapcore.Field) {
 	l.logger.Fatal(msg, fields...)
 }
 
-// With creates a child logger, and optionally adds some context fields to that logger.
+// With creates a child logger, and optionally Creates some context fields to that logger.
 func (l wrapper) With(fields ...zapcore.Field) Logger {
 	return wrapper{logger: l.logger.With(fields...)}
 }

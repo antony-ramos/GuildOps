@@ -5,8 +5,9 @@ import (
 )
 
 type Absence struct {
-	Name string
-	Date time.Time
+	ID     int
+	Player *Player
+	Raid   *Raid
 }
 
 type Error struct {
@@ -38,8 +39,5 @@ func validateDate(dateToCheck time.Time) error {
 }
 
 func (a Absence) Validate() error {
-	if len(a.Name) == 0 {
-		return ErrorNameCannotBeEmpty
-	}
 	return nil
 }
