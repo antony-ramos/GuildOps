@@ -9,16 +9,16 @@ import (
 // TODO Read Difficulties from backend
 
 type Raid struct {
-	ID         int
-	Name       string
-	Date       time.Time
-	Difficulty string
+	ID         int       `json:"id"`
+	Name       string    `json:"name"`
+	Date       time.Time `json:"date"`
+	Difficulty string    `json:"difficulty"`
 
-	Absences []*Player
-	Players  []*Player
-	Bench    []*Player
+	Absences []*Player `json:"absences"`
+	Players  []*Player `json:"players"`
+	Bench    []*Player `json:"bench"`
 
-	Loots []*Loot
+	Loots []*Loot `json:"loots"`
 }
 
 func (r Raid) Validate() error {

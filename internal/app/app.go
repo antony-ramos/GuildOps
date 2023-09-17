@@ -2,14 +2,23 @@ package app
 
 import (
 	"context"
+	"errors"
 	"github.com/bwmarrin/discordgo"
 	"github.com/coven-discord-bot/config"
+	"github.com/coven-discord-bot/internal/controller/api"
 	discordHandler "github.com/coven-discord-bot/internal/controller/discord"
 	"github.com/coven-discord-bot/internal/usecase"
 	"github.com/coven-discord-bot/internal/usecase/backend_pg"
 	"github.com/coven-discord-bot/pkg/discord"
 	"github.com/coven-discord-bot/pkg/postgres"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func Run(ctx context.Context, cfg *config.Config) {
@@ -57,10 +66,49 @@ func Run(ctx context.Context, cfg *config.Config) {
 
 	serve := discord.New(discord.CommandHandlers(mapHandler), discord.Token(cfg.Discord.Token), discord.Command(handlers), discord.GuildID(cfg.Discord.GuildID))
 
+	server := api.API{
+		Engine:         gin.Default(),
+		AbsenceUseCase: auc,
+		PlayerUseCase:  puc,
+		LootUseCase:    luc,
+		RaidUseCase:    ruc,
+		StrikeUseCase:  suc,
+	}
+	server.Init()
+
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: server.Engine,
+	}
+
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
 	zap.L().Info("starting to serve to discord webhooks")
 	err = serve.Run(ctx)
 	if err != nil {
 		zap.L().Error(err.Error())
 		return
 	}
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	zap.L().Info("Shutdown Server ...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		zap.L().Fatal("Server Shutdown", zap.Error(err))
+	}
+	// catching ctx.Done(). timeout of 5 seconds.
+	select {
+	case <-ctx.Done():
+		zap.L().Info("timeout of 5 seconds.")
+	}
+	zap.L().Info("Server exiting")
 }

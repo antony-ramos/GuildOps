@@ -8,12 +8,11 @@ import (
 //TODO Tests
 
 type Player struct {
-	ID   int
-	Name string
-
-	Strikes     []Strike
-	Loots       []Loot
-	MissedRaids []Raid
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	Strikes     []Strike `json:"strikes"`
+	Loots       []Loot   `json:"loots"`
+	MissedRaids []Raid   `json:"missed_raids"`
 }
 
 func (p Player) Validate() error {

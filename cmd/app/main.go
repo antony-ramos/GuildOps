@@ -5,19 +5,14 @@ import (
 	"fmt"
 	"github.com/coven-discord-bot/config"
 	"github.com/coven-discord-bot/internal/app"
-	"github.com/coven-discord-bot/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
-	"log"
 	"net/http"
-	"time"
 )
 
 func main() {
 	ctx := context.Background()
-	spanName := "main function"
+	//spanName := "main function"
 
 	// Starting Log
 	logger := zap.NewExample()
@@ -39,16 +34,16 @@ func main() {
 	zap.L().Info("Starting telemetry")
 
 	// Tracing
-	shutdown, err := tracing.InstallExportPipeline(ctx, cfg.Name, cfg.Version)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		if err := shutdown(ctx); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	ctx, span := otel.Tracer(spanName).Start(ctx, "main", trace.WithTimestamp(time.Now()))
+	//shutdown, err := tracing.InstallExportPipeline(ctx, cfg.Name, cfg.Version)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//defer func() {
+	//	if err := shutdown(ctx); err != nil {
+	//		log.Fatal(err)
+	//	}
+	//}()
+	//ctx, span := otel.Tracer(spanName).Start(ctx, "main", trace.WithTimestamp(time.Now()))
 
 	// Metrics
 	zap.L().Info(fmt.Sprintf("Starting metrics server on port %s", cfg.Metrics.Port))
@@ -57,15 +52,15 @@ func main() {
 
 		err = http.ListenAndServe(":"+cfg.Metrics.Port, nil)
 		if err != nil {
-			span.RecordError(err)
+			//span.RecordError(err)
 			zap.L().Fatal(err.Error())
-			span.End(trace.WithTimestamp(time.Now()))
+			//span.End(trace.WithTimestamp(time.Now()))
 		}
 	}()
 
-	// Run
+	// Run App
 	zap.L().Info("Starting app")
 	app.Run(ctx, cfg)
-	span.End(trace.WithTimestamp(time.Now()))
+	//span.End(trace.WithTimestamp(time.Now()))
 
 }

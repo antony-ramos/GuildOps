@@ -8,12 +8,11 @@ import (
 //TODO Tests
 
 type Strike struct {
-	Date   time.Time
-	ID     int
-	Season string
-	Reason string
-
-	Player *Player
+	Date   time.Time `json:"date"`
+	ID     int       `json:"id"`
+	Season string    `json:"season"`
+	Reason string    `json:"reason"`
+	Player *Player   `json:"player"`
 }
 
 var seasons = []string{"s1", "s2", "s3"}

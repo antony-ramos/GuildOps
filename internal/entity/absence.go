@@ -5,9 +5,9 @@ import (
 )
 
 type Absence struct {
-	ID     int
-	Player *Player
-	Raid   *Raid
+	ID     int     `json:"id"`
+	Player *Player `json:"player"`
+	Raid   *Raid   `json:"raid"`
 }
 
 type Error struct {

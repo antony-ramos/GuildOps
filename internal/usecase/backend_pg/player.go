@@ -54,7 +54,7 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 				return nil, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
 			}
 			loot.Raid = &raid
-			loot.Player = &player
+			loot.PlayerID = player.ID
 			player.Loots = append(player.Loots, loot)
 		}
 

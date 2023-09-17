@@ -31,9 +31,9 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 	}
 
 	loot := entity.Loot{
-		Name:   lootName,
-		Player: &player[0],
-		Raid:   &raid,
+		Name:     lootName,
+		PlayerID: player[0].ID,
+		Raid:     &raid,
 	}
 	err = loot.Validate()
 	if err != nil {
@@ -80,7 +80,7 @@ func (puc LootUseCase) SelectPlayerToAssign(ctx context.Context, playerNames []s
 			}
 		}
 	}
-	
+
 	min := 1000
 	for _, value := range counter {
 		if value < min {
