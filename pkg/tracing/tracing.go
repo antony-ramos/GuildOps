@@ -15,7 +15,7 @@ func newResource(sn, sv string) *resource.Resource {
 	return resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceName(sn),
-		semconv.ServiceVersion(sn),
+		semconv.ServiceVersion(sv),
 	)
 }
 

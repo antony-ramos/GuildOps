@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bwmarrin/discordgo"
 	"strconv"
+	"time"
 )
 
 func (d Discord) InitRaid() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -113,38 +114,37 @@ func (d Discord) CreateRaidHandler(ctx context.Context, s *discordgo.Session, i 
 }
 
 func (d Discord) DeleteRaidHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	//defer cancel()
-	//
-	//var returnErr error
-	//var msg string
-	//
-	//options := i.ApplicationCommandData().Options
-	//optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-	//
-	//for _, opt := range options {
-	//	optionMap[opt.Name] = opt
-	//}
-	//
-	//id, err := uuid.Parse(optionMap["id"].StringValue())
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = d.DeleteRaid(ctx, id)
-	//if err != nil {
-	//	msg = "Erreur lors de la suppression du joueur: " + err.Error()
-	//	returnErr = err
-	//} else {
-	//	msg = "Joueur " + id.String() + " supprimé avec succès"
-	//}
-	//
-	//_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-	//	Type: discordgo.InteractionResponseChannelMessageWithSource,
-	//	Data: &discordgo.InteractionResponseData{
-	//		Content: msg,
-	//	},
-	//})
-	//return returnErr
-	return nil
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var returnErr error
+	var msg string
+
+	options := i.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+
+	id, err := strconv.Atoi(optionMap["id"].StringValue())
+	if err != nil {
+		return err
+	}
+
+	err = d.DeleteRaid(ctx, id)
+	if err != nil {
+		msg = "Erreur lors de la suppression du joueur: " + err.Error()
+		returnErr = err
+	} else {
+		msg = "Joueur " + strconv.Itoa(id) + " supprimé avec succès"
+	}
+
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: msg,
+		},
+	})
+	return returnErr
 }

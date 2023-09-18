@@ -10,17 +10,45 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
+
+var LogLevels = map[string]zapcore.Level{
+	"debug": zap.DebugLevel,
+	"info":  zap.InfoLevel,
+	"warn":  zap.WarnLevel,
+	"error": zap.ErrorLevel,
+	"fatal": zap.FatalLevel,
+	"panic": zap.PanicLevel,
+}
 
 func main() {
 	ctx := context.Background()
 	spanName := "main function"
 
+	// Configuration
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Error while loading config : %s", err.Error()))
+		return
+	}
+
 	// Starting Log
-	logger := zap.NewExample()
+	atom := zap.NewAtomicLevel()
+	atom.SetLevel(LogLevels[cfg.Log.Level])
+
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.TimeKey = ""
+
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		atom,
+	))
 	defer func(logger *zap.Logger) {
 		err := logger.Sync()
 		if err != nil {
@@ -33,12 +61,7 @@ func main() {
 
 	zap.L().Info("replaced zap's global loggers")
 
-	// Configuration
-	cfg, err := config.NewConfig()
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("Error while loading config : %s", err.Error()))
-		return
-	}
+	// Setup Zap Log Level
 
 	// Tracing
 	zap.L().Info("Starting telemetry")

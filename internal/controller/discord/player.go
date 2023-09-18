@@ -63,7 +63,7 @@ func (d Discord) CreatePlayerHandler(ctx context.Context, s *discordgo.Session, 
 
 	var msg string
 	name := optionMap["name"].StringValue()
-	err := d.CreatePlayer(ctx, name, "")
+	err := d.CreatePlayer(ctx, name)
 	var returnErr error
 	if err != nil {
 		msg = "Erreur lors de la création du joueur: " + err.Error()

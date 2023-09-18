@@ -19,7 +19,12 @@ func (pg *PG) Init(connStr string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			zap.L().Error(err.Error())
+		}
+	}(db)
 
 	// Test the connection
 	err = db.Ping()

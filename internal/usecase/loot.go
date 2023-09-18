@@ -81,15 +81,15 @@ func (puc LootUseCase) SelectPlayerToAssign(ctx context.Context, playerNames []s
 		}
 	}
 
-	min := 1000
+	minimum := 1000
 	for _, value := range counter {
-		if value < min {
-			min = value
+		if value < minimum {
+			minimum = value
 		}
 	}
 	winningPlayers := make([]entity.Player, 0)
 	for _, player := range playerList {
-		if counter[player.Name] == min {
+		if counter[player.Name] == minimum {
 			winningPlayers = append(winningPlayers, player)
 		}
 	}
