@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"github.com/coven-discord-bot/config"
 	"github.com/coven-discord-bot/internal/app"
+	logger2 "github.com/coven-discord-bot/pkg/log"
 	"github.com/coven-discord-bot/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -19,8 +22,26 @@ func main() {
 	ctx := context.Background()
 	spanName := "main function"
 
+	// Configuration
+	cfg, err := config.NewConfig()
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("Error while loading config : %s", err.Error()))
+		return
+	}
+
 	// Starting Log
-	logger := zap.NewExample()
+	// Set log level
+	atom := zap.NewAtomicLevel()
+	atom.SetLevel(logger2.LogLevels[cfg.Log.Level])
+
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.TimeKey = ""
+
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		atom,
+	))
 	defer func(logger *zap.Logger) {
 		err := logger.Sync()
 		if err != nil {
@@ -33,12 +54,7 @@ func main() {
 
 	zap.L().Info("replaced zap's global loggers")
 
-	// Configuration
-	cfg, err := config.NewConfig()
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("Error while loading config : %s", err.Error()))
-		return
-	}
+	// Setup Zap Log Level
 
 	// Tracing
 	zap.L().Info("Starting telemetry")
