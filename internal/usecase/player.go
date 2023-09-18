@@ -15,7 +15,7 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 	return &PlayerUseCase{backend: bk}
 }
 
-func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName, playerRole string) error {
+func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
