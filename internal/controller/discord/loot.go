@@ -5,6 +5,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var LootDescriptors = []discordgo.ApplicationCommand{
@@ -165,36 +166,39 @@ func (d Discord) ListLootsOnPlayerHandler(ctx context.Context, s *discordgo.Sess
 }
 
 func (d Discord) DeleteLootHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	//defer cancel()
-	//
-	//options := i.ApplicationCommandData().Options
-	//optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-	//
-	//for _, opt := range options {
-	//	optionMap[opt.Name] = opt
-	//}
-	//
-	//id := optionMap["id"].StringValue()
-	//
-	//err := d.LootUseCase.DeleteLoot(ctx, id)
-	//if err != nil {
-	//	msg := "Erreur lors de la suppression du loot: " + err.Error()
-	//	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-	//		Type: discordgo.InteractionResponseChannelMessageWithSource,
-	//		Data: &discordgo.InteractionResponseData{
-	//			Content: msg,
-	//		},
-	//	})
-	//	return err
-	//}
-	//msg := "Loot supprimé avec succès"
-	//_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-	//	Type: discordgo.InteractionResponseChannelMessageWithSource,
-	//	Data: &discordgo.InteractionResponseData{
-	//		Content: msg,
-	//	},
-	//})
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	options := i.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+
+	id, err := strconv.Atoi(optionMap["id"].StringValue())
+	if err != nil {
+		return err
+	}
+
+	err = d.LootUseCase.DeleteLoot(ctx, id)
+	if err != nil {
+		msg := "Erreur lors de la suppression du loot: " + err.Error()
+		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+		return err
+	}
+	msg := "Loot supprimé avec succès"
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: msg,
+		},
+	})
 	return nil
 }
 
