@@ -2,11 +2,8 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"github.com/coven-discord-bot/internal/entity"
-	logger "github.com/coven-discord-bot/pkg/log"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -18,54 +15,72 @@ func NewAbsenceUseCase(bk Backend) *AbsenceUseCase {
 	return &AbsenceUseCase{backend: bk}
 }
 
-func (a AbsenceUseCase) AddAbsence(ctx context.Context, log logger.Logger, absence entity.Absence) error {
-	_, span := otel.Tracer("").Start(ctx, "Usecase AbsenceUseCase/AddAbsence is processing", trace.WithTimestamp(time.Now()))
-	defer span.End(trace.WithTimestamp(time.Now()))
-	select {
-	case <-ctx.Done():
-		log = log.With(zap.String("name", absence.Name)).With(zap.String("date", absence.Date.String()))
-		log.Debug("UseCase/AddAbsence Context Exceeded")
-		return ctx.Err()
-	default:
-		err := absence.Validate()
-		span.RecordError(err)
-		if err != nil {
-			log = log.With(zap.String("name", absence.Name)).With(zap.String("date", absence.Date.String()))
-			log.Debug("UseCase/AddAbsence Validate Absence failed")
-			return err
-		}
-		err = a.backend.AddAbsence(ctx, absence)
-		if err != nil {
-			log = log.With(zap.String("name", absence.Name)).With(zap.String("date", absence.Date.String()))
-			log.Debug("UseCase/AddAbsence a.backend.AddAbsence failed")
-			return err
-		}
-		return nil
+func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, date time.Time) error {
+	// Get player ID
+	player, err := a.backend.SearchPlayer(ctx, -1, playerName)
+	if err != nil {
+		return err
 	}
+	if len(player) == 0 {
+		return fmt.Errorf("no player found")
+	}
+	// Get raid ID
+	raids, err := a.backend.SearchRaid(ctx, "", date, "")
+	if err != nil {
+		return err
+	}
+	if len(raids) == 0 {
+		return fmt.Errorf("no raid found on this date %s", date)
+	}
+	// For each raid ID, create an absence
+	for _, raid := range raids {
+		absence := entity.Absence{
+			Player: &player[0],
+			Raid:   &raid,
+		}
+		err := absence.Validate()
+		if err != nil {
+			return err
+		}
+		_, err = a.backend.CreateAbsence(ctx, absence)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (a AbsenceUseCase) RemoveAbsence(ctx context.Context, log logger.Logger, absence entity.Absence) error {
-	_, span := otel.Tracer("").Start(ctx, "Usecase AbsenceUseCase/RemoveAbsence is processing", trace.WithTimestamp(time.Now()))
-	defer span.End(trace.WithTimestamp(time.Now()))
-	select {
-	case <-ctx.Done():
-		log = log.With(zap.String("name", absence.Name)).With(zap.String("date", absence.Date.String()))
-		log.Debug("UseCase/AddAbsence Context Exceeded")
-		return ctx.Err()
-	default:
-		err := absence.Validate()
-		span.RecordError(err)
-		if err != nil {
-			log = log.With(zap.String("name", absence.Name)).With(zap.String("date", absence.Date.String()))
-			log.Debug("UseCase/AddAbsence Validate Absence failed")
-			return err
-		}
-		err = a.backend.RemoveAbsence(ctx, absence)
-		if err != nil {
-			log = log.With(zap.String("name", absence.Name)).With(zap.String("date", absence.Date.String()))
-			log.Debug("UseCase/AddAbsence a.backend.RemoveAbsence failed")
-			return err
-		}
-		return nil
+func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, date time.Time) error {
+	// Get player ID
+	player, err := a.backend.SearchPlayer(ctx, -1, playerName)
+	if err != nil {
+		return err
 	}
+	if len(player) == 0 {
+		return fmt.Errorf("no player found")
+	}
+
+	absences, err := a.backend.SearchAbsence(ctx, "", player[0].ID, date)
+	if err != nil {
+		return err
+	}
+	if len(absences) == 0 {
+		return fmt.Errorf("no absence found")
+	}
+	for _, absence := range absences {
+		err := a.backend.DeleteAbsence(ctx, absence.ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// List Absences on a specific date
+func (a AbsenceUseCase) ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error) {
+	absences, err := a.backend.SearchAbsence(ctx, "", -1, date)
+	if err != nil {
+		return nil, err
+	}
+	return absences, nil
 }

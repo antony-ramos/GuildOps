@@ -1,19 +1,24 @@
 ### Todo
 
-- [ ] Import .proto is better than just copypasta
-- [ ] Add Release Pipeline
+- [ ] Create Release Pipeline
 - [ ] Better error management, errors send to Discord are too descriptive
-- [ ] When backend didn't respond in time, should put request on bus and have a link to see status
-- [ ] Must add a pretty README but i didn't defined pretty yet
-- [ ] Must add more logs, but what the best way to propagate logger to sub functions ?
-- [ ] Pretty sure I commented every function the other day... did i ?
-- [ ] This project test coverage is awful, should i mention that i want to use TDD ?
+- [ ] Better context timeout management
+- [ ] Create Readme
+- [ ] Add Log Level to config
+- [ ] Add comments to every functions
+- [ ] Add tests to every functions
+- [ ] Add more logs for each level
+- [ ] Add tracing for each request
+- [ ] Add Validate for entities
+- [ ] Add API as controller
+- [ ] Add Usecase: player name is not discord name. Must implement a way to link them
+- [ ] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
+- [ ] Add In CreatePlayer id to player entity
+- [ ] Fix DeleteStrike always return success
+- [ ] Fix in SearchPlayer: player strikes must be import there not in usecase
 
 ### In Progress
 
 ### Done ✓
-- [X] Add CI linter and everything to make my next night... sleepless!
-- [X] Implement Validate on entities
-- [X] Implement tracing
-- [X] Must add more logs, but what the best way to propagate logger to sub functions ?
+- [X] Create CI linter
 
