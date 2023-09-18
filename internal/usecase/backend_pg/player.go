@@ -26,55 +26,60 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var player entity.Player
-		err := rows.Scan(&player.ID, &player.Name)
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
-		}
-
-		// populate player.Loot list
-		sql, _, err = pg.Builder.Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").From("loots").Join("raids ON raids.id = loots.raid_id").Where("loots.player_id = $1").ToSql()
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - r.Builder.Select: %w", err)
-		}
-		r, err := pg.Pool.Query(context.Background(), sql, strconv.FormatInt(int64(player.ID), 10))
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
-		}
-		defer r.Close()
-		for r.Next() {
-			loot := entity.Loot{}
-			raid := entity.Raid{}
-
-			err := r.Scan(&loot.ID, &loot.Name, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
+		player, err := func() (entity.Player, error) {
+			var player entity.Player
+			err := rows.Scan(&player.ID, &player.Name)
 			if err != nil {
-				return nil, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
-			}
-			loot.Raid = &raid
-			loot.Player = &player
-			player.Loots = append(player.Loots, loot)
-		}
-
-		// populate player.MissedRaids list
-		sql, _, err = pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date").From("absences").Join("raids ON raids.id = absences.raid_id").Where("absences.player_id = $1").ToSql()
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - r.Builder.Select: %w", err)
-		}
-		r, err = pg.Pool.Query(context.Background(), sql, strconv.FormatInt(int64(player.ID), 10))
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
-		}
-		defer r.Close()
-		for r.Next() {
-			raid := entity.Raid{}
-			err := r.Scan(nil, nil, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
-			if err != nil {
-				return nil, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+				return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
 			}
 
-			player.MissedRaids = append(player.MissedRaids, raid)
-		}
+			// populate player.Loot list
+			sql, _, err = pg.Builder.Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").From("loots").Join("raids ON raids.id = loots.raid_id").Where("loots.player_id = $1").ToSql()
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - SearchPlayer - r.Builder.Select: %w", err)
+			}
+			r, err := pg.Pool.Query(context.Background(), sql, strconv.FormatInt(int64(player.ID), 10))
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
+			}
+			defer r.Close()
+			for r.Next() {
+				loot := entity.Loot{}
+				raid := entity.Raid{}
 
+				err := r.Scan(&loot.ID, &loot.Name, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
+				if err != nil {
+					return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+				}
+				loot.Raid = &raid
+				loot.Player = &player
+				player.Loots = append(player.Loots, loot)
+			}
+
+			// populate player.MissedRaids list
+			sql, _, err = pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date").From("absences").Join("raids ON raids.id = absences.raid_id").Where("absences.player_id = $1").ToSql()
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - SearchPlayer - r.Builder.Select: %w", err)
+			}
+			r, err = pg.Pool.Query(context.Background(), sql, strconv.FormatInt(int64(player.ID), 10))
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
+			}
+			defer r.Close()
+			for r.Next() {
+				raid := entity.Raid{}
+				err := r.Scan(nil, nil, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
+				if err != nil {
+					return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+				}
+
+				player.MissedRaids = append(player.MissedRaids, raid)
+			}
+			return player, nil
+		}()
+		if err != nil {
+			return nil, err
+		}
 		players = append(players, player)
 	}
 	return players, nil
