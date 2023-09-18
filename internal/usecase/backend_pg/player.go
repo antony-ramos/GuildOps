@@ -14,15 +14,22 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 		return nil, ctx.Err()
 	default:
 		var players []entity.Player
-		// name cannot be empty
-		if len(name) == 0 {
-			return nil, fmt.Errorf("database - SearchPlayer - name cannot be empty")
+
+		var sql string
+		var err error
+		switch {
+		case id != -1:
+			sql, _, err = pg.Builder.Select("id", "name").From("players").Where("name = $1").ToSql()
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
+			}
+		case name != "":
+			sql, _, err = pg.Builder.Select("id", "name").From("players").Where("name = $1").ToSql()
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
+			}
 		}
 
-		sql, _, err := pg.Builder.Select("id", "name").From("players").Where("name = $1").ToSql()
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
-		}
 		rows, err := pg.Pool.Query(context.Background(), sql, name)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
