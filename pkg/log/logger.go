@@ -67,32 +67,3 @@ func (l wrapper) Fatal(msg string, fields ...zapcore.Field) {
 func (l wrapper) With(fields ...zapcore.Field) Logger {
 	return wrapper{logger: l.logger.With(fields...)}
 }
-
-func Start() (zap.AtomicLevel, Factory, error) {
-
-	atom := zap.NewAtomicLevel()
-	zaplog, err := zap.Config{
-		Encoding:    "json",
-		Level:       atom,
-		OutputPaths: []string{"stdout"}, // You can change this to a file path if needed
-		EncoderConfig: zapcore.EncoderConfig{
-			TimeKey:        "time",
-			LevelKey:       "level",
-			NameKey:        "logger",
-			CallerKey:      "caller",
-			MessageKey:     "message",
-			StacktraceKey:  "stacktrace",
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.LowercaseLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.SecondsDurationEncoder,
-			EncodeCaller:   zapcore.FullCallerEncoder,
-			EncodeName:     zapcore.FullNameEncoder,
-		},
-	}.Build()
-	if err != nil {
-		return zap.AtomicLevel{}, Factory{}, err
-	}
-	factory := NewFactory(zaplog)
-	return atom, factory, nil
-}
