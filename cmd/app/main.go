@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/coven-discord-bot/config"
 	"github.com/coven-discord-bot/internal/app"
-	logger2 "github.com/coven-discord-bot/pkg/log"
 	"github.com/coven-discord-bot/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
@@ -18,6 +17,15 @@ import (
 	"time"
 )
 
+var LogLevels = map[string]zapcore.Level{
+	"debug": zap.DebugLevel,
+	"info":  zap.InfoLevel,
+	"warn":  zap.WarnLevel,
+	"error": zap.ErrorLevel,
+	"fatal": zap.FatalLevel,
+	"panic": zap.PanicLevel,
+}
+
 func main() {
 	ctx := context.Background()
 	spanName := "main function"
@@ -25,14 +33,13 @@ func main() {
 	// Configuration
 	cfg, err := config.NewConfig()
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("Error while loading config : %s", err.Error()))
+		log.Fatal(fmt.Sprintf("Error while loading config : %s", err.Error()))
 		return
 	}
 
 	// Starting Log
-	// Set log level
 	atom := zap.NewAtomicLevel()
-	atom.SetLevel(logger2.LogLevels[cfg.Log.Level])
+	atom.SetLevel(LogLevels[cfg.Log.Level])
 
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.TimeKey = ""
