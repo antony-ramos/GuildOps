@@ -3,7 +3,6 @@ package discordHandler
 import (
 	"context"
 	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
 	"strconv"
 	"time"
 )
@@ -128,7 +127,7 @@ func (d Discord) DeleteRaidHandler(ctx context.Context, s *discordgo.Session, i 
 		optionMap[opt.Name] = opt
 	}
 
-	id, err := uuid.Parse(optionMap["id"].StringValue())
+	id, err := strconv.Atoi(optionMap["id"].StringValue())
 	if err != nil {
 		return err
 	}
@@ -138,7 +137,7 @@ func (d Discord) DeleteRaidHandler(ctx context.Context, s *discordgo.Session, i 
 		msg = "Erreur lors de la suppression du joueur: " + err.Error()
 		returnErr = err
 	} else {
-		msg = "Joueur " + id.String() + " supprimé avec succès"
+		msg = "Joueur " + strconv.Itoa(id) + " supprimé avec succès"
 	}
 
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
