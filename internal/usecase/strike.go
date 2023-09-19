@@ -53,8 +53,8 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 }
 
 // DeleteStrike is a function which call backend to Delete a Strike Object.
-func (puc StrikeUseCase) DeleteStrike(ctx context.Context, ID int) error {
-	err := puc.backend.DeleteStrike(ctx, ID)
+func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
+	err := puc.backend.DeleteStrike(ctx, id)
 	if err != nil {
 		return err
 	}
