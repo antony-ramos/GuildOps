@@ -9,7 +9,9 @@ import (
 )
 
 // SearchRaid searches a raid in the database.
-func (pg *PG) SearchRaid(ctx context.Context, raidName string, date time.Time, difficulty string) ([]entity.Raid, error) {
+func (pg *PG) SearchRaid(
+	ctx context.Context, raidName string, date time.Time, difficulty string,
+) ([]entity.Raid, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -82,7 +84,10 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 	case <-ctx.Done():
 		return entity.Raid{}, ctx.Err()
 	default:
-		sql, _, err := pg.Builder.Select("name", "date", "difficulty").From("raids").Where("name = $1 AND date = $2 AND difficulty = $3").ToSql()
+		sql, _, err := pg.Builder.
+			Select("name", "date", "difficulty").
+			From("raids").
+			Where("name = $1 AND date = $2 AND difficulty = $3").ToSql()
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder: %w", err)
 		}
@@ -94,7 +99,10 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		if rows.Next() {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - raid already exists")
 		}
-		sql, _, errInsert := pg.Builder.Insert("raids").Columns("name", "date", "difficulty").Values(raid.Name, raid.Date, raid.Difficulty).ToSql()
+		sql, _, errInsert := pg.Builder.
+			Insert("raids").
+			Columns("name", "date", "difficulty").
+			Values(raid.Name, raid.Date, raid.Difficulty).ToSql()
 		if errInsert != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder.Insert: %w", errInsert)
 		}
@@ -172,7 +180,12 @@ func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 		}
 
 		// Update raid in database
-		sql, _, err := pg.Builder.Update("raids").Set("name", oldRaid.Name).Set("date", oldRaid.Date).Set("difficulty", oldRaid.Difficulty).Where("id = $1").ToSql()
+		sql, _, err := pg.Builder.
+			Update("raids").
+			Set("name", oldRaid.Name).
+			Set("date", oldRaid.Date).
+			Set("difficulty", oldRaid.Difficulty).
+			Where("id = $1").ToSql()
 		if err != nil {
 			return fmt.Errorf("database - UpdateRaid - r.Builder.Update: %w", err)
 		}

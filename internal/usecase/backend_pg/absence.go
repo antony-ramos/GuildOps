@@ -8,7 +8,9 @@ import (
 	"github.com/coven-discord-bot/internal/entity"
 )
 
-func (pg *PG) SearchAbsence(ctx context.Context, playerName string, playerID int, date time.Time) ([]entity.Absence, error) {
+func (pg *PG) SearchAbsence(
+	ctx context.Context, playerName string, playerID int, date time.Time,
+) ([]entity.Absence, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -16,7 +18,14 @@ func (pg *PG) SearchAbsence(ctx context.Context, playerName string, playerID int
 		var absences []entity.Absence
 		switch {
 		case playerID == -1 && playerName == "":
-			sql, _, err := pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date", "players.name").From("absences").Join("raids ON raids.id = absences.raid_id").Join("players ON players.id = absences.player_id").Where("raids.date = $1").ToSql()
+			sql, _, err := pg.Builder.
+				Select("absences.id", "absences.player_id", "absences.raid_id",
+					"raids.name", "raids.difficulty", "raids.date",
+					"players.name").
+				From("absences").
+				Join("raids ON raids.id = absences.raid_id").
+				Join("players ON players.id = absences.player_id").
+				Where("raids.date = $1").ToSql()
 			if err != nil {
 				return nil, err
 			}
@@ -38,7 +47,14 @@ func (pg *PG) SearchAbsence(ctx context.Context, playerName string, playerID int
 				absences = append(absences, absence)
 			}
 		case playerID != -1 && playerName == "":
-			sql, _, err := pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date", "players.name").From("absences").Join("raids ON raids.id = absences.raid_id").Join("players ON players.id = absences.player_id").Where("absences.player_id = $1").Where("raids.date = $2").ToSql()
+			sql, _, err := pg.Builder.
+				Select("absences.id", "absences.player_id", "absences.raid_id",
+					"raids.name", "raids.difficulty", "raids.date", "players.name").
+				From("absences").
+				Join("raids ON raids.id = absences.raid_id").
+				Join("players ON players.id = absences.player_id").
+				Where("absences.player_id = $1").
+				Where("raids.date = $2").ToSql()
 			if err != nil {
 				return nil, err
 			}
@@ -60,7 +76,15 @@ func (pg *PG) SearchAbsence(ctx context.Context, playerName string, playerID int
 				absences = append(absences, absence)
 			}
 		case playerID == -1 && playerName != "":
-			sql, _, err := pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date", "players.name").From("absences").Join("raids ON raids.id = absences.raid_id").Join("players ON players.id = absences.player_id").Where("players.name = $1").Where("raids.date = $2").ToSql()
+			sql, _, err := pg.
+				Builder.Select("absences.id", "absences.player_id", "absences.raid_id",
+				"raids.name", "raids.difficulty", "raids.date",
+				"players.name").
+				From("absences").
+				Join("raids ON raids.id = absences.raid_id").
+				Join("players ON players.id = absences.player_id").
+				Where("players.name = $1").
+				Where("raids.date = $2").ToSql()
 			if err != nil {
 				return nil, err
 			}
@@ -94,7 +118,10 @@ func (pg *PG) CreateAbsence(ctx context.Context, absence entity.Absence) (entity
 	case <-ctx.Done():
 		return entity.Absence{}, ctx.Err()
 	default:
-		sql, args, errInsert := pg.Builder.Insert("absences").Columns("player_id", "raid_id").Values(absence.Player.ID, absence.Raid.ID).ToSql()
+		sql, args, errInsert := pg.Builder.
+			Insert("absences").
+			Columns("player_id", "raid_id").
+			Values(absence.Player.ID, absence.Raid.ID).ToSql()
 		if errInsert != nil {
 			return entity.Absence{}, errInsert
 		}
@@ -137,7 +164,11 @@ func (pg *PG) UpdateAbsence(ctx context.Context, absence entity.Absence) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		sql, args, err := pg.Builder.Update("absences").Set("player_id", absence.Player.ID).Set("raid_id", absence.Raid.ID).Where("id = $1").ToSql()
+		sql, args, err := pg.Builder.
+			Update("absences").
+			Set("player_id", absence.Player.ID).
+			Set("raid_id", absence.Raid.ID).
+			Where("id = $1").ToSql()
 		if err != nil {
 			return err
 		}

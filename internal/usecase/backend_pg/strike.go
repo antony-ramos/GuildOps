@@ -12,7 +12,9 @@ import (
 // SearchStrikeOnID is a function which call backend to search a strike object based on playerID.
 func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
 	var strikes []entity.Strike
-	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("player_id = $1").ToSql()
+	sql, _, err := pg.Builder.
+		Select("id", "player_id", "season", "reason", "created_at").
+		From("strikes").Where("player_id = $1").ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - r.Builder: %w", err)
 	}
@@ -35,7 +37,9 @@ func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
 // SearchStrikeOnSeason is a function which call backend to search a strike object based on season.
 func (pg *PG) searchStrikeOnSeason(season string) ([]entity.Strike, error) {
 	var strikes []entity.Strike
-	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("season = $1").ToSql()
+	sql, _, err := pg.Builder.
+		Select("id", "player_id", "season", "reason", "created_at").
+		From("strikes").Where("season = $1").ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnSeason - r.Builder: %w", err)
 	}
@@ -58,7 +62,9 @@ func (pg *PG) searchStrikeOnSeason(season string) ([]entity.Strike, error) {
 // SearchStrikeOnReason is a function which call backend to search a strike object based on reason.
 func (pg *PG) searchStrikeOnReason(reason string) ([]entity.Strike, error) {
 	var strikes []entity.Strike
-	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("reason = $1").ToSql()
+	sql, _, err := pg.Builder.
+		Select("id", "player_id", "season", "reason", "created_at").
+		From("strikes").Where("reason = $1").ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnReason - r.Builder: %w", err)
 	}
@@ -81,7 +87,10 @@ func (pg *PG) searchStrikeOnReason(reason string) ([]entity.Strike, error) {
 // SearchStrikeOnDate is a function which call backend to search a strike object based on date.
 func (pg *PG) searchStrikeOnDate(date time.Time) ([]entity.Strike, error) {
 	var strikes []entity.Strike
-	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("created_at = $1").ToSql()
+	sql, _, err := pg.Builder.
+		Select("id", "player_id", "season", "reason", "created_at").
+		From("strikes").
+		Where("created_at = $1").ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnDate - r.Builder: %w", err)
 	}
@@ -103,8 +112,14 @@ func (pg *PG) searchStrikeOnDate(date time.Time) ([]entity.Strike, error) {
 
 // SearchStrike is a function which call backend to Search a Strike Object
 // It returns a list of strikes matching the given parameters not combined.
-func (pg *PG) SearchStrike(ctx context.Context, playerID int, date time.Time, season, reason string) ([]entity.Strike, error) {
-	zap.L().Debug("SearchStrike", zap.Int("playerID", playerID), zap.Time("date", date), zap.String("season", season), zap.String("reason", reason))
+func (pg *PG) SearchStrike(
+	ctx context.Context, playerID int, date time.Time, season, reason string,
+) ([]entity.Strike, error) {
+	zap.L().Debug("SearchStrike",
+		zap.Int("playerID", playerID),
+		zap.Time("date", date),
+		zap.String("season", season),
+		zap.String("reason", reason))
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -144,12 +159,18 @@ func (pg *PG) SearchStrike(ctx context.Context, playerID int, date time.Time, se
 
 // CreateStrike is a function which call backend to Create a Strike Object.
 func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error {
-	zap.L().Debug("CreateStrike", zap.String("season", strike.Season), zap.String("reason", strike.Reason), zap.String("player", player.Name))
+	zap.L().Debug("CreateStrike",
+		zap.String("season", strike.Season),
+		zap.String("reason", strike.Reason),
+		zap.String("player", player.Name))
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		sql, args, errInsert := pg.Builder.Insert("strikes").Columns("player_id", "season", "reason").Values(player.ID, strike.Season, strike.Reason).ToSql()
+		sql, args, errInsert := pg.Builder.
+			Insert("strikes").
+			Columns("player_id", "season", "reason").
+			Values(player.ID, strike.Season, strike.Reason).ToSql()
 		if errInsert != nil {
 			return fmt.Errorf("database - CreateStrike - r.Builder: %w", errInsert)
 		}
@@ -168,7 +189,10 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 		return entity.Strike{}, ctx.Err()
 	default:
 		// Find Strike from id on database
-		sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("id = $1").ToSql()
+		sql, _, err := pg.Builder.
+			Select("id", "player_id", "season", "reason", "created_at").
+			From("strikes").
+			Where("id = $1").ToSql()
 		if err != nil {
 			return entity.Strike{}, fmt.Errorf("database - ReadStrike - r.Builder: %w", err)
 		}
@@ -189,13 +213,19 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 }
 
 func (pg *PG) UpdateStrike(ctx context.Context, strike entity.Strike) error {
-	zap.L().Debug("UpdateStrike", zap.Int("strikeID", strike.ID), zap.String("season", strike.Season), zap.String("reason", strike.Reason))
+	zap.L().Debug("UpdateStrike",
+		zap.Int("strikeID", strike.ID),
+		zap.String("season", strike.Season),
+		zap.String("reason", strike.Reason))
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
 		// Update strike on database
-		sql, _, err := pg.Builder.Update("strikes").Set("season", strike.Season).Set("reason", strike.Reason).Where("id = $1").ToSql()
+		sql, _, err := pg.Builder.Update("strikes").
+			Set("season", strike.Season).
+			Set("reason", strike.Reason).
+			Where("id = $1").ToSql()
 		if err != nil {
 			return fmt.Errorf("database - UpdateStrike - r.Builder: %w", err)
 		}

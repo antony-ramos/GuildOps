@@ -18,7 +18,8 @@ func NewStrikeUseCase(bk Backend) *StrikeUseCase {
 }
 
 func SeasonCalculator(date time.Time) string {
-	if date.After(time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC)) && date.Before(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)) {
+	if date.After(time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC)) &&
+		date.Before(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)) {
 		return "DF/S2"
 	} else {
 		return "Unknown"

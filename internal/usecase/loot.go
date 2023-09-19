@@ -61,7 +61,9 @@ func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 	return player[0].Loots, nil
 }
 
-func (puc LootUseCase) SelectPlayerToAssign(ctx context.Context, playerNames []string, difficulty string) (entity.Player, error) {
+func (puc LootUseCase) SelectPlayerToAssign(
+	ctx context.Context, playerNames []string, difficulty string,
+) (entity.Player, error) {
 	playerList := make([]entity.Player, 0)
 	for _, playerName := range playerNames {
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)

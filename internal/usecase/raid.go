@@ -15,7 +15,9 @@ func NewRaidUseCase(bk Backend) *RaidUseCase {
 	return &RaidUseCase{backend: bk}
 }
 
-func (puc RaidUseCase) CreateRaid(ctx context.Context, raidName, difficulty string, date time.Time) (entity.Raid, error) {
+func (puc RaidUseCase) CreateRaid(
+	ctx context.Context, raidName, difficulty string, date time.Time,
+) (entity.Raid, error) {
 	raid := entity.Raid{
 		Name:       raidName,
 		Difficulty: difficulty,

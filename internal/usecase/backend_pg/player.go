@@ -45,7 +45,11 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 				}
 
 				// populate player.Loot list
-				sql, _, err = pg.Builder.Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").From("loots").Join("raids ON raids.id = loots.raid_id").Where("loots.player_id = $1").ToSql()
+				sql, _, err = pg.Builder.
+					Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").
+					From("loots").
+					Join("raids ON raids.id = loots.raid_id").
+					Where("loots.player_id = $1").ToSql()
 				if err != nil {
 					return entity.Player{}, fmt.Errorf("database - SearchPlayer - r.Builder.Select: %w", err)
 				}
@@ -68,7 +72,11 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 				}
 
 				// populate player.MissedRaids list
-				sql, _, err = pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date").From("absences").Join("raids ON raids.id = absences.raid_id").Where("absences.player_id = $1").ToSql()
+				sql, _, err = pg.Builder.
+					Select("absences.id", "absences.player_id", "absences.raid_id", "raids.name", "raids.difficulty", "raids.date").
+					From("absences").
+					Join("raids ON raids.id = absences.raid_id").
+					Where("absences.player_id = $1").ToSql()
 				if err != nil {
 					return entity.Player{}, fmt.Errorf("database - SearchPlayer - r.Builder.Select: %w", err)
 				}
