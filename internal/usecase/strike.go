@@ -63,14 +63,14 @@ func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
 
 // ReadStrikes is a function which call backend to Read all strikes on a player.
 func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]entity.Strike, error) {
-	p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+	player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 	if err != nil {
 		return nil, err
 	}
-	if len(p) == 0 {
+	if len(player) == 0 {
 		return nil, errors.New("player not found")
 	}
-	strikes, err := puc.backend.SearchStrike(ctx, p[0].ID, time.Time{}, "", "")
+	strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
 	if err != nil {
 		return nil, err
 	}

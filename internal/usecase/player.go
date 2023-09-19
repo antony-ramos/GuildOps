@@ -41,15 +41,15 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
 			return err
 		}
-		if len(p) == 0 {
+		if len(player) == 0 {
 			return fmt.Errorf("player %s not found", playerName)
 		}
 
-		strikes, err := puc.backend.SearchStrike(ctx, p[0].ID, time.Time{}, "", "")
+		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
 		for _, strike := range strikes {
 			err = puc.backend.DeleteStrike(ctx, strike.ID)
 			if err != nil {
@@ -60,7 +60,7 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 		if err != nil {
 			return err
 		}
-		err = puc.backend.DeletePlayer(ctx, p[0].ID)
+		err = puc.backend.DeletePlayer(ctx, player[0].ID)
 		if err != nil {
 			return err
 		}
@@ -73,22 +73,21 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 	case <-ctx.Done():
 		return entity.Player{}, ctx.Err()
 	default:
-		p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
 			return entity.Player{}, err
 		}
 
-		if len(p) == 0 {
+		if len(player) == 0 {
 			return entity.Player{}, fmt.Errorf("player %s not found", playerName)
 		}
 
-		player := p[0]
-		strikes, err := puc.backend.SearchStrike(ctx, player.ID, time.Time{}, "", "")
+		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
 		if err != nil {
 			return entity.Player{}, err
 		}
-		player.Strikes = strikes
+		player[0].Strikes = strikes
 
-		return player, nil
+		return player[0], nil
 	}
 }
