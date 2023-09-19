@@ -1,11 +1,11 @@
-package backend_pg
+package postgresbackend
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/coven-discord-bot/internal/entity"
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 // SearchRaid searches a raid in the database.
@@ -14,7 +14,7 @@ func (pg *PG) SearchRaid(
 ) ([]entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("database - SearchRaid - ctx.Done: %w", ctx.Err())
 	default:
 		var raids []entity.Raid
 		if raidName != "" {
@@ -22,7 +22,7 @@ func (pg *PG) SearchRaid(
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Builder: %w", err)
 			}
-			rows, err := pg.Pool.Query(context.Background(), sql, raidName)
+			rows, err := pg.Pool.Query(ctx, sql, raidName)
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
 			}
@@ -41,7 +41,7 @@ func (pg *PG) SearchRaid(
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Builder: %w", err)
 			}
-			rows, err := pg.Pool.Query(context.Background(), sql, difficulty)
+			rows, err := pg.Pool.Query(ctx, sql, difficulty)
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
 			}
@@ -60,7 +60,7 @@ func (pg *PG) SearchRaid(
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Builder: %w", err)
 			}
-			rows, err := pg.Pool.Query(context.Background(), sql, date)
+			rows, err := pg.Pool.Query(ctx, sql, date)
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
 			}
@@ -82,7 +82,7 @@ func (pg *PG) SearchRaid(
 func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Raid{}, ctx.Err()
+		return entity.Raid{}, fmt.Errorf("database - CreateRaid - ctx.Done: %w", ctx.Err())
 	default:
 		sql, _, err := pg.Builder.
 			Select("name", "date", "difficulty").
@@ -91,7 +91,7 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(context.Background(), sql, raid.Name, raid.Date, raid.Difficulty)
+		rows, err := pg.Pool.Query(ctx, sql, raid.Name, raid.Date, raid.Difficulty)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Pool.Query: %w", err)
 		}
@@ -107,7 +107,7 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder.Insert: %w", errInsert)
 		}
 
-		_, err = pg.Pool.Exec(context.Background(), sql, raid.Name, raid.Date, raid.Difficulty)
+		_, err = pg.Pool.Exec(ctx, sql, raid.Name, raid.Date, raid.Difficulty)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Pool.Exec: %w", err)
 		}
@@ -116,7 +116,7 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder: %w", err)
 		}
-		rows, err = pg.Pool.Query(context.Background(), sql, raid.Name, raid.Date, raid.Difficulty)
+		rows, err = pg.Pool.Query(ctx, sql, raid.Name, raid.Date, raid.Difficulty)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Pool.Query: %w", err)
 		}
@@ -135,13 +135,13 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Raid{}, ctx.Err()
+		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: %w", ctx.Err())
 	default:
 		sql, _, err := pg.Builder.Select("id", "name", "date", "difficulty").From("raids").Where("id = $1").ToSql()
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(context.Background(), sql, raidID)
+		rows, err := pg.Pool.Query(ctx, sql, raidID)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Pool.Query: %w", err)
 		}
@@ -161,7 +161,7 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("database - UpdateRaid - ctx.Done: %w", ctx.Err())
 	default:
 		oldRaid, err := pg.ReadRaid(ctx, raid.ID)
 		if err != nil {
@@ -189,7 +189,7 @@ func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 		if err != nil {
 			return fmt.Errorf("database - UpdateRaid - r.Builder.Update: %w", err)
 		}
-		_, err = pg.Pool.Exec(context.Background(), sql, oldRaid.ID)
+		_, err = pg.Pool.Exec(ctx, sql, oldRaid.ID)
 		if err != nil {
 			return fmt.Errorf("database - UpdateRaid - r.Pool.Exec: %w", err)
 		}
@@ -200,13 +200,13 @@ func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 func (pg *PG) DeleteRaid(ctx context.Context, raidID int) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("database - DeleteRaid - ctx.Done: %w", ctx.Err())
 	default:
 		sql, _, err := pg.Builder.Delete("raids").Where("id = $1").ToSql()
 		if err != nil {
 			return fmt.Errorf("database - DeleteRaid - r.Builder.Delete: %w", err)
 		}
-		_, err = pg.Pool.Exec(context.Background(), sql, raidID)
+		_, err = pg.Pool.Exec(ctx, sql, raidID)
 		if err != nil {
 			return fmt.Errorf("database - DeleteRaid - r.Pool.Exec: %w", err)
 		}

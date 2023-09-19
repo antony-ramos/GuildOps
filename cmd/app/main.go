@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/coven-discord-bot/config"
-	"github.com/coven-discord-bot/internal/app"
-	"github.com/coven-discord-bot/pkg/tracing"
+	"github.com/antony-ramos/guildops/config"
+	"github.com/antony-ramos/guildops/internal/app"
+	"github.com/antony-ramos/guildops/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -70,7 +70,8 @@ func main() {
 	// Tracing
 	shutdown, err := tracing.InstallExportPipeline(ctx, cfg.Name, cfg.Version)
 	if err != nil {
-		log.Fatal(err)
+		zap.L().Error(err.Error())
+		return
 	}
 	defer func() {
 		if err := shutdown(ctx); err != nil {

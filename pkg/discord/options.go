@@ -22,7 +22,7 @@ func GuildID(guildID int) Option {
 }
 
 func CommandHandlers(m map[string]func(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error,
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error,
 ) Option {
 	return func(d *Discord) {
 		d.commandHandlers = m

@@ -1,7 +1,8 @@
-package discordHandler
+package discordhandler
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -9,8 +10,8 @@ import (
 )
 
 func (d Discord) InitRaid() map[string]func(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-raid-create": d.CreateRaidHandler,
 		"coven-raid-del":    d.DeleteRaidHandler,
 	}
@@ -73,11 +74,13 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) CreateRaidHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	var returnErr error
+func (d Discord) CreateRaidHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	returnErr := error(nil)
 	var msg string
 
-	options := i.ApplicationCommandData().Options
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -88,13 +91,13 @@ func (d Discord) CreateRaidHandler(ctx context.Context, s *discordgo.Session, i 
 	date, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
 		msg = "Erreur lors de la création du raid: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return returnErr
+		return fmt.Errorf("discord - CreateRaidHandler - parseDate: %w", err)
 	}
 	difficulty := optionMap["difficulté"].StringValue()
 
@@ -106,7 +109,7 @@ func (d Discord) CreateRaidHandler(ctx context.Context, s *discordgo.Session, i 
 		msg = "Raid " + strconv.Itoa(raid.ID) + " créé avec succès"
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -115,34 +118,36 @@ func (d Discord) CreateRaidHandler(ctx context.Context, s *discordgo.Session, i 
 	return returnErr
 }
 
-func (d Discord) DeleteRaidHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func (d Discord) DeleteRaidHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	var returnErr error
 	var msg string
 
-	options := i.ApplicationCommandData().Options
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
 
-	id, err := strconv.Atoi(optionMap["id"].StringValue())
+	raidID, err := strconv.Atoi(optionMap["raidID"].StringValue())
 	if err != nil {
-		return err
+		return fmt.Errorf("discord - DeleteRaidHandler - strconv.Atoi: %w", err)
 	}
 
-	err = d.DeleteRaid(ctx, id)
+	err = d.DeleteRaid(ctx, raidID)
 	if err != nil {
 		msg = "Erreur lors de la suppression du joueur: " + err.Error()
 		returnErr = err
 	} else {
-		msg = "Joueur " + strconv.Itoa(id) + " supprimé avec succès"
+		msg = "Joueur " + strconv.Itoa(raidID) + " supprimé avec succès"
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,

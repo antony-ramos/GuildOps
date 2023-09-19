@@ -28,45 +28,50 @@ type Postgres struct {
 }
 
 // New -.
-func New(url string, opts ...Option) (*Postgres, error) {
-	postgres := &Postgres{
-		maxPoolSize:  _defaultMaxPoolSize,
-		connAttempts: _defaultConnAttempts,
-		connTimeout:  _defaultConnTimeout,
-	}
-
-	// Custom options
-	for _, opt := range opts {
-		opt(postgres)
-	}
-
-	postgres.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
-	poolConfig, err := pgxpool.ParseConfig(url)
-	if err != nil {
-		return nil, fmt.Errorf("postgres - NewPostgres - pgxpool.ParseConfig: %w", err)
-	}
-
-	poolConfig.MaxConns = int32(postgres.maxPoolSize)
-
-	for postgres.connAttempts > 0 {
-		postgres.Pool, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
-		if err == nil {
-			break
+func New(ctx context.Context, url string, opts ...Option) (*Postgres, error) {
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("postgres - New - ctx.Done: %w", ctx.Err())
+	default:
+		postgres := &Postgres{
+			maxPoolSize:  _defaultMaxPoolSize,
+			connAttempts: _defaultConnAttempts,
+			connTimeout:  _defaultConnTimeout,
 		}
 
-		log.Printf("Postgres is trying to connect, attempts left: %d", postgres.connAttempts)
+		// Custom options
+		for _, opt := range opts {
+			opt(postgres)
+		}
 
-		time.Sleep(postgres.connTimeout)
+		postgres.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-		postgres.connAttempts--
+		poolConfig, err := pgxpool.ParseConfig(url)
+		if err != nil {
+			return nil, fmt.Errorf("postgres - NewPostgres - pgxpool.ParseConfig: %w", err)
+		}
+
+		poolConfig.MaxConns = int32(postgres.maxPoolSize)
+
+		for postgres.connAttempts > 0 {
+			postgres.Pool, err = pgxpool.ConnectConfig(ctx, poolConfig)
+			if err == nil {
+				break
+			}
+
+			log.Printf("Postgres is trying to connect, attempts left: %d", postgres.connAttempts)
+
+			time.Sleep(postgres.connTimeout)
+
+			postgres.connAttempts--
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("postgres - NewPostgres - connAttempts == 0: %w", err)
+		}
+
+		return postgres, nil
 	}
-
-	if err != nil {
-		return nil, fmt.Errorf("postgres - NewPostgres - connAttempts == 0: %w", err)
-	}
-
-	return postgres, nil
 }
 
 // Close -.

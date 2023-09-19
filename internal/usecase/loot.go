@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 
-	"github.com/coven-discord-bot/internal/entity"
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 type LootUseCase struct {
@@ -19,12 +20,12 @@ func NewLootUseCase(bk Backend) *LootUseCase {
 func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID int, playerName string) error {
 	raid, err := puc.backend.ReadRaid(ctx, raidID)
 	if err != nil {
-		return err
+		return fmt.Errorf("CreateLoot - backend.ReadRaid: %w", err)
 	}
 
 	player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 	if err != nil {
-		return err
+		return fmt.Errorf("CreateLoot - backend.SearchPlayer: %w", err)
 	}
 
 	if len(player) == 0 {
@@ -38,16 +39,16 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 	}
 	err = loot.Validate()
 	if err != nil {
-		return err
+		return fmt.Errorf("CreateLoot - loot.Validate: %w", err)
 	}
 
 	_, err = puc.backend.CreateLoot(ctx, loot)
 	if err != nil {
-		return err
+		return fmt.Errorf("CreateLoot - backend.CreateLoot: %w", err)
 	}
 
 	if err != nil {
-		return err
+		return fmt.Errorf("CreateLoot - backend.CreateLoot: %w", err)
 	}
 	return nil
 }
@@ -55,7 +56,7 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) ([]entity.Loot, error) {
 	player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
 	}
 
 	return player[0].Loots, nil
@@ -68,7 +69,7 @@ func (puc LootUseCase) SelectPlayerToAssign(
 	for _, playerName := range playerNames {
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
-			return entity.Player{}, err
+			return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - backend.SearchPlayer: %w", err)
 		}
 		playerList = append(playerList, player[0])
 	}
@@ -96,8 +97,12 @@ func (puc LootUseCase) SelectPlayerToAssign(
 		}
 	}
 	if len(winningPlayers) > 0 {
-		r := rand.New(rand.NewSource(int64(len(winningPlayers))))
-		return winningPlayers[r.Int()], nil
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(winningPlayers)-1)))
+		if err != nil {
+			return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - rand.Int: %w", err)
+		}
+
+		return winningPlayers[n.Int64()], nil
 	}
 
 	return entity.Player{}, fmt.Errorf("no player found")
@@ -106,7 +111,7 @@ func (puc LootUseCase) SelectPlayerToAssign(
 func (puc LootUseCase) DeleteLoot(ctx context.Context, lootID int) error {
 	err := puc.backend.DeleteLoot(ctx, lootID)
 	if err != nil {
-		return err
+		return fmt.Errorf("DeleteLoot - backend.DeleteLoot: %w", err)
 	}
 	return nil
 }

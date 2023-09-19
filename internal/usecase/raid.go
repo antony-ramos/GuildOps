@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/coven-discord-bot/internal/entity"
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 type RaidUseCase struct {
@@ -25,11 +26,11 @@ func (puc RaidUseCase) CreateRaid(
 	}
 	err := raid.Validate()
 	if err != nil {
-		return entity.Raid{}, err
+		return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Validate: %w", err)
 	}
 	raid, err = puc.backend.CreateRaid(ctx, raid)
 	if err != nil {
-		return entity.Raid{}, err
+		return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.CreateRaid: %w", err)
 	}
 	return raid, nil
 }
@@ -37,7 +38,7 @@ func (puc RaidUseCase) CreateRaid(
 func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 	err := puc.backend.DeleteRaid(ctx, raidID)
 	if err != nil {
-		return err
+		return fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
 	}
 	return nil
 }

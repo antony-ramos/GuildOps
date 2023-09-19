@@ -1,7 +1,8 @@
-package discordHandler
+package discordhandler
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
@@ -47,16 +48,18 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitPlayer() map[string]func(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-player-create": d.CreatePlayerHandler,
 		"coven-player-delete": d.DeletePlayerHandler,
 		"coven-player-get":    d.GetPlayerHandler,
 	}
 }
 
-func (d Discord) CreatePlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) CreatePlayerHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -74,7 +77,7 @@ func (d Discord) CreatePlayerHandler(ctx context.Context, s *discordgo.Session, 
 		msg = "Joueur " + name + " créé avec succès"
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -83,8 +86,10 @@ func (d Discord) CreatePlayerHandler(ctx context.Context, s *discordgo.Session, 
 	return returnErr
 }
 
-func (d Discord) DeletePlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) DeletePlayerHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -102,7 +107,7 @@ func (d Discord) DeletePlayerHandler(ctx context.Context, s *discordgo.Session, 
 		msg = "Joueur " + name + " supprimé avec succès"
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -111,8 +116,10 @@ func (d Discord) DeletePlayerHandler(ctx context.Context, s *discordgo.Session, 
 	return returnErr
 }
 
-func (d Discord) GetPlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) GetPlayerHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -125,13 +132,13 @@ func (d Discord) GetPlayerHandler(ctx context.Context, s *discordgo.Session, i *
 	// Show on string all info about player
 	if err != nil {
 		msg = "Erreur lors de la récupération du joueur: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("database - GetPlayerHandler - r.ReadPlayer: %w", err)
 	}
 	msg += "Name : **" + player.Name + "**\n"
 	msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
@@ -173,7 +180,7 @@ func (d Discord) GetPlayerHandler(ctx context.Context, s *discordgo.Session, i *
 		}
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,

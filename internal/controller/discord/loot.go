@@ -1,7 +1,8 @@
-package discordHandler
+package discordhandler
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -79,8 +80,8 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitLoot() map[string]func(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-loot-attribute": d.AttributeLootHandler,
 		"coven-loot-list":      d.ListLootsOnPlayerHandler,
 		"coven-loot-delete":    d.DeleteLootHandler,
@@ -88,8 +89,10 @@ func (d Discord) InitLoot() map[string]func(
 	}
 }
 
-func (d Discord) AttributeLootHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) AttributeLootHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -100,29 +103,29 @@ func (d Discord) AttributeLootHandler(ctx context.Context, s *discordgo.Session,
 	raidID, err := strconv.Atoi(optionMap["raid-id"].StringValue())
 	if err != nil {
 		msg := "Erreur lors de l'attribution du loot: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("discord - AttributeLootHandler - strconv.Atoi: %w", err)
 	}
 	playerName := optionMap["player-name"].StringValue()
 
 	err = d.LootUseCase.CreateLoot(ctx, lootName, raidID, playerName)
 	if err != nil {
 		msg := "Erreur lors de l'attribution du loot: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("discord - AttributeLootHandler - d.LootUseCase.CreateLoot: %w", err)
 	}
 	msg := "Loot attribué avec succès"
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -132,9 +135,9 @@ func (d Discord) AttributeLootHandler(ctx context.Context, s *discordgo.Session,
 }
 
 func (d Discord) ListLootsOnPlayerHandler(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
-	options := i.ApplicationCommandData().Options
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -146,19 +149,19 @@ func (d Discord) ListLootsOnPlayerHandler(
 	lootList, err := d.LootUseCase.ListLootOnPLayer(ctx, playerName)
 	if err != nil {
 		msg := "Erreur lors de la récupération des loots: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
 	}
 	msg := "Tous les loots de " + playerName + ":\n"
 	for _, loot := range lootList {
 		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
 	}
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -167,11 +170,13 @@ func (d Discord) ListLootsOnPlayerHandler(
 	return nil
 }
 
-func (d Discord) DeleteLootHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func (d Discord) DeleteLootHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	options := i.ApplicationCommandData().Options
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -180,22 +185,22 @@ func (d Discord) DeleteLootHandler(ctx context.Context, s *discordgo.Session, i 
 
 	id, err := strconv.Atoi(optionMap["id"].StringValue())
 	if err != nil {
-		return err
+		return fmt.Errorf("discord - DeleteLootHandler - strconv.Atoi: %w", err)
 	}
 
 	err = d.LootUseCase.DeleteLoot(ctx, id)
 	if err != nil {
 		msg := "Erreur lors de la suppression du loot: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("discord - DeleteLootHandler - d.LootUseCase.DeleteLoot: %w", err)
 	}
 	msg := "Loot supprimé avec succès"
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -205,9 +210,9 @@ func (d Discord) DeleteLootHandler(ctx context.Context, s *discordgo.Session, i 
 }
 
 func (d Discord) LootCounterCheckerHandler(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
-	options := i.ApplicationCommandData().Options
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -220,18 +225,18 @@ func (d Discord) LootCounterCheckerHandler(
 	player, err := d.LootUseCase.SelectPlayerToAssign(ctx, playerNames, difficulty)
 	if err != nil {
 		msg := "Erreur lors de l'assignation du loot: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("discord - LootCounterCheckerHandler - d.LootUseCase.SelectPlayerToAssign: %w", err)
 	}
 
 	msg := "Le joueur " + player.Name + " a été sélectionné pour recevoir le loot"
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,

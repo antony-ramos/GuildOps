@@ -1,12 +1,12 @@
-package discordHandler
+package discordhandler
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"go.uber.org/zap"
 )
 
 var AbsenceDescriptor = []discordgo.ApplicationCommand{
@@ -49,16 +49,18 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitAbsence() map[string]func(
-	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-absence-create": d.AbsenceHandler,
 		"coven-absence-delete": d.AbsenceHandler,
 		"coven-absence-list":   d.ListAbsenceHandler,
 	}
 }
 
-func (d Discord) ListAbsenceHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) ListAbsenceHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -80,7 +82,7 @@ func (d Discord) ListAbsenceHandler(ctx context.Context, s *discordgo.Session, i
 			}
 		}
 	}
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -89,11 +91,13 @@ func (d Discord) ListAbsenceHandler(ctx context.Context, s *discordgo.Session, i
 	return err
 }
 
-func (d Discord) AbsenceHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func (d Discord) AbsenceHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	options := i.ApplicationCommandData().Options
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -101,59 +105,60 @@ func (d Discord) AbsenceHandler(ctx context.Context, s *discordgo.Session, i *di
 	}
 
 	var user string
-	if i.Member != nil {
-		user = i.Member.User.Username
+	if interaction.Member != nil {
+		user = interaction.Member.User.Username
 	} else {
-		user = i.User.Username
+		user = interaction.User.Username
 	}
 
 	dates, err := parseDate(optionMap["date"].StringValue())
-	var wg sync.WaitGroup
+	var waitGroup sync.WaitGroup
 	for _, date := range dates {
-		wg.Add(1)
+		date := date
+		waitGroup.Add(1)
 		go func() {
-			defer wg.Done()
-			if i.ApplicationCommandData().Name == "coven-absence-delete" {
+			defer waitGroup.Done()
+			if interaction.ApplicationCommandData().Name == "coven-absence-delete" {
 				err = d.DeleteAbsence(ctx, user, date)
 				if err != nil {
-					err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					err = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
 						Data: &discordgo.InteractionResponseData{
 							Content: "Erreur lors de la suppression de l'absence pour le " + date.Format("02-01-2006"),
 						},
 					})
 				}
-				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				err = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Content: "Absence supprimée pour le " + date.Format("02-01-2006"),
 					},
 				})
 				if err != nil {
-					fmt.Print(err)
+					zap.L().Error("discord - AbsenceHandler - session.InteractionRespond", zap.Error(err))
 				}
 			} else {
 				err = d.CreateAbsence(ctx, user, date)
 				if err != nil {
-					err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					err = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
 						Data: &discordgo.InteractionResponseData{
 							Content: "Erreur lors de la suppression de l'absence pour le " + date.Format("02-01-2006"),
 						},
 					})
 				}
-				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				err = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Content: "Absence créée pour le " + date.Format("02-01-2006"),
 					},
 				})
 				if err != nil {
-					fmt.Print(err)
+					zap.L().Error("discord - AbsenceHandler - session.InteractionRespond", zap.Error(err))
 				}
 			}
 		}()
 	}
-	wg.Wait()
+	waitGroup.Wait()
 	return nil
 }

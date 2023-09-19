@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/coven-discord-bot/internal/entity"
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 type StrikeUseCase struct {
@@ -35,19 +36,19 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 	}
 	err := strike.Validate()
 	if err != nil {
-		return err
+		return fmt.Errorf("database - CreateStrike - r.Validate: %w", err)
 	}
 
-	p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+	player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 	if err != nil {
-		return err
+		return fmt.Errorf("database - CreateStrike - r.SearchPlayer: %w", err)
 	}
-	if len(p) == 0 {
+	if len(player) == 0 {
 		return errors.New("player not found")
 	}
-	err = puc.backend.CreateStrike(ctx, strike, p[0])
+	err = puc.backend.CreateStrike(ctx, strike, player[0])
 	if err != nil {
-		return err
+		return fmt.Errorf("database - CreateStrike - r.CreateStrike: %w", err)
 	}
 	return nil
 }
@@ -56,7 +57,7 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
 	err := puc.backend.DeleteStrike(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("database - DeleteStrike - r.DeleteStrike: %w", err)
 	}
 	return nil
 }
@@ -65,14 +66,14 @@ func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
 func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]entity.Strike, error) {
 	player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database - ReadStrikes - r.SearchPlayer: %w", err)
 	}
 	if len(player) == 0 {
 		return nil, errors.New("player not found")
 	}
 	strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database - ReadStrikes - r.SearchStrike: %w", err)
 	}
 	if len(strikes) == 0 {
 		return nil, errors.New("no strikes found")
