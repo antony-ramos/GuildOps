@@ -33,7 +33,7 @@ func main() {
 	// Configuration
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Error while loading config : %s", err.Error()))
+		log.Fatalf("error while loading config : %s", err.Error())
 		return
 	}
 
