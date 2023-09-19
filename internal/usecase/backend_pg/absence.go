@@ -8,7 +8,7 @@ import (
 	"github.com/coven-discord-bot/internal/entity"
 )
 
-func (pg *PG) searchAbsenceOnParam(paramName string, param interface{}) ([]entity.Absence, error) {
+func (pg *PG) searchAbsenceOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Absence, error) {
 	sql, _, err := pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id",
 		"raids.name", "raids.difficulty", "raids.date", "players.name").
 		From("absences").
@@ -49,19 +49,19 @@ func (pg *PG) SearchAbsence(
 		var absences []entity.Absence
 		switch {
 		case playerID != -1 && playerName == "":
-			a, err := pg.searchAbsenceOnParam("player_id", playerID)
+			a, err := pg.searchAbsenceOnParam(ctx, "player_id", playerID)
 			if err != nil {
 				return nil, err
 			}
 			absences = append(absences, a...)
 		case playerID == -1 && playerName != "":
-			a, err := pg.searchAbsenceOnParam("players.name", playerName)
+			a, err := pg.searchAbsenceOnParam(ctx, "players.name", playerName)
 			if err != nil {
 				return nil, err
 			}
 			absences = append(absences, a...)
 		case playerID != -1 && playerName != "" && !date.IsZero():
-			a, err := pg.searchAbsenceOnParam("date", date)
+			a, err := pg.searchAbsenceOnParam(ctx, "date", date)
 			if err != nil {
 				return nil, err
 			}
