@@ -79,7 +79,7 @@ func (d *Discord) Run(ctx context.Context) error {
 	defer func(s *discordgo.Session) {
 		err := s.Close()
 		if err != nil {
-			fmt.Print(err)
+			zap.L().Error(err.Error())
 		}
 	}(d.s)
 
