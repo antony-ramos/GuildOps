@@ -96,7 +96,8 @@ func (puc LootUseCase) SelectPlayerToAssign(
 		}
 	}
 	if len(winningPlayers) > 0 {
-		return winningPlayers[rand.Intn(len(winningPlayers))], nil
+		r := rand.New(rand.NewSource(int64(len(winningPlayers))))
+		return winningPlayers[r.Int()], nil
 	}
 
 	return entity.Player{}, fmt.Errorf("no player found")
