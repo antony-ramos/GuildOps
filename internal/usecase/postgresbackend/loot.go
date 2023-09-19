@@ -1,26 +1,33 @@
-package backend_pg
+package postgresbackend
 
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("database - SearchLoot - ctx.Done: %w", ctx.Err())
 	default:
 		var loots []entity.Loot
-		sql, _, err := pg.Builder.Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date", "loots.player_id", "players.name").From("loots").Join("raids ON raids.id = loots.raid_id").Join("players ON players.id = loots.player_id").Where("loots.name = $1").Where("raids.date = $2").Where("raids.difficulty = $3").ToSql()
+		sql, _, err := pg.Builder.
+			Select("loots.id", "loots.name", "loots.raid_id",
+				"raids.name", "raids.difficulty", "raids.date",
+				"loots.player_id", "players.name").
+			From("loots").
+			Join("raids ON raids.id = loots.raid_id").Join("players ON players.id = loots.player_id").
+			Where("loots.name = $1").Where("raids.date = $2").
+			Where("raids.difficulty = $3").ToSql()
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchLoot - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(context.Background(), sql, name, date, difficulty)
+		rows, err := pg.Pool.Query(ctx, sql, name, date, difficulty)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchLoot - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		for rows.Next() {
@@ -42,13 +49,18 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Loot{}, ctx.Err()
+		return entity.Loot{}, fmt.Errorf("database - CreateLoot - ctx.Done: %w", ctx.Err())
 	default:
-		sql, _, err := pg.Builder.Select("name", "raid_id", "player_id").From("loots").Where("name = $1").Where("raid_id = $2").Where("player_id = $3").ToSql()
+		sql, _, err := pg.Builder.
+			Select("name", "raid_id", "player_id").
+			From("loots").
+			Where("name = $1").
+			Where("raid_id = $2").
+			Where("player_id = $3").ToSql()
 		if err != nil {
 			return entity.Loot{}, fmt.Errorf("database - CreateLoot - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(context.Background(), sql, loot.Name, loot.Raid.ID, loot.Player.ID)
+		rows, err := pg.Pool.Query(ctx, sql, loot.Name, loot.Raid.ID, loot.Player.ID)
 		if err != nil {
 			return entity.Loot{}, fmt.Errorf("database - CreateLoot - r.Pool.Query: %w", err)
 		}
@@ -57,11 +69,14 @@ func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, er
 			return entity.Loot{}, fmt.Errorf("database - CreateLoot - loot already exists")
 		}
 
-		sql, args, errInsert := pg.Builder.Insert("loots").Columns("name", "raid_id", "player_id").Values(loot.Name, loot.Raid.ID, loot.Player.ID).ToSql()
+		sql, args, errInsert := pg.Builder.
+			Insert("loots").
+			Columns("name", "raid_id", "player_id").
+			Values(loot.Name, loot.Raid.ID, loot.Player.ID).ToSql()
 		if errInsert != nil {
 			return entity.Loot{}, fmt.Errorf("database - CreateLoot - r.Builder.Insert: %w", errInsert)
 		}
-		_, err = pg.Pool.Exec(context.Background(), sql, args...)
+		_, err = pg.Pool.Exec(ctx, sql, args...)
 		if err != nil {
 			return entity.Loot{}, fmt.Errorf("database - CreateLoot - r.Pool.Exec: %w", err)
 		}
@@ -72,13 +87,13 @@ func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, er
 func (pg *PG) ReadLoot(ctx context.Context, lootID int) (entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Loot{}, ctx.Err()
+		return entity.Loot{}, fmt.Errorf("database - ReadLoot - ctx.Done: %w", ctx.Err())
 	default:
 		sql, _, err := pg.Builder.Select("id", "name", "raid_id", "player_id").From("loots").Where("id = $1").ToSql()
 		if err != nil {
 			return entity.Loot{}, fmt.Errorf("database - ReadLoot - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(context.Background(), sql, lootID)
+		rows, err := pg.Pool.Query(ctx, sql, lootID)
 		if err != nil {
 			return entity.Loot{}, fmt.Errorf("database - ReadLoot - r.Pool.Query: %w", err)
 		}
@@ -112,13 +127,18 @@ func (pg *PG) ReadLoot(ctx context.Context, lootID int) (entity.Loot, error) {
 func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("database - UpdateLoot - ctx.Done: %w", ctx.Err())
 	default:
-		sql, args, err := pg.Builder.Update("loots").Set("name", loot.Name).Set("raid_id", loot.Raid.ID).Set("player_id", loot.Player.ID).Where("id = $1").ToSql()
+		sql, args, err := pg.Builder.
+			Update("loots").
+			Set("name", loot.Name).
+			Set("raid_id", loot.Raid.ID).
+			Set("player_id", loot.Player.ID).
+			Where("id = $1").ToSql()
 		if err != nil {
 			return fmt.Errorf("database - UpdateLoot - r.Builder: %w", err)
 		}
-		_, err = pg.Pool.Exec(context.Background(), sql, args...)
+		_, err = pg.Pool.Exec(ctx, sql, args...)
 		if err != nil {
 			return fmt.Errorf("database - UpdateLoot - r.Pool.Exec: %w", err)
 		}
@@ -129,13 +149,13 @@ func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
 func (pg *PG) DeleteLoot(ctx context.Context, lootID int) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("database - DeleteLoot - ctx.Done: %w", ctx.Err())
 	default:
 		sql, _, errInsert := pg.Builder.Delete("loots").Where("id = $1").ToSql()
 		if errInsert != nil {
 			return fmt.Errorf("database - DeleteLoot - r.Builder: %w", errInsert)
 		}
-		_, err := pg.Pool.Exec(context.Background(), sql, lootID)
+		_, err := pg.Pool.Exec(ctx, sql, lootID)
 		if err != nil {
 			return fmt.Errorf("database - DeleteLoot - r.Pool.Exec: %w", err)
 		}

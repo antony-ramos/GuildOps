@@ -3,8 +3,9 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 type PlayerUseCase struct {
@@ -18,18 +19,18 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("database - CreatePlayer - ctx.Done: %w", ctx.Err())
 	default:
 		player := entity.Player{
 			Name: playerName,
 		}
 		err := player.Validate()
 		if err != nil {
-			return err
+			return fmt.Errorf("database - CreatePlayer - r.Validate: %w", err)
 		}
 		_, err = puc.backend.CreatePlayer(ctx, player)
 		if err != nil {
-			return err
+			return fmt.Errorf("database - CreatePlayer - r.CreatePlayer: %w", err)
 		}
 		return nil
 	}
@@ -38,30 +39,30 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) er
 func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("database - DeletePlayer - ctx.Done: %w", ctx.Err())
 	default:
-		p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
-			return err
+			return fmt.Errorf("database - DeletePlayer - r.SearchPlayer: %w", err)
 		}
-		if len(p) == 0 {
+		if len(player) == 0 {
 			return fmt.Errorf("player %s not found", playerName)
 		}
 
-		strikes, err := puc.backend.SearchStrike(ctx, p[0].ID, time.Time{}, "", "")
+		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
 		for _, strike := range strikes {
 			err = puc.backend.DeleteStrike(ctx, strike.ID)
 			if err != nil {
-				return err
+				return fmt.Errorf("database - DeletePlayer - r.DeleteStrike: %w", err)
 			}
 		}
 
 		if err != nil {
-			return err
+			return fmt.Errorf("database - DeletePlayer - r.SearchStrike: %w", err)
 		}
-		err = puc.backend.DeletePlayer(ctx, p[0].ID)
+		err = puc.backend.DeletePlayer(ctx, player[0].ID)
 		if err != nil {
-			return err
+			return fmt.Errorf("database - DeletePlayer - r.DeletePlayer: %w", err)
 		}
 		return nil
 	}
@@ -70,24 +71,23 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (entity.Player, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Player{}, ctx.Err()
+		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: %w", ctx.Err())
 	default:
-		p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
-			return entity.Player{}, err
+			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
 		}
 
-		if len(p) == 0 {
+		if len(player) == 0 {
 			return entity.Player{}, fmt.Errorf("player %s not found", playerName)
 		}
 
-		player := p[0]
-		strikes, err := puc.backend.SearchStrike(ctx, player.ID, time.Time{}, "", "")
+		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
 		if err != nil {
-			return entity.Player{}, err
+			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchStrike: %w", err)
 		}
-		player.Strikes = strikes
+		player[0].Strikes = strikes
 
-		return player, nil
+		return player[0], nil
 	}
 }

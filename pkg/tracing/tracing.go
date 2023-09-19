@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"fmt"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -19,7 +20,10 @@ func newResource(sn, sv string) *resource.Resource {
 	)
 }
 
-func InstallExportPipeline(ctx context.Context, serviceName, serviceVersion string) (func(context.Context) error, error) {
+func InstallExportPipeline(ctx context.Context,
+	serviceName, serviceVersion string) (
+	func(context.Context) error, error,
+) {
 	if serviceName == "" || serviceVersion == "" {
 		return nil, fmt.Errorf("serviceName nor serviceVersion can be empty")
 	}

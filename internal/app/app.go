@@ -2,37 +2,46 @@ package app
 
 import (
 	"context"
+
+	"github.com/antony-ramos/guildops/config"
+	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
+	"github.com/antony-ramos/guildops/internal/usecase"
+	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
+	"github.com/antony-ramos/guildops/pkg/discord"
+	"github.com/antony-ramos/guildops/pkg/postgres"
 	"github.com/bwmarrin/discordgo"
-	"github.com/coven-discord-bot/config"
-	discordHandler "github.com/coven-discord-bot/internal/controller/discord"
-	"github.com/coven-discord-bot/internal/usecase"
-	"github.com/coven-discord-bot/internal/usecase/backend_pg"
-	"github.com/coven-discord-bot/pkg/discord"
-	"github.com/coven-discord-bot/pkg/postgres"
 	"go.uber.org/zap"
 )
 
 func Run(ctx context.Context, cfg *config.Config) {
-
 	zap.L().Info("loading backend")
 
-	pg, err := postgres.New(cfg.URL, postgres.MaxPoolSize(cfg.PoolMax), postgres.ConnAttempts(cfg.ConnAttempts), postgres.ConnTimeout(cfg.ConnTimeOut))
+	pgHandler, err := postgres.New(
+		ctx,
+		cfg.URL,
+		postgres.MaxPoolSize(cfg.PoolMax),
+		postgres.ConnAttempts(cfg.ConnAttempts),
+		postgres.ConnTimeout(cfg.ConnTimeOut))
 	if err != nil {
 		zap.L().Fatal(err.Error())
 	}
 
-	db := backend_pg.PG{Postgres: pg}
-	db.Init(cfg.URL)
+	backend := postgresbackend.PG{Postgres: pgHandler}
+	err = backend.Init(cfg.URL)
+	if err != nil {
+		zap.L().Fatal(err.Error())
+		return
+	}
 
-	mapHandler := map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{}
+	mapHandler := map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{}
 
-	auc := usecase.NewAbsenceUseCase(&db)
-	puc := usecase.NewPlayerUseCase(&db)
-	luc := usecase.NewLootUseCase(&db)
-	ruc := usecase.NewRaidUseCase(&db)
-	suc := usecase.NewStrikeUseCase(&db)
+	auc := usecase.NewAbsenceUseCase(&backend)
+	puc := usecase.NewPlayerUseCase(&backend)
+	luc := usecase.NewLootUseCase(&backend)
+	ruc := usecase.NewRaidUseCase(&backend)
+	suc := usecase.NewStrikeUseCase(&backend)
 
-	d := discordHandler.Discord{
+	disc := discordHandler.Discord{
 		AbsenceUseCase: auc,
 		PlayerUseCase:  puc,
 		LootUseCase:    luc,
@@ -40,8 +49,9 @@ func Run(ctx context.Context, cfg *config.Config) {
 		StrikeUseCase:  suc,
 	}
 
-	var inits []func() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error
-	inits = append(inits, d.InitAbsence, d.InitLoot, d.InitPlayer, d.InitRaid, d.InitStrike)
+	var inits []func() map[string]func(
+		ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error
+	inits = append(inits, disc.InitAbsence, disc.InitLoot, disc.InitPlayer, disc.InitRaid, disc.InitStrike)
 	for _, v := range inits {
 		for k, v := range v() {
 			mapHandler[k] = v
@@ -49,13 +59,23 @@ func Run(ctx context.Context, cfg *config.Config) {
 	}
 
 	var handlers []*discordgo.ApplicationCommand
-	handlers = append(handlers, &discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
-	handlers = append(handlers, &discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1], &discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
-	handlers = append(handlers, &discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1], &discordHandler.PlayerDescriptors[2])
-	handlers = append(handlers, &discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
-	handlers = append(handlers, &discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
+	handlers = append(handlers,
+		&discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
+	handlers = append(handlers,
+		&discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1],
+		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
+	handlers = append(handlers,
+		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1], &discordHandler.PlayerDescriptors[2])
+	handlers = append(handlers,
+		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
+	handlers = append(handlers,
+		&discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
 
-	serve := discord.New(discord.CommandHandlers(mapHandler), discord.Token(cfg.Discord.Token), discord.Command(handlers), discord.GuildID(cfg.Discord.GuildID))
+	serve := discord.New(
+		discord.CommandHandlers(mapHandler),
+		discord.Token(cfg.Discord.Token),
+		discord.Command(handlers),
+		discord.GuildID(cfg.Discord.GuildID))
 
 	zap.L().Info("starting to serve to discord webhooks")
 	err = serve.Run(ctx)

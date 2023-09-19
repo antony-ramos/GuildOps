@@ -2,8 +2,9 @@ package usecase
 
 import (
 	"context"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 type Backend interface {

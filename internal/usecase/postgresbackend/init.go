@@ -1,21 +1,23 @@
-package backend_pg
+package postgresbackend
 
 import (
 	"database/sql"
-	"github.com/coven-discord-bot/pkg/postgres"
+	"fmt"
+	"log"
+
+	"github.com/antony-ramos/guildops/pkg/postgres"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
-	"log"
 )
 
 type PG struct {
 	*postgres.Postgres
 }
 
-// Init Database Tables
-func (pg *PG) Init(connStr string) {
+// Init Database Tables.
+func (pg *PG) Init(connStr string) error {
 	// Open a connection to the database
-	db, err := sql.Open("postgres", connStr)
+	database, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,12 +26,12 @@ func (pg *PG) Init(connStr string) {
 		if err != nil {
 			zap.L().Error(err.Error())
 		}
-	}(db)
+	}(database)
 
 	// Test the connection
-	err = db.Ping()
+	err = database.Ping()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("database - Init - database.Ping: %w", err)
 	}
 
 	// Create a player table if it doesn't exist
@@ -85,11 +87,12 @@ func (pg *PG) Init(connStr string) {
 		    		);
 	`
 
-	_, err = db.Exec(createTableSQL)
+	_, err = database.Exec(createTableSQL)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("database - Init - database.Exec: %w", err)
 	}
 
 	zap.L().With(zap.String("table", "raids"))
 	zap.L().Info("Player table created (if it didn't exist)")
+	return nil
 }

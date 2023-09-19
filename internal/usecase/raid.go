@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
-	"github.com/coven-discord-bot/internal/entity"
+	"fmt"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 type RaidUseCase struct {
@@ -14,7 +16,9 @@ func NewRaidUseCase(bk Backend) *RaidUseCase {
 	return &RaidUseCase{backend: bk}
 }
 
-func (puc RaidUseCase) CreateRaid(ctx context.Context, raidName, difficulty string, date time.Time) (entity.Raid, error) {
+func (puc RaidUseCase) CreateRaid(
+	ctx context.Context, raidName, difficulty string, date time.Time,
+) (entity.Raid, error) {
 	raid := entity.Raid{
 		Name:       raidName,
 		Difficulty: difficulty,
@@ -22,11 +26,11 @@ func (puc RaidUseCase) CreateRaid(ctx context.Context, raidName, difficulty stri
 	}
 	err := raid.Validate()
 	if err != nil {
-		return entity.Raid{}, err
+		return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Validate: %w", err)
 	}
 	raid, err = puc.backend.CreateRaid(ctx, raid)
 	if err != nil {
-		return entity.Raid{}, err
+		return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.CreateRaid: %w", err)
 	}
 	return raid, nil
 }
@@ -34,7 +38,7 @@ func (puc RaidUseCase) CreateRaid(ctx context.Context, raidName, difficulty stri
 func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 	err := puc.backend.DeleteRaid(ctx, raidID)
 	if err != nil {
-		return err
+		return fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
 	}
 	return nil
 }

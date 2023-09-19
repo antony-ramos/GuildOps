@@ -19,33 +19,33 @@ type (
 
 	// App -.
 	App struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
-		Env     string `env-required:"true" yaml:"environment" env:"APP_ENV"`
+		Name    string `env:"APP_NAME"    env-required:"true" yaml:"name"`
+		Version string `env:"APP_VERSION" env-required:"true" yaml:"version"`
+		Env     string `env:"APP_ENV"     env-required:"true" yaml:"environment"`
 	}
 
 	// Discord -.
 	Discord struct {
-		Token   string `env-required:"true" yaml:"token" env:"DISCORD_TOKEN"`
-		GuildID int    `env-required:"true" yaml:"guild_id" env:"DISCORD_GUILD_ID"`
+		Token   string `env:"DISCORD_TOKEN"    env-required:"true" yaml:"token"`
+		GuildID int    `env:"DISCORD_GUILD_ID" env-required:"true" yaml:"guild_id"`
 	}
 
 	// Log -.
 	Log struct {
-		Level string `env-required:"true" yaml:"level"   env:"LOG_LEVEL"`
+		Level string `env:"LOG_LEVEL" env-required:"true" yaml:"level"`
 	}
 
 	// Metrics -.
 	Metrics struct {
-		Port string `env-required:"true" yaml:"port"   env:"METRICS_PORT"`
+		Port string `env:"METRICS_PORT" env-required:"true" yaml:"port"`
 	}
 
 	// PG -.
 	PG struct {
-		PoolMax      int           `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
-		URL          string        `env-required:"true" yaml:"url"                env:"PG_URL"`
-		ConnAttempts int           `env-required:"true"   yaml:"conn_attempts"              env:"PG_CONN_ATTEMPTS"`
-		ConnTimeOut  time.Duration `env-required:"true"  yaml:"conn_timeout"               env:"PG_CONN_TIMEOUT"`
+		PoolMax      int           `env:"PG_POOL_MAX"      env-required:"true" yaml:"pool_max"`
+		URL          string        `env:"PG_URL"           env-required:"true" yaml:"url"`
+		ConnAttempts int           `env:"PG_CONN_ATTEMPTS" env-required:"true" yaml:"conn_attempts"`
+		ConnTimeOut  time.Duration `env:"PG_CONN_TIMEOUT"  env-required:"true" yaml:"conn_timeout"`
 	}
 )
 
@@ -60,7 +60,7 @@ func NewConfig() (*Config, error) {
 
 	err = cleanenv.ReadEnv(cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("config error: %w", err)
 	}
 
 	return cfg, nil

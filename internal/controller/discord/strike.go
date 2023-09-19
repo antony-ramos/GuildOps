@@ -1,9 +1,11 @@
-package discordHandler
+package discordhandler
 
 import (
 	"context"
-	"github.com/bwmarrin/discordgo"
+	"fmt"
 	"strconv"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var StrikeDescriptors = []discordgo.ApplicationCommand{
@@ -51,16 +53,19 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) InitStrike() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
+func (d Discord) InitStrike() map[string]func(
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-strike-create": d.StrikeOnPlayerHandler,
 		"coven-strike-del":    d.DeleteStrikeHandler,
 		"coven-strike-list":   d.ListStrikesOnPlayerHandler,
 	}
 }
 
-func (d Discord) StrikeOnPlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) StrikeOnPlayerHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -79,7 +84,7 @@ func (d Discord) StrikeOnPlayerHandler(ctx context.Context, s *discordgo.Session
 		msg = "Strike créé avec succès"
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -88,8 +93,10 @@ func (d Discord) StrikeOnPlayerHandler(ctx context.Context, s *discordgo.Session
 	return returnErr
 }
 
-func (d Discord) ListStrikesOnPlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) ListStrikesOnPlayerHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -102,13 +109,13 @@ func (d Discord) ListStrikesOnPlayerHandler(ctx context.Context, s *discordgo.Se
 	strikes, err := d.ReadStrikes(ctx, playerName)
 	if err != nil {
 		msg = "Erreurs lors de la récupération des strikes: " + err.Error()
-		_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return err
+		return fmt.Errorf("database - ListStrikesOnPlayerHandler - r.ReadStrikes: %w", err)
 	}
 
 	msg = "Strikes de " + playerName + ":\n"
@@ -116,7 +123,7 @@ func (d Discord) ListStrikesOnPlayerHandler(ctx context.Context, s *discordgo.Se
 		msg += strike.Date.String() + " | " + strike.Reason + "\n"
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
@@ -125,8 +132,10 @@ func (d Discord) ListStrikesOnPlayerHandler(ctx context.Context, s *discordgo.Se
 	return nil
 }
 
-func (d Discord) DeleteStrikeHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := i.ApplicationCommandData().Options
+func (d Discord) DeleteStrikeHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
@@ -134,14 +143,14 @@ func (d Discord) DeleteStrikeHandler(ctx context.Context, s *discordgo.Session, 
 	}
 
 	var msg string
-	idString := optionMap["id"].StringValue()
-	id, err := strconv.ParseInt(idString, 10, 64)
+	idString := optionMap["strikeID"].StringValue()
+	strikeID, err := strconv.ParseInt(idString, 10, 64)
 	returnErr := error(nil)
 	if err != nil {
 		msg = "Erreurs lors de la suppression du strike: " + err.Error()
 		returnErr = err
 	} else {
-		err = d.DeleteStrike(ctx, int(id))
+		err = d.DeleteStrike(ctx, int(strikeID))
 		if err != nil {
 			msg = "Erreurs lors de la suppression du strike: " + err.Error()
 			returnErr = err
@@ -150,7 +159,7 @@ func (d Discord) DeleteStrikeHandler(ctx context.Context, s *discordgo.Session, 
 		}
 	}
 
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,

@@ -3,18 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/config"
-	"github.com/coven-discord-bot/internal/app"
-	"github.com/coven-discord-bot/pkg/tracing"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/antony-ramos/guildops/config"
+	"github.com/antony-ramos/guildops/internal/app"
+	"github.com/antony-ramos/guildops/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
 
 var LogLevels = map[string]zapcore.Level{
@@ -33,7 +34,7 @@ func main() {
 	// Configuration
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Error while loading config : %s", err.Error()))
+		log.Fatalf("error while loading config : %s", err.Error())
 		return
 	}
 
@@ -69,7 +70,8 @@ func main() {
 	// Tracing
 	shutdown, err := tracing.InstallExportPipeline(ctx, cfg.Name, cfg.Version)
 	if err != nil {
-		log.Fatal(err)
+		zap.L().Error(err.Error())
+		return
 	}
 	defer func() {
 		if err := shutdown(ctx); err != nil {
@@ -82,8 +84,11 @@ func main() {
 	zap.L().Info(fmt.Sprintf("Starting metrics server on port %s", cfg.Metrics.Port))
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
-
-		err = http.ListenAndServe(":"+cfg.Metrics.Port, nil)
+		server := &http.Server{
+			Addr:              ":" + cfg.Metrics.Port,
+			ReadHeaderTimeout: 3 * time.Second,
+		}
+		err := server.ListenAndServe()
 		if err != nil {
 			span.RecordError(err)
 			zap.L().Fatal(err.Error())
@@ -95,5 +100,4 @@ func main() {
 	zap.L().Info("Starting app")
 	app.Run(ctx, cfg)
 	span.End(trace.WithTimestamp(time.Now()))
-
 }

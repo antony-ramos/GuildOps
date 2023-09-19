@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -20,7 +21,9 @@ func GuildID(guildID int) Option {
 	}
 }
 
-func CommandHandlers(m map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error) Option {
+func CommandHandlers(m map[string]func(
+	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error,
+) Option {
 	return func(d *Discord) {
 		d.commandHandlers = m
 	}

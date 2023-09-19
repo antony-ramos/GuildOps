@@ -18,6 +18,5 @@ type Raid struct {
 }
 
 func (r Raid) Validate() error {
-
 	return nil
 }

@@ -1,9 +1,11 @@
-package discordHandler
+package discordhandler
 
 import (
-	"github.com/coven-discord-bot/internal/usecase"
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/usecase"
 )
 
 type Discord struct {
@@ -23,7 +25,7 @@ func parseDate(dateStr string) ([]time.Time, error) {
 	for _, datePart := range dateParts {
 		date, err := time.Parse("02/01/06", datePart)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("discord - parseDate - time.Parse: %w", err)
 		}
 		dates = append(dates, date)
 	}
