@@ -8,7 +8,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func (d Discord) InitRaid() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) InitRaid() map[string]func(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-raid-create": d.CreateRaidHandler,
 		"coven-raid-del":    d.DeleteRaidHandler,

@@ -78,7 +78,8 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) InitLoot() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) InitLoot() map[string]func(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-loot-attribute": d.AttributeLootHandler,
 		"coven-loot-list":      d.ListLootsOnPlayerHandler,
@@ -130,7 +131,9 @@ func (d Discord) AttributeLootHandler(ctx context.Context, s *discordgo.Session,
 	return nil
 }
 
-func (d Discord) ListLootsOnPlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) ListLootsOnPlayerHandler(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
+) error {
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -201,7 +204,9 @@ func (d Discord) DeleteLootHandler(ctx context.Context, s *discordgo.Session, i 
 	return nil
 }
 
-func (d Discord) LootCounterCheckerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) LootCounterCheckerHandler(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
+) error {
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 

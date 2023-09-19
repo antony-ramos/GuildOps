@@ -3,6 +3,8 @@ package discordHandler
 import (
 	"context"
 	"strconv"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var PlayerDescriptors = []discordgo.ApplicationCommand{
@@ -44,7 +46,8 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) InitPlayer() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) InitPlayer() map[string]func(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-player-create": d.CreatePlayerHandler,
 		"coven-player-delete": d.DeletePlayerHandler,

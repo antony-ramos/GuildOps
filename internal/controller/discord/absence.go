@@ -48,7 +48,8 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) InitAbsence() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) InitAbsence() map[string]func(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-absence-create": d.CreateAbsenceHandler,
 		"coven-absence-delete": d.DeleteAbsenceHandler,

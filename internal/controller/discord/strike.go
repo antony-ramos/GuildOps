@@ -3,6 +3,8 @@ package discordHandler
 import (
 	"context"
 	"strconv"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var StrikeDescriptors = []discordgo.ApplicationCommand{
@@ -50,7 +52,8 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
-func (d Discord) InitStrike() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) InitStrike() map[string]func(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"coven-strike-create": d.StrikeOnPlayerHandler,
 		"coven-strike-del":    d.DeleteStrikeHandler,
@@ -58,7 +61,9 @@ func (d Discord) InitStrike() map[string]func(ctx context.Context, s *discordgo.
 	}
 }
 
-func (d Discord) StrikeOnPlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) StrikeOnPlayerHandler(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
+) error {
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -87,7 +92,9 @@ func (d Discord) StrikeOnPlayerHandler(ctx context.Context, s *discordgo.Session
 	return returnErr
 }
 
-func (d Discord) ListStrikesOnPlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (d Discord) ListStrikesOnPlayerHandler(
+	ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
+) error {
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 

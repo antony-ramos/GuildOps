@@ -16,7 +16,11 @@ import (
 func Run(ctx context.Context, cfg *config.Config) {
 	zap.L().Info("loading backend")
 
-	pg, err := postgres.New(cfg.URL, postgres.MaxPoolSize(cfg.PoolMax), postgres.ConnAttempts(cfg.ConnAttempts), postgres.ConnTimeout(cfg.ConnTimeOut))
+	pg, err := postgres.New(
+		cfg.URL,
+		postgres.MaxPoolSize(cfg.PoolMax),
+		postgres.ConnAttempts(cfg.ConnAttempts),
+		postgres.ConnTimeout(cfg.ConnTimeOut))
 	if err != nil {
 		zap.L().Fatal(err.Error())
 	}
@@ -49,13 +53,23 @@ func Run(ctx context.Context, cfg *config.Config) {
 	}
 
 	var handlers []*discordgo.ApplicationCommand
-	handlers = append(handlers, &discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
-	handlers = append(handlers, &discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1], &discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
-	handlers = append(handlers, &discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1], &discordHandler.PlayerDescriptors[2])
-	handlers = append(handlers, &discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
-	handlers = append(handlers, &discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
+	handlers = append(handlers,
+		&discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
+	handlers = append(handlers,
+		&discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1],
+		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
+	handlers = append(handlers,
+		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1], &discordHandler.PlayerDescriptors[2])
+	handlers = append(handlers,
+		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
+	handlers = append(handlers,
+		&discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
 
-	serve := discord.New(discord.CommandHandlers(mapHandler), discord.Token(cfg.Discord.Token), discord.Command(handlers), discord.GuildID(cfg.Discord.GuildID))
+	serve := discord.New(
+		discord.CommandHandlers(mapHandler),
+		discord.Token(cfg.Discord.Token),
+		discord.Command(handlers),
+		discord.GuildID(cfg.Discord.GuildID))
 
 	zap.L().Info("starting to serve to discord webhooks")
 	err = serve.Run(ctx)

@@ -29,7 +29,7 @@ type Postgres struct {
 
 // New -.
 func New(url string, opts ...Option) (*Postgres, error) {
-	postgres := &Postgres{
+	pg := &Postgres{
 		maxPoolSize:  _defaultMaxPoolSize,
 		connAttempts: _defaultConnAttempts,
 		connTimeout:  _defaultConnTimeout,
@@ -37,36 +37,36 @@ func New(url string, opts ...Option) (*Postgres, error) {
 
 	// Custom options
 	for _, opt := range opts {
-		opt(postgres)
+		opt(pg)
 	}
 
-	postgres.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	pg.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 	poolConfig, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		return nil, fmt.Errorf("postgres - NewPostgres - pgxpool.ParseConfig: %w", err)
 	}
 
-	poolConfig.MaxConns = int32(postgres.maxPoolSize)
+	poolConfig.MaxConns = int32(pg.maxPoolSize)
 
-	for postgres.connAttempts > 0 {
-		postgres.Pool, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
+	for pg.connAttempts > 0 {
+		pg.Pool, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
 		if err == nil {
 			break
 		}
 
-		log.Printf("Postgres is trying to connect, attempts left: %d", postgres.connAttempts)
+		log.Printf("Postgres is trying to connect, attempts left: %d", pg.connAttempts)
 
-		time.Sleep(postgres.connTimeout)
+		time.Sleep(pg.connTimeout)
 
-		postgres.connAttempts--
+		pg.connAttempts--
 	}
 
 	if err != nil {
 		return nil, fmt.Errorf("postgres - NewPostgres - connAttempts == 0: %w", err)
 	}
 
-	return postgres, nil
+	return pg, nil
 }
 
 // Close -.
