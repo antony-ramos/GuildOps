@@ -8,6 +8,37 @@ import (
 	"github.com/coven-discord-bot/internal/entity"
 )
 
+func (pg *PG) searchAbsenceOnParam(paramName string, param interface{}) ([]entity.Absence, error) {
+	sql, _, err := pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id",
+		"raids.name", "raids.difficulty", "raids.date", "players.name").
+		From("absences").
+		Join("raids ON raids.id = absences.raid_id").
+		Join("players ON players.id = absences.player_id").
+		Where(fmt.Sprintf("%s = $1", paramName)).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := pg.Pool.Query(context.Background(), sql, param)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var absences []entity.Absence
+	for rows.Next() {
+		var absence entity.Absence
+		var raid entity.Raid
+		var player entity.Player
+		err := rows.Scan(&absence.ID, &player.ID, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date, &player.Name)
+		if err != nil {
+			return nil, err
+		}
+		absence.Player = &player
+		absence.Raid = &raid
+		absences = append(absences, absence)
+	}
+	return absences, nil
+}
+
 func (pg *PG) SearchAbsence(
 	ctx context.Context, playerName string, playerID int, date time.Time,
 ) ([]entity.Absence, error) {
@@ -17,96 +48,24 @@ func (pg *PG) SearchAbsence(
 	default:
 		var absences []entity.Absence
 		switch {
-		case playerID == -1 && playerName == "":
-			sql, _, err := pg.Builder.
-				Select("absences.id", "absences.player_id", "absences.raid_id",
-					"raids.name", "raids.difficulty", "raids.date",
-					"players.name").
-				From("absences").
-				Join("raids ON raids.id = absences.raid_id").
-				Join("players ON players.id = absences.player_id").
-				Where("raids.date = $1").ToSql()
-			if err != nil {
-				return nil, err
-			}
-			rows, err := pg.Pool.Query(context.Background(), sql, date)
-			if err != nil {
-				return nil, err
-			}
-			defer rows.Close()
-			for rows.Next() {
-				var absence entity.Absence
-				var raid entity.Raid
-				var player entity.Player
-				err := rows.Scan(&absence.ID, &player.ID, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date, &player.Name)
-				if err != nil {
-					return nil, err
-				}
-				absence.Player = &player
-				absence.Raid = &raid
-				absences = append(absences, absence)
-			}
 		case playerID != -1 && playerName == "":
-			sql, _, err := pg.Builder.
-				Select("absences.id", "absences.player_id", "absences.raid_id",
-					"raids.name", "raids.difficulty", "raids.date", "players.name").
-				From("absences").
-				Join("raids ON raids.id = absences.raid_id").
-				Join("players ON players.id = absences.player_id").
-				Where("absences.player_id = $1").
-				Where("raids.date = $2").ToSql()
+			a, err := pg.searchAbsenceOnParam("player_id", playerID)
 			if err != nil {
 				return nil, err
 			}
-			rows, err := pg.Pool.Query(context.Background(), sql, playerID, date)
-			if err != nil {
-				return nil, err
-			}
-			defer rows.Close()
-			for rows.Next() {
-				var absence entity.Absence
-				var raid entity.Raid
-				var player entity.Player
-				err := rows.Scan(&absence.ID, &player.ID, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date, &player.Name)
-				if err != nil {
-					return nil, err
-				}
-				absence.Player = &player
-				absence.Raid = &raid
-				absences = append(absences, absence)
-			}
+			absences = append(absences, a...)
 		case playerID == -1 && playerName != "":
-			sql, _, err := pg.
-				Builder.Select("absences.id", "absences.player_id", "absences.raid_id",
-				"raids.name", "raids.difficulty", "raids.date",
-				"players.name").
-				From("absences").
-				Join("raids ON raids.id = absences.raid_id").
-				Join("players ON players.id = absences.player_id").
-				Where("players.name = $1").
-				Where("raids.date = $2").ToSql()
+			a, err := pg.searchAbsenceOnParam("players.name", playerName)
 			if err != nil {
 				return nil, err
 			}
-			rows, err := pg.Pool.Query(context.Background(), sql, playerName, date)
+			absences = append(absences, a...)
+		case playerID != -1 && playerName != "" && !date.IsZero():
+			a, err := pg.searchAbsenceOnParam("date", date)
 			if err != nil {
 				return nil, err
 			}
-			defer rows.Close()
-			for rows.Next() {
-				var absence entity.Absence
-				var raid entity.Raid
-				var player entity.Player
-				err := rows.Scan(&absence.ID, &player.ID, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date, &player.Name)
-				if err != nil {
-					return nil, err
-				}
-				absence.Player = &player
-				absence.Raid = &raid
-				absences = append(absences, absence)
-			}
-		case playerID != -1 && playerName != "":
-			return nil, fmt.Errorf("database - SearchAbsence - cannot have both playerID and playerName")
+			absences = append(absences, a...)
 		}
 
 		return absences, nil
