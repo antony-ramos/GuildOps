@@ -9,16 +9,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// SearchStrikeOnID is a function which call backend to search a strike object based on playerID.
-func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
+// searchStrikeOnID is a function which call backend to search a strike object based on a parameter.
+func (pg *PG) searchStrikeOnParam(paramName string, param interface{}) ([]entity.Strike, error) {
 	var strikes []entity.Strike
 	sql, _, err := pg.Builder.
 		Select("id", "player_id", "season", "reason", "created_at").
-		From("strikes").Where("player_id = $1").ToSql()
+		From("strikes").Where("$1 = $2").ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - r.Builder: %w", err)
 	}
-	rows, err := pg.Pool.Query(context.Background(), sql, playerID)
+	rows, err := pg.Pool.Query(context.Background(), sql, paramName, param)
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - r.Pool.Query: %w", err)
 	}
@@ -28,82 +28,6 @@ func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
 		err := rows.Scan(&strike.ID, nil, &strike.Season, &strike.Reason, &strike.Date)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - rows.Scan: %w", err)
-		}
-		strikes = append(strikes, strike)
-	}
-	return strikes, nil
-}
-
-// SearchStrikeOnSeason is a function which call backend to search a strike object based on season.
-func (pg *PG) searchStrikeOnSeason(season string) ([]entity.Strike, error) {
-	var strikes []entity.Strike
-	sql, _, err := pg.Builder.
-		Select("id", "player_id", "season", "reason", "created_at").
-		From("strikes").Where("season = $1").ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnSeason - r.Builder: %w", err)
-	}
-	rows, err := pg.Pool.Query(context.Background(), sql, season)
-	if err != nil {
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnSeason - r.Pool.Query: %w", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var strike entity.Strike
-		err := rows.Scan(&strike.ID, nil, &strike.Season, &strike.Reason, &strike.Date)
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnSeason - rows.Scan: %w", err)
-		}
-		strikes = append(strikes, strike)
-	}
-	return strikes, nil
-}
-
-// SearchStrikeOnReason is a function which call backend to search a strike object based on reason.
-func (pg *PG) searchStrikeOnReason(reason string) ([]entity.Strike, error) {
-	var strikes []entity.Strike
-	sql, _, err := pg.Builder.
-		Select("id", "player_id", "season", "reason", "created_at").
-		From("strikes").Where("reason = $1").ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnReason - r.Builder: %w", err)
-	}
-	rows, err := pg.Pool.Query(context.Background(), sql, reason)
-	if err != nil {
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnReason - r.Pool.Query: %w", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var strike entity.Strike
-		err := rows.Scan(&strike.ID, nil, &strike.Season, &strike.Reason, &strike.Date)
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnReason - rows.Scan: %w", err)
-		}
-		strikes = append(strikes, strike)
-	}
-	return strikes, nil
-}
-
-// SearchStrikeOnDate is a function which call backend to search a strike object based on date.
-func (pg *PG) searchStrikeOnDate(date time.Time) ([]entity.Strike, error) {
-	var strikes []entity.Strike
-	sql, _, err := pg.Builder.
-		Select("id", "player_id", "season", "reason", "created_at").
-		From("strikes").
-		Where("created_at = $1").ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnDate - r.Builder: %w", err)
-	}
-	rows, err := pg.Pool.Query(context.Background(), sql, date)
-	if err != nil {
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnDate - r.Pool.Query: %w", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var strike entity.Strike
-		err := rows.Scan(&strike.ID, nil, &strike.Season, &strike.Reason, &strike.Date)
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnDate - rows.Scan: %w", err)
 		}
 		strikes = append(strikes, strike)
 	}
@@ -126,28 +50,28 @@ func (pg *PG) SearchStrike(
 	default:
 		var strikes []entity.Strike
 		if playerID != -1 {
-			s, err := pg.searchStrikeOnID(playerID)
+			s, err := pg.searchStrikeOnParam("player_id", playerID)
 			if err != nil {
 				return nil, err
 			}
 			strikes = append(strikes, s...)
 		}
 		if len(season) != 0 {
-			s, err := pg.searchStrikeOnSeason(season)
+			s, err := pg.searchStrikeOnParam("season", season)
 			if err != nil {
 				return nil, err
 			}
 			strikes = append(strikes, s...)
 		}
 		if len(reason) != 0 {
-			s, err := pg.searchStrikeOnReason(reason)
+			s, err := pg.searchStrikeOnParam("reason", reason)
 			if err != nil {
 				return nil, err
 			}
 			strikes = append(strikes, s...)
 		}
 		if !date.IsZero() {
-			s, err := pg.searchStrikeOnDate(date)
+			s, err := pg.searchStrikeOnParam("created_at", date)
 			if err != nil {
 				return nil, err
 			}
