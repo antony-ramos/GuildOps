@@ -60,7 +60,7 @@ func NewConfig() (*Config, error) {
 
 	err = cleanenv.ReadEnv(cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("config error: %w", err)
 	}
 
 	return cfg, nil
