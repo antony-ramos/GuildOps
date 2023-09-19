@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 type PlayerUseCase struct {

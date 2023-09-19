@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 func (pg *PG) SearchAbsence(ctx context.Context, playerName string, playerID int, date time.Time) ([]entity.Absence, error) {

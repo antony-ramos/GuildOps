@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 type LootUseCase struct {

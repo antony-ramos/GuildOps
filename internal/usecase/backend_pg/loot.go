@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {

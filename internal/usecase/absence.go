@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 // AbsenceUseCase is the use case for absences.

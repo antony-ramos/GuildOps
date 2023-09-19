@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 type StrikeUseCase struct {

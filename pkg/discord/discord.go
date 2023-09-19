@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/bwmarrin/discordgo"
+	"go.uber.org/zap"
 )
 
 type Discord struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 type Backend interface {

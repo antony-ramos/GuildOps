@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/coven-discord-bot/internal/entity"
 )
 
 // SearchPlayer is a function which call backend to Search a Player Object.
