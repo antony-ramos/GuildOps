@@ -1,4 +1,4 @@
-module github.com/coven-discord-bot
+module github.com/antony-ramos/guildops
 
 go 1.20
 

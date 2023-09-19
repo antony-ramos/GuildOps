@@ -3,7 +3,7 @@ package backend_pg
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
+	"github.com/antony-ramos/guildops/internal/entity"
 	"time"
 )
 

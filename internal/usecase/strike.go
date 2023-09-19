@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/coven-discord-bot/internal/entity"
+	"github.com/antony-ramos/guildops/internal/entity"
 	"time"
 )
 

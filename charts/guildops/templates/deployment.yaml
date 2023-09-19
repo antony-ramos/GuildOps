@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "guildops.fullname" . }}
+  labels: {{- include "guildops.labels" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "guildops.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels: {{- include "guildops.selectorLabels" . | nindent 6 }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  {{- if .Values.updateStrategy }}
+  strategy: {{- .Values.updateStrategy | toYaml | nindent 4}}
+  {{- end }}
+  template:
+    metadata:
+      labels: {{- include "guildops.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.podAnnotations }}
+          {{- .Values.podAnnotations | toYaml | nindent 8 }}
+          {{- end }}
+          checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      imagePullSecrets: {{- concat .Values.global.imagePullSecrets .Values.image.pullSecrets | toYaml | nindent 8 }}
+      serviceAccountName: {{ include "guildops.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- if .Values.affinity }}
+      affinity: {{- .Values.affinity | toYaml | nindent 8 }}
+      {{- end }}
+      securityContext: {{- .Values.podSecurityContext | toYaml | nindent 8 }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{ .Values.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{ .Values.tolerations | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{ .Values.topologySpreadConstraints | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ include "guildops.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          securityContext: {{- .Values.containerSecurityContext | toYaml | nindent 12 }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.guildops.logLevel }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPorts.http }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.containerPorts.metrics }}
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /src/config.yaml
+              subPath: config.yaml
+            - name: google-creds
+              mountPath: /secret/credentials
+              subPath: credentials
+          livenessProbe:
+            httpGet: &httpProbe
+              path: /health
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: *httpProbe
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources: {{- .Values.resources | toYaml | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-configmap
+            items:
+              - key: config.yaml
+                path: config/config.yml
+        - name: google-creds
+          secret:
+            secretName: {{ .Values.guildops.credentials.fromSecret.name | default (printf "%s-secret-token" (include "guildops.fullname" . )) }}
+            items:
+              - key: {{ .Values.guildops.credentials.fromSecret.key | default "token" }}
+                path: credentials
+      {{- if .Values.extraPodSpec }}
+      {{ .Values.extraPodSpec | toYaml | nindent 6 }}
+      {{- end }}

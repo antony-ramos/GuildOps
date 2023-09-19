@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/config"
-	"github.com/coven-discord-bot/internal/app"
-	"github.com/coven-discord-bot/pkg/tracing"
+	"github.com/antony-ramos/guildops/config"
+	"github.com/antony-ramos/guildops/internal/app"
+	"github.com/antony-ramos/guildops/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"

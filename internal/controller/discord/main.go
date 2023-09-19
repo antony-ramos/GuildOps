@@ -1,7 +1,7 @@
 package discordHandler
 
 import (
-	"github.com/coven-discord-bot/internal/usecase"
+	"github.com/antony-ramos/guildops/internal/usecase"
 	"strings"
 	"time"
 )

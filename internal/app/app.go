@@ -2,13 +2,13 @@ package app
 
 import (
 	"context"
+	"github.com/antony-ramos/guildops/config"
+	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
+	"github.com/antony-ramos/guildops/internal/usecase"
+	"github.com/antony-ramos/guildops/internal/usecase/backend_pg"
+	"github.com/antony-ramos/guildops/pkg/discord"
+	"github.com/antony-ramos/guildops/pkg/postgres"
 	"github.com/bwmarrin/discordgo"
-	"github.com/coven-discord-bot/config"
-	discordHandler "github.com/coven-discord-bot/internal/controller/discord"
-	"github.com/coven-discord-bot/internal/usecase"
-	"github.com/coven-discord-bot/internal/usecase/backend_pg"
-	"github.com/coven-discord-bot/pkg/discord"
-	"github.com/coven-discord-bot/pkg/postgres"
 	"go.uber.org/zap"
 )
 

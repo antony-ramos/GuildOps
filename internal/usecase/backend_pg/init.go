@@ -2,7 +2,7 @@ package backend_pg
 
 import (
 	"database/sql"
-	"github.com/coven-discord-bot/pkg/postgres"
+	"github.com/antony-ramos/guildops/pkg/postgres"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"log"
