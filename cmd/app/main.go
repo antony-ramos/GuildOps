@@ -82,8 +82,11 @@ func main() {
 	zap.L().Info(fmt.Sprintf("Starting metrics server on port %s", cfg.Metrics.Port))
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
-
-		err = http.ListenAndServe(":"+cfg.Metrics.Port, nil)
+		server := &http.Server{
+			Addr:              ":" + cfg.Metrics.Port,
+			ReadHeaderTimeout: 3 * time.Second,
+		}
+		err := server.ListenAndServe()
 		if err != nil {
 			span.RecordError(err)
 			zap.L().Fatal(err.Error())
