@@ -3,7 +3,6 @@ package discordHandler
 import (
 	"context"
 	"strconv"
-
 )
 
 var StrikeDescriptors = []discordgo.ApplicationCommand{
