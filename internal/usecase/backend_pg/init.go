@@ -2,17 +2,18 @@ package backend_pg
 
 import (
 	"database/sql"
+	"log"
+
 	"github.com/coven-discord-bot/pkg/postgres"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
-	"log"
 )
 
 type PG struct {
 	*postgres.Postgres
 }
 
-// Init Database Tables
+// Init Database Tables.
 func (pg *PG) Init(connStr string) {
 	// Open a connection to the database
 	db, err := sql.Open("postgres", connStr)

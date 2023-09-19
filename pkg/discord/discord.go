@@ -3,10 +3,9 @@ package discord
 import (
 	"context"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"go.uber.org/zap"
 	"strconv"
 	"sync"
+
 )
 
 type Discord struct {
@@ -47,7 +46,6 @@ func (d *Discord) Run(ctx context.Context) error {
 				zap.L().Error(fmt.Sprintf("Error while handling command %s : %s", i.ApplicationCommandData().Name, err.Error()))
 			}
 		}
-
 	})
 
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(d.commands))
@@ -93,5 +91,4 @@ func (d *Discord) Run(ctx context.Context) error {
 		}
 	}
 	return nil
-
 }

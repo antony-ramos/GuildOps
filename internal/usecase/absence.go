@@ -3,21 +3,21 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
-// AbsenceUseCase is the use case for absences
+// AbsenceUseCase is the use case for absences.
 type AbsenceUseCase struct {
 	backend Backend
 }
 
-// NewAbsenceUseCase returns a new AbsenceUseCase
+// NewAbsenceUseCase returns a new AbsenceUseCase.
 func NewAbsenceUseCase(bk Backend) *AbsenceUseCase {
 	return &AbsenceUseCase{backend: bk}
 }
 
-// CreateAbsence creates an absence for a given player and date
+// CreateAbsence creates an absence for a given player and date.
 func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, date time.Time) error {
 	// Get player ID
 	player, err := a.backend.SearchPlayer(ctx, -1, playerName)
@@ -55,7 +55,7 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 	return nil
 }
 
-// DeleteAbsence deletes an absence for a given player and date
+// DeleteAbsence deletes an absence for a given player and date.
 func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, date time.Time) error {
 	// Get player ID
 	player, err := a.backend.SearchPlayer(ctx, -1, playerName)
@@ -85,7 +85,7 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 	return nil
 }
 
-// ListAbsence returns a list of absences for a given date
+// ListAbsence returns a list of absences for a given date.
 func (a AbsenceUseCase) ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error) {
 	// Get absences
 	absences, err := a.backend.SearchAbsence(ctx, "", -1, date)

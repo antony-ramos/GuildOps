@@ -2,10 +2,11 @@ package discordHandler
 
 import (
 	"context"
-	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var LootDescriptors = []discordgo.ApplicationCommand{
@@ -84,7 +85,6 @@ func (d Discord) InitLoot() map[string]func(ctx context.Context, s *discordgo.Se
 		"coven-loot-delete":    d.DeleteLootHandler,
 		"coven-loot-selector":  d.LootCounterCheckerHandler,
 	}
-
 }
 
 func (d Discord) AttributeLootHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -154,7 +154,6 @@ func (d Discord) ListLootsOnPlayerHandler(ctx context.Context, s *discordgo.Sess
 	msg := "Tous les loots de " + playerName + ":\n"
 	for _, loot := range lootList {
 		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
-
 	}
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

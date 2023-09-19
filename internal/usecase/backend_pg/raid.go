@@ -3,11 +3,11 @@ package backend_pg
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
-// SearchRaid searches a raid in the database
+// SearchRaid searches a raid in the database.
 func (pg *PG) SearchRaid(ctx context.Context, raidName string, date time.Time, difficulty string) ([]entity.Raid, error) {
 	select {
 	case <-ctx.Done():
@@ -22,7 +22,6 @@ func (pg *PG) SearchRaid(ctx context.Context, raidName string, date time.Time, d
 			rows, err := pg.Pool.Query(context.Background(), sql, raidName)
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
-
 			}
 			defer rows.Close()
 			for rows.Next() {
@@ -42,7 +41,6 @@ func (pg *PG) SearchRaid(ctx context.Context, raidName string, date time.Time, d
 			rows, err := pg.Pool.Query(context.Background(), sql, difficulty)
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
-
 			}
 			defer rows.Close()
 			for rows.Next() {
@@ -62,7 +60,6 @@ func (pg *PG) SearchRaid(ctx context.Context, raidName string, date time.Time, d
 			rows, err := pg.Pool.Query(context.Background(), sql, date)
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
-
 			}
 			defer rows.Close()
 			for rows.Next() {
@@ -78,7 +75,7 @@ func (pg *PG) SearchRaid(ctx context.Context, raidName string, date time.Time, d
 	}
 }
 
-// CreateRaid creates a raid in the database
+// CreateRaid creates a raid in the database.
 func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
@@ -91,7 +88,6 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		rows, err := pg.Pool.Query(context.Background(), sql, raid.Name, raid.Date, raid.Difficulty)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		if rows.Next() {
@@ -126,7 +122,7 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 	}
 }
 
-// ReadRaid returns a raid from the database
+// ReadRaid returns a raid from the database.
 func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
@@ -139,7 +135,6 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 		rows, err := pg.Pool.Query(context.Background(), sql, raidID)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		var raid entity.Raid
@@ -153,7 +148,7 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 	}
 }
 
-// UpdateRaid updates a raid in the database
+// UpdateRaid updates a raid in the database.
 func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 	select {
 	case <-ctx.Done():

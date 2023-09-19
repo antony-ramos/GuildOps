@@ -3,12 +3,13 @@ package backend_pg
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/coven-discord-bot/internal/entity"
 	"go.uber.org/zap"
-	"time"
 )
 
-// SearchStrikeOnID is a function which call backend to search a strike object based on playerID
+// SearchStrikeOnID is a function which call backend to search a strike object based on playerID.
 func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
 	var strikes []entity.Strike
 	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("player_id = $1").ToSql()
@@ -18,7 +19,6 @@ func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
 	rows, err := pg.Pool.Query(context.Background(), sql, playerID)
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - r.Pool.Query: %w", err)
-
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -32,7 +32,7 @@ func (pg *PG) searchStrikeOnID(playerID int) ([]entity.Strike, error) {
 	return strikes, nil
 }
 
-// SearchStrikeOnSeason is a function which call backend to search a strike object based on season
+// SearchStrikeOnSeason is a function which call backend to search a strike object based on season.
 func (pg *PG) searchStrikeOnSeason(season string) ([]entity.Strike, error) {
 	var strikes []entity.Strike
 	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("season = $1").ToSql()
@@ -42,7 +42,6 @@ func (pg *PG) searchStrikeOnSeason(season string) ([]entity.Strike, error) {
 	rows, err := pg.Pool.Query(context.Background(), sql, season)
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnSeason - r.Pool.Query: %w", err)
-
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -56,7 +55,7 @@ func (pg *PG) searchStrikeOnSeason(season string) ([]entity.Strike, error) {
 	return strikes, nil
 }
 
-// SearchStrikeOnReason is a function which call backend to search a strike object based on reason
+// SearchStrikeOnReason is a function which call backend to search a strike object based on reason.
 func (pg *PG) searchStrikeOnReason(reason string) ([]entity.Strike, error) {
 	var strikes []entity.Strike
 	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("reason = $1").ToSql()
@@ -66,7 +65,6 @@ func (pg *PG) searchStrikeOnReason(reason string) ([]entity.Strike, error) {
 	rows, err := pg.Pool.Query(context.Background(), sql, reason)
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnReason - r.Pool.Query: %w", err)
-
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -80,7 +78,7 @@ func (pg *PG) searchStrikeOnReason(reason string) ([]entity.Strike, error) {
 	return strikes, nil
 }
 
-// SearchStrikeOnDate is a function which call backend to search a strike object based on date
+// SearchStrikeOnDate is a function which call backend to search a strike object based on date.
 func (pg *PG) searchStrikeOnDate(date time.Time) ([]entity.Strike, error) {
 	var strikes []entity.Strike
 	sql, _, err := pg.Builder.Select("id", "player_id", "season", "reason", "created_at").From("strikes").Where("created_at = $1").ToSql()
@@ -90,7 +88,6 @@ func (pg *PG) searchStrikeOnDate(date time.Time) ([]entity.Strike, error) {
 	rows, err := pg.Pool.Query(context.Background(), sql, date)
 	if err != nil {
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnDate - r.Pool.Query: %w", err)
-
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -105,7 +102,7 @@ func (pg *PG) searchStrikeOnDate(date time.Time) ([]entity.Strike, error) {
 }
 
 // SearchStrike is a function which call backend to Search a Strike Object
-// It returns a list of strikes matching the given parameters not combined
+// It returns a list of strikes matching the given parameters not combined.
 func (pg *PG) SearchStrike(ctx context.Context, playerID int, date time.Time, season, reason string) ([]entity.Strike, error) {
 	zap.L().Debug("SearchStrike", zap.Int("playerID", playerID), zap.Time("date", date), zap.String("season", season), zap.String("reason", reason))
 	select {
@@ -145,7 +142,7 @@ func (pg *PG) SearchStrike(ctx context.Context, playerID int, date time.Time, se
 	}
 }
 
-// CreateStrike is a function which call backend to Create a Strike Object
+// CreateStrike is a function which call backend to Create a Strike Object.
 func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error {
 	zap.L().Debug("CreateStrike", zap.String("season", strike.Season), zap.String("reason", strike.Reason), zap.String("player", player.Name))
 	select {
@@ -178,7 +175,6 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 		rows, err := pg.Pool.Query(context.Background(), sql, strikeID)
 		if err != nil {
 			return entity.Strike{}, fmt.Errorf("database - ReadStrike - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		var strike entity.Strike
@@ -187,7 +183,6 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 			if err != nil {
 				return entity.Strike{}, fmt.Errorf("database - ReadStrike - rows.Scan: %w", err)
 			}
-
 		}
 		return strike, nil
 	}

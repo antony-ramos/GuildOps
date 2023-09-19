@@ -2,8 +2,8 @@ package discordHandler
 
 import (
 	"context"
-	"github.com/bwmarrin/discordgo"
 	"strconv"
+
 )
 
 var StrikeDescriptors = []discordgo.ApplicationCommand{

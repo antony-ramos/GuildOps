@@ -3,8 +3,8 @@ package backend_pg
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
 func (pg *PG) SearchAbsence(ctx context.Context, playerName string, playerID int, date time.Time) ([]entity.Absence, error) {

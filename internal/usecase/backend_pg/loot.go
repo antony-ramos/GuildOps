@@ -3,8 +3,8 @@ package backend_pg
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
 func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
@@ -20,7 +20,6 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 		rows, err := pg.Pool.Query(context.Background(), sql, name, date, difficulty)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchLoot - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		for rows.Next() {

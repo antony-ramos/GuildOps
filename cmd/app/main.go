@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/coven-discord-bot/config"
 	"github.com/coven-discord-bot/internal/app"
 	"github.com/coven-discord-bot/pkg/tracing"
@@ -11,10 +16,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
 
 var LogLevels = map[string]zapcore.Level{
@@ -98,5 +99,4 @@ func main() {
 	zap.L().Info("Starting app")
 	app.Run(ctx, cfg)
 	span.End(trace.WithTimestamp(time.Now()))
-
 }

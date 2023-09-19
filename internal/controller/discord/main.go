@@ -1,9 +1,10 @@
 package discordHandler
 
 import (
-	"github.com/coven-discord-bot/internal/usecase"
 	"strings"
 	"time"
+
+	"github.com/coven-discord-bot/internal/usecase"
 )
 
 type Discord struct {

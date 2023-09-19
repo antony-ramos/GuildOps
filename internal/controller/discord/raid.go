@@ -2,9 +2,10 @@ package discordHandler
 
 import (
 	"context"
-	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func (d Discord) InitRaid() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {

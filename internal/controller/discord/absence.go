@@ -3,9 +3,10 @@ package discordHandler
 import (
 	"context"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"sync"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var AbsenceDescriptor = []discordgo.ApplicationCommand{
@@ -40,7 +41,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "exemple : 09/09/23",
+				Description: "example : 09/09/23",
 				Required:    true,
 			},
 		},
@@ -56,7 +57,6 @@ func (d Discord) InitAbsence() map[string]func(ctx context.Context, s *discordgo
 }
 
 func (d Discord) ListAbsenceHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -98,7 +98,6 @@ func (d Discord) CreateAbsenceHandler(ctx context.Context, s *discordgo.Session,
 	resultCh := make(chan bool)
 	errorCh := make(chan error)
 	go func() {
-
 		for _, opt := range options {
 			optionMap[opt.Name] = opt
 		}
@@ -125,7 +124,6 @@ func (d Discord) CreateAbsenceHandler(ctx context.Context, s *discordgo.Session,
 						errorCh <- err
 						return
 					}
-
 				}
 			}()
 			wg.Wait()
@@ -169,7 +167,6 @@ func (d Discord) DeleteAbsenceHandler(ctx context.Context, s *discordgo.Session,
 	resultCh := make(chan bool)
 	errorCh := make(chan error)
 	go func() {
-
 		for _, opt := range options {
 			optionMap[opt.Name] = opt
 		}
@@ -227,5 +224,4 @@ func (d Discord) DeleteAbsenceHandler(ctx context.Context, s *discordgo.Session,
 		fmt.Print(err)
 	}
 	return nil
-
 }

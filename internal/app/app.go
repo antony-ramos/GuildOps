@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/coven-discord-bot/config"
 	discordHandler "github.com/coven-discord-bot/internal/controller/discord"
@@ -13,7 +14,6 @@ import (
 )
 
 func Run(ctx context.Context, cfg *config.Config) {
-
 	zap.L().Info("loading backend")
 
 	pg, err := postgres.New(cfg.URL, postgres.MaxPoolSize(cfg.PoolMax), postgres.ConnAttempts(cfg.ConnAttempts), postgres.ConnTimeout(cfg.ConnTimeOut))

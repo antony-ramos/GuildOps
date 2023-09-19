@@ -3,11 +3,11 @@ package backend_pg
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"strconv"
+
 )
 
-// SearchPlayer is a function which call backend to Search a Player Object
+// SearchPlayer is a function which call backend to Search a Player Object.
 func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.Player, error) {
 	select {
 	case <-ctx.Done():
@@ -33,7 +33,6 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 		rows, err := pg.Pool.Query(context.Background(), sql, name)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		for rows.Next() {
@@ -97,7 +96,7 @@ func (pg *PG) SearchPlayer(ctx context.Context, id int, name string) ([]entity.P
 	}
 }
 
-// CreatePlayer is a function which call backend to Create a Player Object
+// CreatePlayer is a function which call backend to Create a Player Object.
 func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Player, error) {
 	select {
 	case <-ctx.Done():
@@ -110,7 +109,6 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 		rows, err := pg.Pool.Query(context.Background(), sql, player.Name)
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		if rows.Next() {
@@ -124,12 +122,12 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Pool.Exec: %w", err)
 		}
-		//player.ID = id
+		// player.ID = id
 		return player, nil
 	}
 }
 
-// ReadPlayer is a function which call backend to Read a Player Object
+// ReadPlayer is a function which call backend to Read a Player Object.
 func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, error) {
 	select {
 	case <-ctx.Done():
@@ -142,7 +140,6 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 		rows, err := pg.Pool.Query(context.Background(), sql, strconv.FormatInt(int64(playerID), 10))
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.Pool.Query: %w", err)
-
 		}
 		defer rows.Close()
 		var player entity.Player
@@ -157,7 +154,7 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 	}
 }
 
-// UpdatePlayer is a function which call backend to Update a Player Object
+// UpdatePlayer is a function which call backend to Update a Player Object.
 func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 	select {
 	case <-ctx.Done():
@@ -166,7 +163,6 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 		sql, args, err := pg.Builder.Update("players").Set("name", player.Name).Where("id = ?", player.ID).ToSql()
 		if err != nil {
 			return fmt.Errorf("database - UpdatePlayer - r.Builder.Update: %w", err)
-
 		}
 		_, err = pg.Pool.Exec(context.Background(), sql, args...)
 		if err != nil {
@@ -176,7 +172,7 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 	}
 }
 
-// DeletePlayer is a function which call backend to Delete a Player Object
+// DeletePlayer is a function which call backend to Delete a Player Object.
 func (pg *PG) DeletePlayer(ctx context.Context, playerID int) error {
 	select {
 	case <-ctx.Done():

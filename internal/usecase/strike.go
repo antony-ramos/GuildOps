@@ -3,15 +3,15 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
 type StrikeUseCase struct {
 	backend Backend
 }
 
-// NewStrikeUseCase is a StrikeUseCase Object generator
+// NewStrikeUseCase is a StrikeUseCase Object generator.
 func NewStrikeUseCase(bk Backend) *StrikeUseCase {
 	return &StrikeUseCase{backend: bk}
 }
@@ -24,7 +24,7 @@ func SeasonCalculator(date time.Time) string {
 	}
 }
 
-// CreateStrike is a function which call backend to Create a Strike Object
+// CreateStrike is a function which call backend to Create a Strike Object.
 func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerName string) error {
 	strike := entity.Strike{
 		Reason: strikeReason,
@@ -50,7 +50,7 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 	return nil
 }
 
-// DeleteStrike is a function which call backend to Delete a Strike Object
+// DeleteStrike is a function which call backend to Delete a Strike Object.
 func (puc StrikeUseCase) DeleteStrike(ctx context.Context, ID int) error {
 	err := puc.backend.DeleteStrike(ctx, ID)
 	if err != nil {
@@ -59,12 +59,11 @@ func (puc StrikeUseCase) DeleteStrike(ctx context.Context, ID int) error {
 	return nil
 }
 
-// ReadStrikes is a function which call backend to Read all strikes on a player
+// ReadStrikes is a function which call backend to Read all strikes on a player.
 func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]entity.Strike, error) {
 	p, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 	if err != nil {
 		return nil, err
-
 	}
 	if len(p) == 0 {
 		return nil, errors.New("player not found")
@@ -72,7 +71,6 @@ func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]
 	strikes, err := puc.backend.SearchStrike(ctx, p[0].ID, time.Time{}, "", "")
 	if err != nil {
 		return nil, err
-
 	}
 	if len(strikes) == 0 {
 		return nil, errors.New("no strikes found")

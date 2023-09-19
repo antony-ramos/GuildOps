@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"math/rand"
+
 )
 
 type LootUseCase struct {
@@ -47,7 +47,6 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 
 	if err != nil {
 		return err
-
 	}
 	return nil
 }
@@ -104,7 +103,6 @@ func (puc LootUseCase) DeleteLoot(ctx context.Context, lootID int) error {
 	err := puc.backend.DeleteLoot(ctx, lootID)
 	if err != nil {
 		return err
-
 	}
 	return nil
 }

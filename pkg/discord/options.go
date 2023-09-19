@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+
 	"github.com/bwmarrin/discordgo"
 )
 

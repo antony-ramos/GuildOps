@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
 type RaidUseCase struct {

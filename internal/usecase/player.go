@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/coven-discord-bot/internal/entity"
 	"time"
+
 )
 
 type PlayerUseCase struct {

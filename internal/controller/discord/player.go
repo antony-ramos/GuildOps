@@ -2,8 +2,8 @@ package discordHandler
 
 import (
 	"context"
-	"github.com/bwmarrin/discordgo"
 	"strconv"
+
 )
 
 var PlayerDescriptors = []discordgo.ApplicationCommand{
@@ -82,7 +82,6 @@ func (d Discord) CreatePlayerHandler(ctx context.Context, s *discordgo.Session, 
 }
 
 func (d Discord) DeletePlayerHandler(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
-
 	options := i.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -166,7 +165,6 @@ func (d Discord) GetPlayerHandler(ctx context.Context, s *discordgo.Session, i *
 	if len(player.Loots) > 0 {
 		msg += "**Loots :** \n"
 		for _, loot := range player.Loots {
-
 			msg += "  " + loot.Raid.Difficulty +
 				" | " + loot.Raid.Date.Format("02/01/06") +
 				" | " + loot.Name + "\n"
