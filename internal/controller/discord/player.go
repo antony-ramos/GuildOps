@@ -8,7 +8,7 @@ import (
 
 var PlayerDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-player-create",
+		Name:        "guildops-player-create",
 		Description: "Créer un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -20,7 +20,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-delete",
+		Name:        "guildops-player-delete",
 		Description: "Supprimer un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -32,7 +32,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-get",
+		Name:        "guildops-player-get",
 		Description: "Infos sur le joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -47,9 +47,9 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 
 func (d Discord) InitPlayer() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-player-create": d.CreatePlayerHandler,
-		"coven-player-delete": d.DeletePlayerHandler,
-		"coven-player-get":    d.GetPlayerHandler,
+		"guildops-player-create": d.CreatePlayerHandler,
+		"guildops-player-delete": d.DeletePlayerHandler,
+		"guildops-player-get":    d.GetPlayerHandler,
 	}
 }
 

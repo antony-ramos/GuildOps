@@ -10,7 +10,7 @@ import (
 
 var AbsenceDescriptor = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-absence-create",
+		Name:        "guildops-absence-create",
 		Description: "Créer une absence pour un ou plusieurs raids",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -22,7 +22,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-absence-delete",
+		Name:        "guildops-absence-delete",
 		Description: "Supprimer une absence pour un ou plusieurs raids",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -34,7 +34,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-absence-list",
+		Name:        "guildops-absence-list",
 		Description: "Lister les absences pour un raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -49,9 +49,9 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 
 func (d Discord) InitAbsence() map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-absence-create": d.CreateAbsenceHandler,
-		"coven-absence-delete": d.DeleteAbsenceHandler,
-		"coven-absence-list":   d.ListAbsenceHandler,
+		"guildops-absence-create": d.CreateAbsenceHandler,
+		"guildops-absence-delete": d.DeleteAbsenceHandler,
+		"guildops-absence-list":   d.ListAbsenceHandler,
 	}
 }
 

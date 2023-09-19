@@ -1,5 +1,5 @@
 app:
-  name: 'coven-bot'
+  name: 'GuildOps'
   version: '0.0.1'
   environment: "development"
 
