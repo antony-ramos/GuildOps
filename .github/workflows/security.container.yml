@@ -8,7 +8,6 @@ on: # yamllint disable-line rule:truthy
       - Dockerfile
 
 jobs:
-  # Analyze statically Helm charts to identify any policy violations.
   checkov:
     name: Checkov
     runs-on: ubuntu-latest
@@ -23,8 +22,3 @@ jobs:
         with:
           framework: dockerfile
           skip_check: CKV_DOCKER_2
-      - uses: github/codeql-action/upload-sarif@43750fe4fc4f068f04f2215206e6f6a29c78c763 # tag=codeql-bundle-20221211
-        if: always()
-        with:
-          category: checkov-helm
-          sarif_file: results.sarif

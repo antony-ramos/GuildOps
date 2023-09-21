@@ -2,7 +2,8 @@
 extends: default
 
 ignore: |
-  test/
+  charts/guildops/templates/
+  pkg/conf/tests
 
 rules:
   comments:
