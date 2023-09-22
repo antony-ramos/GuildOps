@@ -35,7 +35,7 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 		return fmt.Errorf("CreateAbsence - backend.SearchRaid: %w", err)
 	}
 	if len(raids) == 0 {
-		return fmt.Errorf("no raid found on this date %s", date)
+		return fmt.Errorf("CreateAbsence - no raid found on %s", date)
 	}
 
 	// For each raid ID, create an absence
@@ -89,7 +89,6 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 
 // ListAbsence returns a list of absences for a given date.
 func (a AbsenceUseCase) ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error) {
-	// Get absences
 	absences, err := a.backend.SearchAbsence(ctx, "", -1, date)
 	if err != nil {
 		return nil, fmt.Errorf("ListAbsence - backend.SearchAbsence: %w", err)

@@ -62,7 +62,7 @@ docker run --publish 8080 ghcr.io/antony-ramos/guildops
 
 A configuration file is required to run GuildOps. 
 
-This configuration file should be located at `"config/config.yml"`
+This configuration file should be located at `"config/config.yml"` or any file specified by `CONFIG_PATH`
 
 ```yaml
 app:
