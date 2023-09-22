@@ -1,0 +1,15 @@
+#!/bin/bash
+
+systemctl stop guildops.service
+
+systemctl disable guildops.service
+
+rm /etc/systemd/system/guildops.service
+
+sudo userdel guildops
+sudo groupdel guildops
+
+rm /usr/bin/guildops
+rm -r /etc/guildops
+
+systemctl daemon-reload
