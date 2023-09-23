@@ -173,7 +173,7 @@ func (d Discord) ListLootsOnPlayerHandler(
 func (d Discord) DeleteLootHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
 	options := interaction.ApplicationCommandData().Options
