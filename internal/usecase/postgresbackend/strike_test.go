@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antony-ramos/guildops/internal/entity"
+
 	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
 	"github.com/jackc/pgconn"
 
@@ -174,6 +176,98 @@ func TestPG_DeleteStrike(t *testing.T) {
 			Return(commandTag, nil)
 
 		err := pgBackend.DeleteStrike(context.Background(), 1)
+		assert.Error(t, err)
+	})
+}
+
+func TestPG_CreateStrike(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"INSERT INTO strikes (player_id,season,reason) VALUES ($1,$2,$3)", 1, "season", "reason").
+			Return(nil, nil)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		strike := entity.Strike{
+			ID:     0,
+			Player: &entity.Player{},
+			Season: "season",
+			Reason: "reason",
+		}
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		err := pgBackend.CreateStrike(context.Background(), strike, player)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Context cancelled", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		strike := entity.Strike{
+			ID:     0,
+			Player: &entity.Player{},
+			Season: "season",
+			Reason: "reason",
+		}
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		err := pgBackend.CreateStrike(ctx, strike, player)
+		assert.Error(t, err)
+	})
+
+	t.Run("Query failed", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"INSERT INTO strikes (player_id,season,reason) VALUES ($1,$2,$3)", 1, "season", "reason").
+			Return(nil, errors.New("error"))
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		strike := entity.Strike{
+			ID:     0,
+			Player: &entity.Player{},
+			Season: "season",
+			Reason: "reason",
+		}
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		err := pgBackend.CreateStrike(context.Background(), strike, player)
 		assert.Error(t, err)
 	})
 }
