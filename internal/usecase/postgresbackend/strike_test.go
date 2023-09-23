@@ -3,9 +3,11 @@ package postgresbackend_test
 import (
 	"context"
 	"errors"
-	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
 	"testing"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
+	"github.com/jackc/pgconn"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/antony-ramos/guildops/pkg/postgres"
@@ -97,6 +99,80 @@ func TestPG_searchStrikeOnParam(t *testing.T) {
 			Return(pgxRows, nil)
 
 		_, err := pgBackend.SearchStrikeOnParam(context.Background(), "player_id", 1)
+		assert.Error(t, err)
+	})
+}
+
+func TestPG_DeleteStrike(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"DELETE FROM strikes WHERE id = $1", 1).
+			Return(nil, nil)
+
+		err := pgBackend.DeleteStrike(context.Background(), 1)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Context cancelled", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := pgBackend.DeleteStrike(ctx, 1)
+		assert.Error(t, err)
+	})
+
+	t.Run("Query failed", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"DELETE FROM strikes WHERE id = $1", 1).
+			Return(nil, errors.New("error"))
+
+		err := pgBackend.DeleteStrike(context.Background(), 1)
+		assert.Error(t, err)
+	})
+
+	t.Run("strike is not deleted", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		commandTag := pgconn.CommandTag("DELETE 0")
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"DELETE FROM strikes WHERE id = $1", 1).
+			Return(commandTag, nil)
+
+		err := pgBackend.DeleteStrike(context.Background(), 1)
 		assert.Error(t, err)
 	})
 }
