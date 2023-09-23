@@ -56,6 +56,24 @@ docker pull ghcr.io/antony-ramos/guildops
 docker run --publish 8080 ghcr.io/antony-ramos/guildops
 ```
 
+### Debian
+Before anything, you need to edit the config at config/config.yml to add your discord bot token, guild id and postgres credentials.
+```shell
+make dpkg.build 
+make dpkg.install
+```
+
+You can remove it with `make dpkg.remove`
+
+You can also install it via ssh. You need to setup SSH_HOST and SSH_USER in your environment.
+
+```shell
+export SSH_HOST=yourhost
+export SSH_USER=youruser
+make ssh.install
+```
+
+
 ## Usage
 
 ### Configuration
@@ -82,8 +100,7 @@ postgres:
   conn_timeout: 5s
 ```
 
-For exemple :
->
+> For exemple :
 > ```yaml
 > app:
 >   name: 'guildops'
@@ -101,6 +118,41 @@ For exemple :
 >   conn_attempts: 10
 >   conn_timeout: 5s
 >```
+
+### Secret 
+
+Secrets are needed to be set in the environment variables
+    
+  ```shell
+  export DISCORD_TOKEN=yourtoken
+  export DISCORD_GUILD_ID=yourguildid
+  export PG_URL=yourpostgresurl
+  ```
+
+For Debian installation, you must set them in config file.
+  ```yaml
+app:
+    name: 'guildops'
+    version: '0.0.1'
+    environment: "development"
+
+logger:
+    level: debug
+
+metrics:
+    port: 2213
+
+discord:
+    token: <yourtoken>
+    guild_id: <yourguildid>
+
+postgres:
+    pool_max: 10
+    conn_attempts: 10
+    conn_timeout: 5s
+    url: <yourpostgresurl>
+  ```
+
 
 ## Support
 
@@ -134,19 +186,12 @@ See [LICENSE](LICENSE) for more information.
 
 Thanks for these awesome resources and projects that were used during development:
 
-- <https://github.com/go-co-op/gocron> - A Golang Job Scheduling Package
-- <https://github.com/gorilla/mux> - A powerful HTTP router and URL matcher for building Go web servers with 🦍
-- <https://github.com/sirupsen/logrus> - Structured, pluggable logging for Go.
-- <https://github.com/spf13/viper> - Go configuration with fangs
-  github.com/Masterminds/squirrel v1.5.4
-  github.com/bwmarrin/discordgo v0.27.1
-  github.com/ilyakaznacheev/cleanenv v1.5.0
-  github.com/jackc/pgx/v4 v4.18.1
-  github.com/lib/pq v1.10.9
-  github.com/prometheus/client_golang v1.16.0
-  go.opentelemetry.io/otel v1.18.0
-  go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.18.0
-  go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.18.0
-  go.opentelemetry.io/otel/sdk v1.18.0
-  go.opentelemetry.io/otel/trace v1.18.0
-  go.uber.org/zap v1.26.0
+- <https://github.com/Masterminds/squirrel> Squirrel - fluent SQL generator for Go
+- <https://github.com/bwmarrin/discordgo>  Go bindings for Discord
+- <https://github.com/ilyakaznacheev/cleanenv> Clean and minimalistic environment configuration reader for Golang
+- <https://github.com/jackc/pgx> PostgreSQL driver and toolkit for Go
+- <https://github.com/lib/pq> Pure Go Postgres driver for database/sql
+- <https://github.com/prometheus/client_golang> Prometheus instrumentation library for Go applications
+- <https://github.com/stretchr/testify> A toolkit with common assertions and mocks that plays nicely with the standard library
+- <https://go.opentelemetry.io/otel> OpenTelemetry-Go is the Go implementation of OpenTelemetry
+- <https://go.uber.org/zap> Blazing fast, structured, leveled logging in Go

@@ -1,0 +1,5 @@
+Package: guildops
+Version: 0.0.1
+Architecture: amd64
+Maintainer: Antony Ramos
+Description: Manage your WoW guild with a Discord Bot
