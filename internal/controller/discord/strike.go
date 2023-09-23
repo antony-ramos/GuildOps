@@ -153,7 +153,7 @@ func (d Discord) DeleteStrikeHandler(
 	}
 
 	var msg string
-	idString := optionMap["strikeID"].StringValue()
+	idString := optionMap["id"].StringValue()
 	strikeID, err := strconv.ParseInt(idString, 10, 64)
 	returnErr := error(nil)
 	if err != nil {
