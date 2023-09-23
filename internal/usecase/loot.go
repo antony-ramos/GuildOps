@@ -79,11 +79,18 @@ func (puc LootUseCase) SelectPlayerToAssign(
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("LootUseCase - SelectPlayerToAssign - ctx.Done: %w", ctx.Err())
 	default:
+		if len(playerNames) == 0 {
+			return entity.Player{}, fmt.Errorf("player list empty")
+		}
+
 		playerList := make([]entity.Player, 0)
 		for _, playerName := range playerNames {
 			player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 			if err != nil {
 				return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - backend.SearchPlayer: %w", err)
+			}
+			if len(player) == 0 {
+				return entity.Player{}, fmt.Errorf("no player found")
 			}
 			playerList = append(playerList, player[0])
 		}
@@ -111,12 +118,9 @@ func (puc LootUseCase) SelectPlayerToAssign(
 			}
 		}
 		if len(winningPlayers) > 0 {
-			n, err := rand.Int(rand.Reader, big.NewInt(int64(len(winningPlayers)-1)))
-			if err != nil {
-				return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - rand.Int: %w", err)
-			}
-
-			return winningPlayers[n.Int64()], nil
+			n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(winningPlayers))))
+			winner := n.Int64()
+			return winningPlayers[winner], nil
 		}
 
 		return entity.Player{}, fmt.Errorf("no player found")

@@ -79,5 +79,4 @@ func TestPlayerUseCase_CreatePlayer(t *testing.T) {
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
 	})
-
 }
