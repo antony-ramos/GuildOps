@@ -8,8 +8,6 @@ import (
 
 	"github.com/antony-ramos/guildops/internal/entity"
 
-	"github.com/antony-ramos/guildops/internal/entity"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
 	"github.com/antony-ramos/guildops/pkg/postgres"
@@ -94,7 +92,6 @@ func TestPG_DeleteRaid(t *testing.T) {
 	})
 }
 
-
 func TestPG_UpdateRaid(t *testing.T) {
 	t.Parallel()
 	t.Run("Success", func(t *testing.T) {
@@ -153,5 +150,69 @@ func TestPG_UpdateRaid(t *testing.T) {
 
 		err := pgBackend.UpdateRaid(ctx, raid)
 		assert.Error(t, err)
+	})
+}
+
+func TestPG_CreateRaid(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		raid := entity.Raid{
+			ID:   1,
+			Name: "test",
+			Date: time.Now(),
+		}
+
+		columns := []string{"name", "date", "difficulty"}
+		pgxRows := pgxpoolmock.NewRows(columns).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT name, date, difficulty FROM raids WHERE name = $1 AND date = $2 AND difficulty = $3",
+			raid.Name, raid.Date, raid.Difficulty).
+			Return(pgxRows, nil)
+
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"INSERT INTO raids (name,date,difficulty) VALUES ($1,$2,$3)", raid.Name, raid.Date, raid.Difficulty).
+			Return(nil, nil)
+
+		columns = []string{"id"}
+		pgxRows = pgxpoolmock.NewRows(columns).AddRow(raid.ID).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id FROM raids WHERE name = $1 AND date = $2 AND difficulty = $3", raid.Name, raid.Date, raid.Difficulty).
+			Return(pgxRows, nil)
+
+		raidFrom, err := pgBackend.CreateRaid(context.Background(), raid)
+		assert.NoError(t, err)
+		assert.Equal(t, raid, raidFrom)
+	})
+
+	t.Run("Context cancelled", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		raid := entity.Raid{
+			ID:   1,
+			Name: "test",
+			Date: time.Now(),
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		raid, err := pgBackend.CreateRaid(ctx, raid)
+		assert.Error(t, err)
+		assert.Equal(t, raid, raid)
 	})
 }
