@@ -19,7 +19,7 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - CreatePlayer - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: %w", ctx.Err())
 	default:
 		player := entity.Player{
 			Name: playerName,
@@ -39,7 +39,7 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) er
 func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeletePlayer - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: %w", ctx.Err())
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
@@ -71,7 +71,7 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (entity.Player, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: %w", ctx.Err())
+		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: %w", ctx.Err())
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
 		if err != nil {
