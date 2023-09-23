@@ -56,6 +56,24 @@ docker pull ghcr.io/antony-ramos/guildops
 docker run --publish 8080 ghcr.io/antony-ramos/guildops
 ```
 
+### Debian
+Before anything, you need to edit the config at config/config.yml to add your discord bot token, guild id and postgres credentials.
+```shell
+make dpkg.build 
+make dpkg.install
+```
+
+You can remove it with `make dpkg.remove`
+
+You can also install it via ssh. You need to setup SSH_HOST and SSH_USER in your environment.
+
+```shell
+export SSH_HOST=yourhost
+export SSH_USER=youruser
+make ssh.install
+```
+
+
 ## Usage
 
 ### Configuration
@@ -82,8 +100,7 @@ postgres:
   conn_timeout: 5s
 ```
 
-For exemple :
->
+> For exemple :
 > ```yaml
 > app:
 >   name: 'guildops'
@@ -101,6 +118,41 @@ For exemple :
 >   conn_attempts: 10
 >   conn_timeout: 5s
 >```
+
+### Secret 
+
+Secrets are needed to be set in the environment variables
+    
+  ```shell
+  export DISCORD_TOKEN=yourtoken
+  export DISCORD_GUILD_ID=yourguildid
+  export PG_URL=yourpostgresurl
+  ```
+
+For Debian installation, you must set them in config file.
+  ```yaml
+app:
+    name: 'guildops'
+    version: '0.0.1'
+    environment: "development"
+
+logger:
+    level: debug
+
+metrics:
+    port: 2213
+
+discord:
+    token: <yourtoken>
+    guild_id: <yourguildid>
+
+postgres:
+    pool_max: 10
+    conn_attempts: 10
+    conn_timeout: 5s
+    url: <yourpostgresurl>
+  ```
+
 
 ## Support
 
