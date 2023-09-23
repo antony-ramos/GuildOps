@@ -82,12 +82,12 @@ func (pg *PG) Init(connStr string) error {
 	// Create a table for absences
 	createTableSQL += `
 		CREATE TABLE IF NOT EXISTS absences (
-		    			id serial PRIMARY KEY,
-		    			player_id INTEGER REFERENCES players(id),
-		    			raid_id INTEGER REFERENCES raids(id),
-		    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		    			CONSTRAINT unique_absence_entry UNIQUE (player_id, raid_id)
-		    		);
+			id serial PRIMARY KEY,
+			player_id INTEGER REFERENCES players(id),
+			raid_id INTEGER REFERENCES raids(id),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT unique_absence_entry UNIQUE (player_id, raid_id)
+		);
 	`
 
 	_, err = database.Exec(createTableSQL)

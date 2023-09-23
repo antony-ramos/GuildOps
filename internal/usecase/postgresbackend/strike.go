@@ -9,8 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// searchStrikeOnID is a function which call backend to search a strike object based on a parameter.
-func (pg *PG) searchStrikeOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Strike, error) {
+// SearchStrikeOnParam is a function which call backend to Search a Strike Object on a given parameter.
+func (pg *PG) SearchStrikeOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Strike, error) {
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - ctx.Done: %w", ctx.Err())
@@ -56,28 +56,28 @@ func (pg *PG) SearchStrike(
 	default:
 		var strikes []entity.Strike
 		if playerID != -1 {
-			s, err := pg.searchStrikeOnParam(ctx, "player_id", playerID)
+			s, err := pg.SearchStrikeOnParam(ctx, "player_id", playerID)
 			if err != nil {
 				return nil, err
 			}
 			strikes = append(strikes, s...)
 		}
 		if len(season) != 0 {
-			s, err := pg.searchStrikeOnParam(ctx, "season", season)
+			s, err := pg.SearchStrikeOnParam(ctx, "season", season)
 			if err != nil {
 				return nil, err
 			}
 			strikes = append(strikes, s...)
 		}
 		if len(reason) != 0 {
-			s, err := pg.searchStrikeOnParam(ctx, "reason", reason)
+			s, err := pg.SearchStrikeOnParam(ctx, "reason", reason)
 			if err != nil {
 				return nil, err
 			}
 			strikes = append(strikes, s...)
 		}
 		if !date.IsZero() {
-			s, err := pg.searchStrikeOnParam(ctx, "created_at", date)
+			s, err := pg.SearchStrikeOnParam(ctx, "created_at", date)
 			if err != nil {
 				return nil, err
 			}
