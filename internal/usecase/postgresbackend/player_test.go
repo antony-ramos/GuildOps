@@ -3,6 +3,7 @@ package postgresbackend_test
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/Masterminds/squirrel"
@@ -179,6 +180,87 @@ func TestPG_CreatePlayer(t *testing.T) {
 			Return(pgxRows, nil)
 
 		_, err := pgBackend.CreatePlayer(context.Background(), player)
+		assert.Error(t, err)
+	})
+}
+
+func TestPG_ReadPlayer(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		columns := []string{"id", "name"}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, name FROM players WHERE id = $1", strconv.FormatInt(int64(player.ID), 10)).
+			Return(pgxRows, nil)
+
+		p, err := pgBackend.ReadPlayer(context.Background(), player.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, player, p)
+	})
+
+	t.Run("Context is done", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{
+			Postgres: &postgres.Postgres{
+				Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+				Pool:    mockPool,
+			},
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := pgBackend.ReadPlayer(ctx, 1)
+		assert.Error(t, err)
+	})
+
+	// Error rows scan
+	t.Run("Error Select", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{
+			Postgres: &postgres.Postgres{
+				Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+				Pool:    mockPool,
+			},
+		}
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		columns := []string{"id", "name"}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, name FROM players WHERE id = $1", strconv.FormatInt(int64(player.ID), 10)).
+			Return(pgxRows, errors.New("error"))
+
+		_, err := pgBackend.ReadPlayer(context.Background(), player.ID)
 		assert.Error(t, err)
 	})
 }

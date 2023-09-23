@@ -172,7 +172,7 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: %w", ctx.Err())
 	default:
-		sql, _, err := pg.Builder.Select("id", "name").From("players").Where("name = $1").ToSql()
+		sql, _, err := pg.Builder.Select("id", "name").From("players").Where("id = $1").ToSql()
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.Builder.Select: %w", err)
 		}
