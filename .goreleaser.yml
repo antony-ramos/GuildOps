@@ -2,7 +2,7 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - main: ./cmd/app
+  - main: ./cmd/guildops
     env:
       - CGO_ENABLED=0
     goos:
