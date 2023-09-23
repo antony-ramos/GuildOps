@@ -16,6 +16,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPG_SearchAbsence(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Searching on playerName", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		columns := []string{"id", "player_id", "raid_id", "name", "difficulty", "date", "name"}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(0, 0, 0, "test", "test", time.Now(), "test").ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT absences.id, absences.player_id, absences.raid_id, "+
+				"raids.name, raids.difficulty, raids.date, players.name "+
+				"FROM absences "+
+				"JOIN raids ON raids.id = absences.raid_id "+
+				"JOIN players ON players.id = absences.player_id "+
+				"WHERE players.name = $1", "test").
+			Return(pgxRows, nil)
+
+		absence, err := pgBackend.SearchAbsence(context.Background(), "test", -1, time.Now())
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(absence))
+	})
+}
+
 func TestPG_CreateAbsence(t *testing.T) {
 	t.Parallel()
 
