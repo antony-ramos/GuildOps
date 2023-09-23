@@ -27,7 +27,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 	}
 
 	backend := postgresbackend.PG{Postgres: pgHandler}
-	err = backend.Init(cfg.URL)
+	err = backend.Init(cfg.URL, nil)
 	if err != nil {
 		zap.L().Fatal(err.Error())
 		return
