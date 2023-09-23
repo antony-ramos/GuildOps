@@ -18,7 +18,7 @@ func (s Strike) Validate() error {
 	if len(s.Reason) == 0 {
 		return fmt.Errorf("reason must not be empty")
 	}
-	if len(s.Reason) > 100 {
+	if len(s.Reason) > 255 {
 		return fmt.Errorf("reason must not be longer than 255 characters")
 	}
 

@@ -30,8 +30,9 @@ func TestCreateAbsence(t *testing.T) {
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
 		raids := []entity.Raid{
 			{
-				ID:   1,
-				Name: "RaidName",
+				ID:         1,
+				Name:       "raid name",
+				Difficulty: "normal",
 			},
 		}
 		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
