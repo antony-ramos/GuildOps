@@ -212,6 +212,9 @@ func (d Discord) DeleteLootHandler(
 func (d Discord) LootCounterCheckerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
