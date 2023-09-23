@@ -74,12 +74,12 @@ func (d Discord) PlayerHandler(
 	var returnErr error
 	name := optionMap["name"].StringValue()
 	if interaction.ApplicationCommandData().Name == "coven-player-create" {
-		err := d.CreatePlayer(ctx, name)
+		id, err := d.CreatePlayer(ctx, name)
 		if err != nil {
 			msg = "Erreur lors de la création du joueur: " + err.Error()
 			returnErr = err
 		} else {
-			msg = "Joueur " + name + " créé avec succès"
+			msg = "Joueur " + name + " créé avec succès : ID " + strconv.Itoa(id)
 		}
 	} else {
 		err := d.DeletePlayer(ctx, name)

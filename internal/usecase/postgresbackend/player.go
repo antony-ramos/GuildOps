@@ -48,7 +48,7 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name string) ([]en
 				sql, _, err = pg.Builder.
 					Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").
 					From("loots").
-					Join("raids ON raids.raid_id = loots.raid_id").
+					Join("raids ON raids.id = loots.raid_id").
 					Where("loots.player_id = $1").ToSql()
 				if err != nil {
 					return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
@@ -76,7 +76,7 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name string) ([]en
 					Select("absences.id", "absences.player_id", "absences.raid_id",
 						"raids.name", "raids.difficulty", "raids.date").
 					From("absences").
-					Join("raids ON raids.raid_id = absences.raid_id").
+					Join("raids ON raids.id = absences.raid_id").
 					Where("absences.player_id = $1").ToSql()
 				if err != nil {
 					return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
@@ -132,8 +132,11 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Pool.Exec: %w", err)
 		}
-		// player.ID = id
-		return player, nil
+		player, err := pg.SearchPlayer(ctx, -1, player.Name)
+		if err != nil {
+			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.SearchPlayer: %w", err)
+		}
+		return player[0], nil
 	}
 }
 

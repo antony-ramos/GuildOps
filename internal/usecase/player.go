@@ -16,23 +16,23 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 	return &PlayerUseCase{backend: bk}
 }
 
-func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) error {
+func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (int, error) {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: %w", ctx.Err())
+		return -1, fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: %w", ctx.Err())
 	default:
 		player := entity.Player{
 			Name: playerName,
 		}
 		err := player.Validate()
 		if err != nil {
-			return fmt.Errorf("database - CreatePlayer - r.Validate: %w", err)
+			return -1, fmt.Errorf("database - CreatePlayer - r.Validate: %w", err)
 		}
-		_, err = puc.backend.CreatePlayer(ctx, player)
+		player, err = puc.backend.CreatePlayer(ctx, player)
 		if err != nil {
-			return fmt.Errorf("database - CreatePlayer - r.CreatePlayer: %w", err)
+			return -1, fmt.Errorf("database - CreatePlayer - r.CreatePlayer: %w", err)
 		}
-		return nil
+		return player.ID, nil
 	}
 }
 
