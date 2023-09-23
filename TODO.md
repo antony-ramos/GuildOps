@@ -7,6 +7,7 @@
 - [ ] Add Usecase: player name is not discord name. Must implement a way to link them
 - [ ] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
 - [ ] Fix in SearchPlayer: player strikes must be import there not in usecase
+- [ ] Add notes to players (for example: player cannot play on wednesday)
 
 ### In Progress
 

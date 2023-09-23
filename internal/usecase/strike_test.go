@@ -157,3 +157,61 @@ func TestStrikeUseCase_CreateStrike(t *testing.T) {
 		mockBackend.AssertExpectations(t)
 	})
 }
+
+func TestStrikeUseCase_ReadStrike(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
+
+		strikes := []entity.Strike{
+			{
+				ID:     1,
+				Reason: "valid reason",
+				Date:   time.Now(),
+				Season: "DF/S2",
+			},
+			{
+				ID:     2,
+				Reason: "valid reason 2",
+				Date:   time.Now(),
+				Season: "DF/S2",
+			},
+		}
+
+		mockBackend.On("SearchStrike",
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(strikes, nil)
+
+		strikes, err := strikeUseCase.ReadStrikes(context.Background(), "playername")
+
+		assert.NoError(t, err)
+		assert.Equal(t, strikes, strikes)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Context is done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := strikeUseCase.ReadStrikes(ctx, "playername")
+
+		assert.Error(t, err)
+	})
+}
