@@ -1,14 +1,19 @@
-package entity
+package entity_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/antony-ramos/guildops/internal/entity"
+)
 
 func TestPlayer_Validate(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		ID          int
 		Name        string
-		Strikes     []Strike
-		Loots       []Loot
-		MissedRaids []Raid
+		Strikes     []entity.Strike
+		Loots       []entity.Loot
+		MissedRaids []entity.Raid
 	}
 	tests := []struct {
 		name    string
@@ -20,9 +25,9 @@ func TestPlayer_Validate(t *testing.T) {
 			fields: fields{
 				ID:          1,
 				Name:        "playername",
-				Strikes:     []Strike{},
-				Loots:       []Loot{},
-				MissedRaids: []Raid{},
+				Strikes:     []entity.Strike{},
+				Loots:       []entity.Loot{},
+				MissedRaids: []entity.Raid{},
 			},
 			wantErr: false,
 		},
@@ -31,9 +36,9 @@ func TestPlayer_Validate(t *testing.T) {
 			fields: fields{
 				ID:          1,
 				Name:        "",
-				Strikes:     []Strike{},
-				Loots:       []Loot{},
-				MissedRaids: []Raid{},
+				Strikes:     []entity.Strike{},
+				Loots:       []entity.Loot{},
+				MissedRaids: []entity.Raid{},
 			},
 			wantErr: true,
 		},
@@ -42,9 +47,9 @@ func TestPlayer_Validate(t *testing.T) {
 			fields: fields{
 				ID:          1,
 				Name:        "playernameplayername",
-				Strikes:     []Strike{},
-				Loots:       []Loot{},
-				MissedRaids: []Raid{},
+				Strikes:     []entity.Strike{},
+				Loots:       []entity.Loot{},
+				MissedRaids: []entity.Raid{},
 			},
 			wantErr: true,
 		},
@@ -53,9 +58,9 @@ func TestPlayer_Validate(t *testing.T) {
 			fields: fields{
 				ID:          1,
 				Name:        "playername123",
-				Strikes:     []Strike{},
-				Loots:       []Loot{},
-				MissedRaids: []Raid{},
+				Strikes:     []entity.Strike{},
+				Loots:       []entity.Loot{},
+				MissedRaids: []entity.Raid{},
 			},
 			wantErr: true,
 		},
@@ -64,24 +69,26 @@ func TestPlayer_Validate(t *testing.T) {
 			fields: fields{
 				ID:          1,
 				Name:        "PlayerName",
-				Strikes:     []Strike{},
-				Loots:       []Loot{},
-				MissedRaids: []Raid{},
+				Strikes:     []entity.Strike{},
+				Loots:       []entity.Loot{},
+				MissedRaids: []entity.Raid{},
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := Player{
-				ID:          tt.fields.ID,
-				Name:        tt.fields.Name,
-				Strikes:     tt.fields.Strikes,
-				Loots:       tt.fields.Loots,
-				MissedRaids: tt.fields.MissedRaids,
+		test := tt
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			player := entity.Player{
+				ID:          test.fields.ID,
+				Name:        test.fields.Name,
+				Strikes:     test.fields.Strikes,
+				Loots:       test.fields.Loots,
+				MissedRaids: test.fields.MissedRaids,
 			}
-			if err := p.Validate(); (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			if err := player.Validate(); (err != nil) != test.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
 			}
 		})
 	}

@@ -1,11 +1,13 @@
 package entity_test
 
 import (
-	"github.com/antony-ramos/guildops/internal/entity"
 	"testing"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 func TestLoot_Validate(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		ID     int
 		Name   string
@@ -59,15 +61,17 @@ func TestLoot_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := entity.Loot{
-				ID:     tt.fields.ID,
-				Name:   tt.fields.Name,
-				Player: tt.fields.Player,
-				Raid:   tt.fields.Raid,
+		test := tt
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			loot := entity.Loot{
+				ID:     test.fields.ID,
+				Name:   test.fields.Name,
+				Player: test.fields.Player,
+				Raid:   test.fields.Raid,
 			}
-			if err := l.Validate(); (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			if err := loot.Validate(); (err != nil) != test.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
 			}
 		})
 	}

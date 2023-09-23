@@ -1,12 +1,14 @@
 package entity_test
 
 import (
-	"github.com/antony-ramos/guildops/internal/entity"
 	"testing"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 func TestStrike_Validate(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		Date   time.Time
 		ID     int
@@ -48,23 +50,27 @@ func TestStrike_Validate(t *testing.T) {
 				ID:     1,
 				Season: "DF/S2",
 				Reason: "ZBNSZVmKQwgZCBU9KjsbEOEewrPl5U1XkH10K4uXYVTuZiZiWzcydA1ISnH7iapcneGpm4CjbdMd1FdDyxuQ4eluwy3jP7kfrLhT" +
-					"Wcm6Pbj2DbMnd4J71OzqqPmntmWd5wyiUFoVtcVNthJXFO23rQIg6MrT25DI4V1LLHmZ9dcMJUbcdaGlJ60nLTgmKnBUhYzYC0roBXeCjBCStg16teOgFS23m6j1Yrejjba9Eyro1YOi2ETX6sCesMvKfG2N0",
+					"Wcm6Pbj2DbMnd4J71OzqqPmntmWd5wyiUFoVtcVNthJXFO23rQIg6MrT25DI4V1LLHmZ9dcMJUbcdaGlJ60nLT" +
+					"gmKnBUhYzYC0roBXeCjBCStg16teOgFS23m6j1Yrejjba9Eyro1YOi2ETX6sCesMvKfG2N0",
 				Player: &entity.Player{},
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := entity.Strike{
-				Date:   tt.fields.Date,
-				ID:     tt.fields.ID,
-				Season: tt.fields.Season,
-				Reason: tt.fields.Reason,
-				Player: tt.fields.Player,
+		test := tt
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			strike := entity.Strike{
+				Date:   test.fields.Date,
+				ID:     test.fields.ID,
+				Season: test.fields.Season,
+				Reason: test.fields.Reason,
+				Player: test.fields.Player,
 			}
-			if err := s.Validate(); (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			if err := strike.Validate(); (err != nil) != test.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
 			}
 		})
 	}
