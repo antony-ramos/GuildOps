@@ -271,3 +271,55 @@ func TestPG_CreateStrike(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestPG_SearchStrike(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		columns := []string{"id", "player_id", "season", "reason", "created_at"}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(0, 0, "test", "test", time.Now()).ToPgxRows()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, player_id, season, reason, created_at FROM strikes WHERE player_id = $1", player.ID).
+			Return(pgxRows, nil)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		strikes, err := pgBackend.SearchStrike(context.Background(), player.ID, time.Time{}, "", "")
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(strikes))
+	})
+
+	t.Run("Context cancelled", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := pgBackend.SearchStrike(ctx, player.ID, time.Time{}, "", "")
+		assert.Error(t, err)
+	})
+}
