@@ -79,7 +79,8 @@ func TestLootUseCase_SelectPlayerToAssign(t *testing.T) {
 		playersNames := []string{"playerone", "playertwo"}
 
 		for _, player := range players {
-			mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, player.Name).Return([]entity.Player{player}, nil)
+			mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, player.Name, mock.Anything).
+				Return([]entity.Player{player}, nil)
 		}
 
 		p, err := LootUseCase.SelectPlayerToAssign(context.Background(), playersNames, "mythic")
@@ -131,7 +132,8 @@ func TestLootUseCase_SelectPlayerToAssign(t *testing.T) {
 		playersWinners := make([]entity.Player, 0)
 		for i := 0; i < 10; i++ {
 			for _, player := range players {
-				mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, player.Name).Return([]entity.Player{player}, nil)
+				mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, player.Name, mock.Anything).
+					Return([]entity.Player{player}, nil)
 			}
 			p, err := LootUseCase.SelectPlayerToAssign(context.Background(), playersNames, "mythic")
 			assert.NoError(t, err)
@@ -173,7 +175,8 @@ func TestLootUseCase_SelectPlayerToAssign(t *testing.T) {
 
 		playersNames := []string{"playerone", "playertwo"}
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, playersNames[0]).Return([]entity.Player{}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, playersNames[0], mock.Anything).
+			Return([]entity.Player{}, nil)
 
 		p, err := LootUseCase.SelectPlayerToAssign(context.Background(), playersNames, "mythic")
 		assert.Error(t, err)

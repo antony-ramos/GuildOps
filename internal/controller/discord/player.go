@@ -46,6 +46,18 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 			},
 		},
 	},
+	{
+		Name:        "coven-player-link",
+		Description: "link your discord account to your player name",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "name",
+				Description: "ex: milowenn",
+				Required:    true,
+			},
+		},
+	},
 }
 
 func (d Discord) InitPlayer() map[string]func(
@@ -54,6 +66,7 @@ func (d Discord) InitPlayer() map[string]func(
 		"coven-player-create": d.PlayerHandler,
 		"coven-player-delete": d.PlayerHandler,
 		"coven-player-get":    d.GetPlayerHandler,
+		"coven-player-link":   d.LinkPlayerHandler,
 	}
 }
 
@@ -129,6 +142,9 @@ func (d Discord) GetPlayerHandler(
 	}
 	msg += "Name : **" + player.Name + "**\n"
 	msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
+	if player.DiscordName != "" {
+		msg += "Discord ID : **" + interaction.Member.User.ID + "**\n"
+	}
 
 	// For each difficulty, show the number of loots
 	lootCounter := make(map[string]int)
@@ -167,6 +183,61 @@ func (d Discord) GetPlayerHandler(
 		}
 	}
 
+	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: msg,
+		},
+	})
+	return nil
+}
+
+func (d Discord) LinkPlayerHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	options := interaction.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+
+	var msg string
+	name := optionMap["name"].StringValue()
+	player, err := d.ReadPlayer(ctx, name)
+	// Show on string all info about player
+	if err != nil {
+		msg = "Erreur lors de la récupération du joueur: " + err.Error()
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+		return fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)
+	}
+
+	err = d.LinkPlayer(ctx, player.Name, interaction.Member.User.Username)
+	if err != nil {
+		msg = "Erreur lors de la liaison avec le joueur : " + err.Error()
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+		return fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
+	}
+
+	msg += "Vous êtes maintenant lié à ce joueur : \n"
+	msg += "Name : **" + player.Name + "**\n"
+	msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
+	if player.DiscordName != "" {
+		msg += "Discord ID : **" + interaction.Member.User.ID + "**\n"
+	}
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{

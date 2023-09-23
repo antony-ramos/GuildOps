@@ -27,7 +27,8 @@ func TestCreateAbsence(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		raids := []entity.Raid{
 			{
 				ID:         1,
@@ -51,7 +52,7 @@ func TestCreateAbsence(t *testing.T) {
 
 		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{}, errors.New("error while searching player"))
 
 		err := absenceUseCase.CreateAbsence(context.Background(), "PlayerName", time.Now())
@@ -74,7 +75,8 @@ func TestCreateAbsence(t *testing.T) {
 			ID:   1,
 			Name: "",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		raids := []entity.Raid{
 			{
 				ID:   1,
@@ -98,7 +100,8 @@ func TestCreateAbsence(t *testing.T) {
 
 		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{}, nil)
 
 		err := absenceUseCase.CreateAbsence(context.Background(), "PlayerName", time.Now())
 
@@ -121,7 +124,8 @@ func TestCreateAbsence(t *testing.T) {
 			ID:   1,
 			Name: "PlayerName",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		raids := []entity.Raid{
 			{
 				ID:   1,
@@ -151,7 +155,8 @@ func TestCreateAbsence(t *testing.T) {
 			ID:   1,
 			Name: "PlayerName",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("no raid found"))
 
@@ -176,7 +181,8 @@ func TestCreateAbsence(t *testing.T) {
 			ID:   1,
 			Name: "PlayerName",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		date := time.Now()
@@ -220,7 +226,8 @@ func TestDeleteAbsence(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		absences := []entity.Absence{
 			{
 				ID:     1,
@@ -243,7 +250,7 @@ func TestDeleteAbsence(t *testing.T) {
 
 		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{}, errors.New("error while searching player"))
 
 		err := absenceUseCase.DeleteAbsence(context.Background(), "PlayerName", time.Now())
@@ -267,7 +274,8 @@ func TestDeleteAbsence(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error while searching absence"))
 
@@ -288,7 +296,8 @@ func TestDeleteAbsence(t *testing.T) {
 
 		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{}, nil)
 
 		err := absenceUseCase.DeleteAbsence(context.Background(), "PlayerName", time.Now())
 
@@ -310,7 +319,8 @@ func TestDeleteAbsence(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		err := absenceUseCase.DeleteAbsence(context.Background(), "PlayerName", time.Now())
@@ -332,7 +342,8 @@ func TestDeleteAbsence(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 		absences := []entity.Absence{
 			{
 				ID:     1,

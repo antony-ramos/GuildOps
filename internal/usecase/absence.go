@@ -25,7 +25,7 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 		return fmt.Errorf("AbsenceUseCase - CreateAbsence - ctx.Done: %w", ctx.Err())
 	default:
 		// Get player ID
-		player, err := a.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return fmt.Errorf("CreateAbsence - backend.SearchPlayer: %w", err)
 		}
@@ -68,7 +68,7 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 	case <-ctx.Done():
 		return fmt.Errorf("AbsenceUseCase - DeleteAbsence - ctx.Done: %w", ctx.Err())
 	default:
-		player, err := a.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return fmt.Errorf("DeleteAbsence - backend.SearchPlayer: %w", err)
 		}

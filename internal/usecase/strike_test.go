@@ -61,7 +61,8 @@ func TestStrikeUseCase_CreateStrike(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 
 		mockBackend.On("CreateStrike", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -95,7 +96,7 @@ func TestStrikeUseCase_CreateStrike(t *testing.T) {
 
 		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("bug SearchPlayer"))
 
 		err := strikeUseCase.CreateStrike(context.Background(), "valid reason", "playername")
@@ -111,7 +112,7 @@ func TestStrikeUseCase_CreateStrike(t *testing.T) {
 
 		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		err := strikeUseCase.CreateStrike(context.Background(), "valid reason", "playername")
 
@@ -130,7 +131,8 @@ func TestStrikeUseCase_CreateStrike(t *testing.T) {
 			ID:   1,
 			Name: "playername",
 		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{player}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
 
 		mockBackend.On("CreateStrike", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("bug Create Strike"))
 

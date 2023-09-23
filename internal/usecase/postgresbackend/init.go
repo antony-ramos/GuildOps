@@ -40,7 +40,8 @@ func (pg *PG) Init(connStr string) error {
 	createTableSQL := `
         CREATE TABLE IF NOT EXISTS players (
             id serial PRIMARY KEY,
-            name VARCHAR(255) UNIQUE
+            name VARCHAR(255) UNIQUE,
+            discord_id VARCHAR(255) UNIQUE
         );
     `
 

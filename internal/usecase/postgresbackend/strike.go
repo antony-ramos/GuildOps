@@ -16,13 +16,14 @@ func (pg *PG) searchStrikeOnParam(ctx context.Context, paramName string, param i
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - ctx.Done: %w", ctx.Err())
 	default:
 		var strikes []entity.Strike
+		condition := fmt.Sprintf("%s = $1", paramName)
 		sql, _, err := pg.Builder.
 			Select("id", "player_id", "season", "reason", "created_at").
-			From("strikes").Where("$1 = $2").ToSql()
+			From("strikes").Where(condition).ToSql()
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(ctx, sql, paramName, param)
+		rows, err := pg.Pool.Query(ctx, sql, param)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - r.Pool.Query: %w", err)
 		}

@@ -27,7 +27,7 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 			return fmt.Errorf("CreateLoot - backend.ReadRaid: %w", err)
 		}
 
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return fmt.Errorf("CreateLoot - backend.SearchPlayer: %w", err)
 		}
@@ -63,7 +63,7 @@ func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 	case <-ctx.Done():
 		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: %w", ctx.Err())
 	default:
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
 		}
@@ -85,7 +85,7 @@ func (puc LootUseCase) SelectPlayerToAssign(
 
 		playerList := make([]entity.Player, 0)
 		for _, playerName := range playerNames {
-			player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+			player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 			if err != nil {
 				return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - backend.SearchPlayer: %w", err)
 			}

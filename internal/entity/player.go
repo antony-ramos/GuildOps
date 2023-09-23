@@ -6,8 +6,9 @@ import (
 )
 
 type Player struct {
-	ID   int
-	Name string
+	ID          int
+	Name        string
+	DiscordName string
 
 	Strikes     []Strike
 	Loots       []Loot
