@@ -103,6 +103,7 @@ func TestPG_searchStrikeOnParam(t *testing.T) {
 	})
 }
 
+//nolint:dupl
 func TestPG_DeleteStrike(t *testing.T) {
 	t.Parallel()
 	t.Run("Success", func(t *testing.T) {
