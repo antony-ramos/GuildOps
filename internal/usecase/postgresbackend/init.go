@@ -14,6 +14,8 @@ type PG struct {
 	*postgres.Postgres
 }
 
+var isNotDeleted = "DELETE 0"
+
 // Init Database Tables.
 func (pg *PG) Init(connStr string) error {
 	// Open a connection to the database

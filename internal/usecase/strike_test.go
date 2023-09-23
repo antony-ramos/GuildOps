@@ -139,4 +139,19 @@ func TestStrikeUseCase_CreateStrike(t *testing.T) {
 		assert.Error(t, err, "bug Create Strike")
 		mockBackend.AssertExpectations(t)
 	})
+
+	t.Run("Context is done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := strikeUseCase.CreateStrike(ctx, "valid reason", "playername")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
 }

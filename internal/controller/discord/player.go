@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -50,15 +51,18 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) InitPlayer() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-player-create": d.CreatePlayerHandler,
-		"coven-player-delete": d.DeletePlayerHandler,
+		"coven-player-create": d.PlayerHandler,
+		"coven-player-delete": d.PlayerHandler,
 		"coven-player-get":    d.GetPlayerHandler,
 	}
 }
 
-func (d Discord) CreatePlayerHandler(
+func (d Discord) PlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -67,44 +71,24 @@ func (d Discord) CreatePlayerHandler(
 	}
 
 	var msg string
-	name := optionMap["name"].StringValue()
-	err := d.CreatePlayer(ctx, name)
 	var returnErr error
-	if err != nil {
-		msg = "Erreur lors de la création du joueur: " + err.Error()
-		returnErr = err
-	} else {
-		msg = "Joueur " + name + " créé avec succès"
-	}
-
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return returnErr
-}
-
-func (d Discord) DeletePlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
-	options := interaction.ApplicationCommandData().Options
-	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
-	for _, opt := range options {
-		optionMap[opt.Name] = opt
-	}
-
-	var msg string
 	name := optionMap["name"].StringValue()
-	err := d.DeletePlayer(ctx, name)
-	var returnErr error
-	if err != nil {
-		msg = "Erreur lors de la suppression du joueur: " + err.Error()
-		returnErr = err
+	if interaction.ApplicationCommandData().Name == "coven-player-create" {
+		id, err := d.CreatePlayer(ctx, name)
+		if err != nil {
+			msg = "Erreur lors de la création du joueur: " + err.Error()
+			returnErr = err
+		} else {
+			msg = "Joueur " + name + " créé avec succès : ID " + strconv.Itoa(id)
+		}
 	} else {
-		msg = "Joueur " + name + " supprimé avec succès"
+		err := d.DeletePlayer(ctx, name)
+		if err != nil {
+			msg = "Erreur lors de la suppression du joueur: " + err.Error()
+			returnErr = err
+		} else {
+			msg = "Joueur " + name + " supprimé avec succès"
+		}
 	}
 
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
@@ -119,6 +103,9 @@ func (d Discord) DeletePlayerHandler(
 func (d Discord) GetPlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 

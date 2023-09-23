@@ -188,6 +188,22 @@ func TestCreateAbsence(t *testing.T) {
 			mockBackend.AssertExpectations(t)
 		})
 	})
+
+	t.Run("Context is Done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
+
+		date := time.Now()
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := absenceUseCase.CreateAbsence(ctx, "PlayerName", date)
+
+		assert.Error(t, err, "AbsenceUseCase - CreateAbsence - ctx.Done: %w", ctx.Err())
+		mockBackend.AssertExpectations(t)
+	})
 }
 
 func TestDeleteAbsence(t *testing.T) {
@@ -329,6 +345,22 @@ func TestDeleteAbsence(t *testing.T) {
 		err := absenceUseCase.DeleteAbsence(context.Background(), "PlayerName", time.Now())
 
 		assert.Error(t, err, "error deleting absence")
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Context is Done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
+
+		date := time.Now()
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := absenceUseCase.DeleteAbsence(ctx, "PlayerName", date)
+
+		assert.Error(t, err, "AbsenceUseCase - DeleteAbsence - ctx.Done: %w", ctx.Err())
 		mockBackend.AssertExpectations(t)
 	})
 }

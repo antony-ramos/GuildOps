@@ -176,9 +176,12 @@ func (pg *PG) DeleteStrike(ctx context.Context, strikeID int) error {
 		if errInsert != nil {
 			return fmt.Errorf("database - DeleteStrike - r.Builder: %w", errInsert)
 		}
-		_, err := pg.Pool.Exec(ctx, sql, strikeID)
+		isDelete, err := pg.Pool.Exec(ctx, sql, strikeID)
 		if err != nil {
 			return fmt.Errorf("database - DeleteStrike - r.Pool.Exec: %w", err)
+		}
+		if isDelete.String() == isNotDeleted {
+			return fmt.Errorf("database - DeleteStrike - strike not found")
 		}
 		return nil
 	}

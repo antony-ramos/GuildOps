@@ -12,4 +12,4 @@ metrics:
 postgres:
   pool_max: 10
   conn_attempts: 10
-  conn_timeout: 5s
+  conn_timeout: 2s

@@ -155,9 +155,12 @@ func (pg *PG) DeleteLoot(ctx context.Context, lootID int) error {
 		if errInsert != nil {
 			return fmt.Errorf("database - DeleteLoot - r.Builder: %w", errInsert)
 		}
-		_, err := pg.Pool.Exec(ctx, sql, lootID)
+		isDelete, err := pg.Pool.Exec(ctx, sql, lootID)
 		if err != nil {
 			return fmt.Errorf("database - DeleteLoot - r.Pool.Exec: %w", err)
+		}
+		if isDelete.String() == isNotDeleted {
+			return fmt.Errorf("database - DeleteLoot - loot not found")
 		}
 		return nil
 	}

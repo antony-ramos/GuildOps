@@ -19,26 +19,36 @@ func NewRaidUseCase(bk Backend) *RaidUseCase {
 func (puc RaidUseCase) CreateRaid(
 	ctx context.Context, raidName, difficulty string, date time.Time,
 ) (entity.Raid, error) {
-	raid := entity.Raid{
-		Name:       raidName,
-		Difficulty: difficulty,
-		Date:       date,
+	select {
+	case <-ctx.Done():
+		return entity.Raid{}, fmt.Errorf("RaidUseCase - CreateRaid - ctx.Done: %w", ctx.Err())
+	default:
+		raid := entity.Raid{
+			Name:       raidName,
+			Difficulty: difficulty,
+			Date:       date,
+		}
+		err := raid.Validate()
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Validate: %w", err)
+		}
+		raid, err = puc.backend.CreateRaid(ctx, raid)
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.CreateRaid: %w", err)
+		}
+		return raid, nil
 	}
-	err := raid.Validate()
-	if err != nil {
-		return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Validate: %w", err)
-	}
-	raid, err = puc.backend.CreateRaid(ctx, raid)
-	if err != nil {
-		return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.CreateRaid: %w", err)
-	}
-	return raid, nil
 }
 
 func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
-	err := puc.backend.DeleteRaid(ctx, raidID)
-	if err != nil {
-		return fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("RaidUseCase - DeleteRaid - ctx.Done: %w", ctx.Err())
+	default:
+		err := puc.backend.DeleteRaid(ctx, raidID)
+		if err != nil {
+			return fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
+		}
+		return nil
 	}
-	return nil
 }

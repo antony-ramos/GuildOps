@@ -153,9 +153,12 @@ func (pg *PG) DeleteAbsence(ctx context.Context, absenceID int) error {
 		if err != nil {
 			return fmt.Errorf("database - DeleteAbsence - r.Builder: %w", err)
 		}
-		_, err = pg.Pool.Exec(ctx, sql, absenceID)
+		isDelete, err := pg.Pool.Exec(ctx, sql, absenceID)
 		if err != nil {
 			return fmt.Errorf("database - DeleteAbsence - r.Pool.Exec: %w", err)
+		}
+		if isDelete.String() == isNotDeleted {
+			return fmt.Errorf("database - DeleteAbsence - absence not found")
 		}
 		return nil
 	}

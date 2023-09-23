@@ -77,6 +77,9 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) CreateRaidHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	returnErr := error(nil)
 	var msg string
 
@@ -121,7 +124,7 @@ func (d Discord) CreateRaidHandler(
 func (d Discord) DeleteRaidHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
 	var returnErr error

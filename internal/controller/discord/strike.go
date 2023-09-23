@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -65,6 +66,9 @@ func (d Discord) InitStrike() map[string]func(
 func (d Discord) StrikeOnPlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -96,6 +100,9 @@ func (d Discord) StrikeOnPlayerHandler(
 func (d Discord) ListStrikesOnPlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -135,6 +142,9 @@ func (d Discord) ListStrikesOnPlayerHandler(
 func (d Discord) DeleteStrikeHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -143,7 +153,7 @@ func (d Discord) DeleteStrikeHandler(
 	}
 
 	var msg string
-	idString := optionMap["strikeID"].StringValue()
+	idString := optionMap["id"].StringValue()
 	strikeID, err := strconv.ParseInt(idString, 10, 64)
 	returnErr := error(nil)
 	if err != nil {
