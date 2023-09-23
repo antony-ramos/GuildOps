@@ -323,3 +323,35 @@ func TestPG_SearchStrike(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestPG_ReadStrike(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		strike := entity.Strike{
+			ID:     1,
+			Reason: "valid reason",
+			Date:   time.Now(),
+			Season: "DF/S2",
+		}
+
+		columns := []string{"id", "player_id", "season", "reason", "created_at"}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(strike.ID, 0, strike.Season, strike.Reason, strike.Date).ToPgxRows()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, player_id, season, reason, created_at FROM strikes WHERE id = $1", strike.ID).
+			Return(pgxRows, nil)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		strikeInput, err := pgBackend.ReadStrike(context.Background(), 1)
+		assert.NoError(t, err)
+		assert.Equal(t, strike, strikeInput)
+	})
+}
