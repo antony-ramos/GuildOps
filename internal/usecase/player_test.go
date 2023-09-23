@@ -20,7 +20,7 @@ func TestPlayerUseCase_CreatePlayer(t *testing.T) {
 
 		mockBackend := mocks.NewBackend(t)
 
-		strikeUseCase := usecase.NewPlayerUseCase(mockBackend)
+		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
 
 		player := entity.Player{
 			ID:   1,
@@ -28,7 +28,7 @@ func TestPlayerUseCase_CreatePlayer(t *testing.T) {
 		}
 		mockBackend.On("CreatePlayer", mock.Anything, mock.Anything, mock.Anything).Return(player, nil)
 
-		id, err := strikeUseCase.CreatePlayer(context.Background(), "playername")
+		id, err := playerUseCase.CreatePlayer(context.Background(), "playername")
 		assert.Equalf(t, 1, id, "CreatePlayer(%v)", "playername")
 
 		assert.NoError(t, err)
@@ -40,9 +40,9 @@ func TestPlayerUseCase_CreatePlayer(t *testing.T) {
 
 		mockBackend := mocks.NewBackend(t)
 
-		strikeUseCase := usecase.NewPlayerUseCase(mockBackend)
+		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
 
-		_, err := strikeUseCase.CreatePlayer(context.Background(), "")
+		_, err := playerUseCase.CreatePlayer(context.Background(), "")
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
 	})
@@ -52,15 +52,32 @@ func TestPlayerUseCase_CreatePlayer(t *testing.T) {
 
 		mockBackend := mocks.NewBackend(t)
 
-		strikeUseCase := usecase.NewPlayerUseCase(mockBackend)
+		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
 
 		mockBackend.On("CreatePlayer", mock.Anything, mock.Anything, mock.Anything).
 			Return(entity.Player{}, errors.New("Backend Error"))
 
-		id, err := strikeUseCase.CreatePlayer(context.Background(), "playername")
+		id, err := playerUseCase.CreatePlayer(context.Background(), "playername")
 		assert.Equalf(t, -1, id, "CreatePlayer(%v)", "playername")
 
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
 	})
+
+	t.Run("Context is done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		id, err := playerUseCase.CreatePlayer(ctx, "playername")
+		assert.Equalf(t, -1, id, "CreatePlayer(%v)", "playername")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
 }
