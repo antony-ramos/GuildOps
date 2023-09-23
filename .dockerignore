@@ -1,9 +1,9 @@
 # Ignore everything ...
 *
-**/*
-
 # ... but
 !cmd/
 !pkg/
+!internal/
+!config/
 !go.mod
 !go.sum
