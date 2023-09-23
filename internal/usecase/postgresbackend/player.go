@@ -192,9 +192,12 @@ func (pg *PG) DeletePlayer(ctx context.Context, playerID int) error {
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.Builder.Delete: %w", err)
 		}
-		_, err = pg.Pool.Exec(ctx, sql, playerID)
+		isDelete, err := pg.Pool.Exec(ctx, sql, playerID)
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.Pool.Exec: %w", err)
+		}
+		if isDelete.String() == isNotDeleted {
+			return fmt.Errorf("database - DeletePlayer - player not found")
 		}
 		return nil
 	}

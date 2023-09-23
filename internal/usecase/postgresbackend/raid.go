@@ -206,9 +206,12 @@ func (pg *PG) DeleteRaid(ctx context.Context, raidID int) error {
 		if err != nil {
 			return fmt.Errorf("database - DeleteRaid - r.Builder.Delete: %w", err)
 		}
-		_, err = pg.Pool.Exec(ctx, sql, raidID)
+		isDelete, err := pg.Pool.Exec(ctx, sql, raidID)
 		if err != nil {
 			return fmt.Errorf("database - DeleteRaid - r.Pool.Exec: %w", err)
+		}
+		if isDelete.String() == isNotDeleted {
+			return fmt.Errorf("database - DeleteRaid - raid not found")
 		}
 		return nil
 	}

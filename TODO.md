@@ -7,7 +7,6 @@
 - [ ] Add Usecase: player name is not discord name. Must implement a way to link them
 - [ ] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
 - [ ] Add In CreatePlayer id to player entity
-- [ ] Fix DeleteStrike always return success
 - [ ] Fix in SearchPlayer: player strikes must be import there not in usecase
 
 ### In Progress
@@ -22,3 +21,4 @@
 - [X] Add Validate for entities
 - [X] Better context timeout management
 - [X] Add Log Level to config
+- [X] Fix DeleteStrike always return success
