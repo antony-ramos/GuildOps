@@ -164,3 +164,7 @@ func TestLootUseCase_DeleteLoot(t *testing.T) {
 		mockBackend.AssertExpectations(t)
 	})
 }
+
+func TestLootUseCase_CreateLoot(t *testing.T) {
+
+}
