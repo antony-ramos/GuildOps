@@ -6,11 +6,9 @@ import (
 	"strconv"
 	"time"
 
-
+	"github.com/jackc/pgx/v4"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/jackc/pgx/v4"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )

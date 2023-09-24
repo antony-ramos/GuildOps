@@ -49,7 +49,8 @@ func (d *Discord) Run(ctx context.Context) error {
 			defer span.End()
 			err := h(ctx, session, interaction)
 			if err != nil {
-				zap.L().Error(fmt.Sprintf("Error while handling command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
+				zap.L().Error(
+					fmt.Sprintf("Error while handling command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
 			}
 		}
 	})
