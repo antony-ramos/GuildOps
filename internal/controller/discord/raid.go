@@ -43,24 +43,6 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-raid-list",
-		Description: "Lister les raids",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "name",
-				Description: "ex: Milowenn",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "date",
-				Description: "ex: Milowenn",
-				Required:    false,
-			},
-		},
-	},
-	{
 		Name:        "coven-raid-del",
 		Description: "Supprimer un raid",
 		Options: []*discordgo.ApplicationCommandOption{
