@@ -134,11 +134,11 @@ func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
 			Set("name", loot.Name).
 			Set("raid_id", loot.Raid.ID).
 			Set("player_id", loot.Player.ID).
-			Where("id = $1").ToSql()
+			Where("id = $4").ToSql()
 		if err != nil {
 			return fmt.Errorf("database - UpdateLoot - r.Builder: %w", err)
 		}
-		_, err = pg.Pool.Exec(ctx, sql, args...)
+		_, err = pg.Pool.Exec(ctx, sql, args, loot.ID)
 		if err != nil {
 			return fmt.Errorf("database - UpdateLoot - r.Pool.Exec: %w", err)
 		}

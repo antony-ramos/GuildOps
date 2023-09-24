@@ -57,13 +57,91 @@ func TestPG_CreateLoot(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, loot, loot)
 	})
-	t.Run("Context cancelled", func(t *testing.T) {
+}
+
+func TestPG_SearchLoot(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		loot := entity.Loot{
+			ID:   1,
+			Name: "lootname",
+			Raid: &entity.Raid{
+				ID:         1,
+				Name:       "raidname",
+				Difficulty: "difficulty",
+				Date:       time.Now(),
+			},
+			Player: &entity.Player{
+				ID:   1,
+				Name: "playername",
+			},
+		}
+
+		columns := []string{
+			"loots.id", "loots.name", "loots.raid_id",
+			"raids.name", "raids.difficulty", "raids.date",
+			"loots.player_id", "players.name",
+		}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(loot.ID, loot.Name, loot.Raid.ID,
+			loot.Raid.Name, loot.Raid.Difficulty, loot.Raid.Date,
+			loot.Player.ID, loot.Player.Name).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT loots.id, loots.name, loots.raid_id, "+
+				"raids.name, raids.difficulty, raids.date, loots.player_id, p"+
+				"layers.name FROM loots JOIN raids ON raids.id = loots.raid_id "+
+				"JOIN players ON players.id = loots.player_id "+
+				"WHERE loots.name = $1 AND raids.date = $2 AND raids.difficulty = $3",
+			loot.Name, loot.Raid.Date, loot.Raid.Difficulty).
+			Return(pgxRows, nil)
+
+		loots, err := pgBackend.SearchLoot(context.Background(), loot.Name, loot.Raid.Date, loot.Raid.Difficulty)
+		assert.NoError(t, err)
+		assert.Equal(t, loots, []entity.Loot{loot})
 	})
-	t.Run("Query failed", func(t *testing.T) {
+}
+
+func TestPG_UpdateLoot(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-	})
-	t.Run("Loot is not created", func(t *testing.T) {
-		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		loot := entity.Loot{
+			ID:   1,
+			Name: "lootname",
+			Raid: &entity.Raid{
+				ID:         1,
+				Name:       "raidname",
+				Difficulty: "difficulty",
+				Date:       time.Now(),
+			},
+			Player: &entity.Player{
+				ID:   1,
+				Name: "playername",
+			},
+		}
+
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"UPDATE loots SET name = $1, raid_id = $2, player_id = $3 WHERE id = $4",
+			gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+
+		err := pgBackend.UpdateLoot(context.Background(), loot)
+		assert.NoError(t, err)
 	})
 }
