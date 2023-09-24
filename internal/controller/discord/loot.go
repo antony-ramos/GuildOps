@@ -22,9 +22,9 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 				Required:    true,
 			},
 			{
-				Type:        discordgo.ApplicationCommandOptionString,
+				Type:        discordgo.ApplicationCommandOptionInteger,
 				Name:        "raid-id",
-				Description: "ex: Milowenn",
+				Description: "ex: 4488766425",
 				Required:    true,
 			},
 			{
@@ -100,20 +100,10 @@ func (d Discord) AttributeLootHandler(
 	}
 
 	lootName := optionMap["loot-name"].StringValue()
-	raidID, err := strconv.Atoi(optionMap["raid-id"].StringValue())
-	if err != nil {
-		msg := "Erreur lors de l'attribution du loot: " + err.Error()
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("discord - AttributeLootHandler - strconv.Atoi: %w", err)
-	}
+	raidID := optionMap["raid-id"].IntValue()
 	playerName := optionMap["player-name"].StringValue()
 
-	err = d.LootUseCase.CreateLoot(ctx, lootName, raidID, playerName)
+	err := d.LootUseCase.CreateLoot(ctx, lootName, int(raidID), playerName)
 	if err != nil {
 		msg := "Erreur lors de l'attribution du loot: " + err.Error()
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
