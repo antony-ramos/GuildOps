@@ -33,4 +33,12 @@ func TestPG_Init(t *testing.T) {
 			t.Errorf("Unfulfilled expectations: %s", err)
 		}
 	})
+
+	t.Run("Failed ping database", func(t *testing.T) {
+		t.Parallel()
+
+		pgBackend := &postgresbackend.PG{nil}
+		err := pgBackend.Init("mock_conn_string", nil)
+		assert.Error(t, err)
+	})
 }
