@@ -15,6 +15,8 @@ type Discord struct {
 	StrikeUseCase
 	LootUseCase
 	RaidUseCase
+
+	Fake bool // Used for testing
 }
 
 var ctxError = "Error because request took too much time to complete"

@@ -47,6 +47,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 		LootUseCase:    luc,
 		RaidUseCase:    ruc,
 		StrikeUseCase:  suc,
+		Fake:           false,
 	}
 
 	var inits []func() map[string]func(
