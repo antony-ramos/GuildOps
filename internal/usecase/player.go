@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
@@ -17,6 +20,9 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 }
 
 func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (int, error) {
+	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/CreatePlayer")
+	span.SetAttributes(attribute.String("playerName", playerName))
+	defer span.End()
 	select {
 	case <-ctx.Done():
 		return -1, fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: %w", ctx.Err())
@@ -24,7 +30,12 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (i
 		player := entity.Player{
 			Name: playerName,
 		}
+
+		_, spanValidate := otel.Tracer("Entity").Start(ctx, "Player/Validate")
+		span.SetAttributes(attribute.String("playerName", playerName))
 		err := player.Validate()
+		spanValidate.End()
+
 		if err != nil {
 			return -1, fmt.Errorf("database - CreatePlayer - r.Validate: %w", err)
 		}

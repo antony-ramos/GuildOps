@@ -6,6 +6,10 @@ import (
 	"strconv"
 	"time"
 
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/jackc/pgx/v4"
 
 	"github.com/antony-ramos/guildops/internal/entity"
@@ -13,6 +17,13 @@ import (
 
 // SearchPlayer is a function which call backend to Search a Player Object.
 func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName string) ([]entity.Player, error) {
+	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "SearchPlayer")
+	span.SetAttributes(
+		attribute.String("playerName", name),
+		attribute.String("discordName", discordName),
+		attribute.Int("playerID", playerID))
+	defer span.End()
+
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("database - SearchPlayer - ctx.Done: %w", ctx.Err())
@@ -149,6 +160,9 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 
 // CreatePlayer is a function which call backend to Create a Player Object.
 func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Player, error) {
+	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "CreatePlayer")
+	span.SetAttributes(attribute.String("playerName", player.Name))
+	defer span.End()
 	select {
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("database - CreatePlayer - ctx.Done: %w", ctx.Err())
@@ -191,6 +205,11 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 
 // ReadPlayer is a function which call backend to Read a Player Object.
 func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, error) {
+	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "ReadPlayer")
+	span.SetAttributes(
+		attribute.Int("playerID", playerID))
+	defer span.End()
+
 	select {
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: %w", ctx.Err())
@@ -218,6 +237,13 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 
 // UpdatePlayer is a function which call backend to Update a Player Object.
 func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
+	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "UpdatePlayer")
+	span.SetAttributes(
+		attribute.String("playerName", player.Name),
+		attribute.String("discordName", player.DiscordName),
+		attribute.Int("playerID", player.ID))
+	defer span.End()
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - UpdatePlayer - ctx.Done: %w", ctx.Err())
@@ -242,6 +268,11 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 
 // DeletePlayer is a function which call backend to Delete a Player Object.
 func (pg *PG) DeletePlayer(ctx context.Context, playerID int) error {
+	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "DeletePlayer")
+	span.SetAttributes(
+		attribute.Int("playerID", playerID))
+	defer span.End()
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - DeletePlayer - ctx.Done: %w", ctx.Err())

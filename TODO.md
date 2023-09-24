@@ -1,8 +1,5 @@
 ### Todo
 
-- [ ] Better error management, errors send to Discord are too descriptive
-- [ ] Add more logs for each level
-- [ ] Add tracing for each request
 - [ ] Add API as controller
 - [ ] Add notes to players (for example: player cannot play on wednesday)
 
@@ -10,6 +7,8 @@
 
 - [ ] Add comments to every functions
 - [ ] Add tests to every functions
+- [ ] Add tracing for each request
+- [ ] Add more logs for each level
 
 ### Done ✓
 - [X] Create CI linter
@@ -23,3 +22,4 @@
 - [X] Add Usecase: player name is not discord name. Must implement a way to link them
 - [X] Fix in SearchPlayer: player strikes must be import there not in usecase
 - [X] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
+- [X] Better error management, errors send to Discord are too descriptive

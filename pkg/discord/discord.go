@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -41,11 +42,14 @@ func (d *Discord) Run(ctx context.Context) error {
 		return fmt.Errorf("discord - Run - d.s.Open: %w", err)
 	}
 
-	d.s.AddHandler(func(session *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := d.commandHandlers[i.ApplicationCommandData().Name]; ok {
-			err := h(ctx, session, i)
+	d.s.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+		if h, ok := d.commandHandlers[interaction.ApplicationCommandData().Name]; ok {
+			ctx := context.Background()
+			ctx, span := otel.Tracer("discordHandler").Start(ctx, interaction.ApplicationCommandData().Name)
+			defer span.End()
+			err := h(ctx, session, interaction)
 			if err != nil {
-				zap.L().Error(fmt.Sprintf("Error while handling command %s : %s", i.ApplicationCommandData().Name, err.Error()))
+				zap.L().Error(fmt.Sprintf("Error while handling command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
 			}
 		}
 	})
