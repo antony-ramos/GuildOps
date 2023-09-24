@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgconn"
 
@@ -70,6 +71,12 @@ func TestPG_CreatePlayer(t *testing.T) {
 				"FROM absences JOIN raids ON raids.id = absences.raid_id "+
 				"WHERE absences.player_id = $1", "1").
 			Return(pgxRows, nil)
+
+		columnsStrike := []string{"id", "season", "reason", "created_at"}
+		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
+			Return(pgxRowsStrike, nil)
 
 		p, err := pgBackend.CreatePlayer(context.Background(), player)
 		assert.NoError(t, err)
@@ -267,7 +274,7 @@ func TestPG_ReadPlayer(t *testing.T) {
 	})
 }
 
-//nolint:dupl,maintidx
+//nolint:maintidx
 func TestPG_SearchPlayer(t *testing.T) {
 	t.Parallel()
 	t.Run("Success with playerID", func(t *testing.T) {
@@ -317,6 +324,12 @@ func TestPG_SearchPlayer(t *testing.T) {
 				"FROM absences JOIN raids ON raids.id = absences.raid_id "+
 				"WHERE absences.player_id = $1", "1").
 			Return(pgxRows, nil)
+
+		columnsStrike := []string{"id", "season", "reason", "created_at"}
+		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
+			Return(pgxRowsStrike, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
 		assert.NoError(t, err)
@@ -397,6 +410,12 @@ func TestPG_SearchPlayer(t *testing.T) {
 				"WHERE absences.player_id = $1", "1").
 			Return(pgxRows, nil)
 
+		columnsStrike := []string{"id", "season", "reason", "created_at"}
+		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
+			Return(pgxRowsStrike, nil)
+
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
 		assert.NoError(t, err)
 		assert.Equal(t, player, p[0])
@@ -476,7 +495,22 @@ func TestPG_SearchPlayer(t *testing.T) {
 				"WHERE absences.player_id = $1", "1").
 			Return(pgxRows, nil)
 
+		strike := entity.Strike{
+			ID:     1,
+			Season: "DF/S2",
+			Reason: "reason",
+			Date:   time.Now(),
+		}
+		columnsStrike := []string{"id", "season", "reason", "created_at"}
+		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).
+			AddRow(strike.ID, strike.Season, strike.Reason, strike.Date).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
+			Return(pgxRowsStrike, nil)
+
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
+		player.Strikes = append(player.Strikes, strike)
+
 		assert.NoError(t, err)
 		assert.Equal(t, player, p[0])
 	})
