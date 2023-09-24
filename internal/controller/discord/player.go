@@ -162,7 +162,7 @@ func (d Discord) GetPlayerHandler(
 		msg += "**Strikes (" + strconv.Itoa(len(player.Strikes)) + ") :** \n"
 		for _, strike := range player.Strikes {
 			msg += "  " + strike.Reason +
-				" | " + strike.Date.Format("02/01/06") + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
+				" | " + strike.Date.Format("02/01/2006") + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
 		}
 	}
 	if len(player.MissedRaids) > 0 {

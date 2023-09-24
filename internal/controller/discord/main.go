@@ -72,7 +72,7 @@ func parseDate(dateStr string) ([]time.Time, error) {
 	for _, datePart := range dateParts {
 		date, err := time.Parse("02/01/06", datePart)
 		if err != nil {
-			return nil, fmt.Errorf("discord - parseDate - time.Parse: %w", err)
+			return nil, fmt.Errorf("date should be in format dd/mm/yy or \"dd/mm/yy au dd/mm/yy\"")
 		}
 		dates = append(dates, date)
 	}

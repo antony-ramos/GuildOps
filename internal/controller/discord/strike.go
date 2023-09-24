@@ -125,9 +125,9 @@ func (d Discord) ListStrikesOnPlayerHandler(
 		return fmt.Errorf("database - ListStrikesOnPlayerHandler - r.ReadStrikes: %w", err)
 	}
 
-	msg = "Strikes de " + playerName + ":\n"
+	msg = "Strikes de " + playerName + " (" + strconv.Itoa(len(strikes)) + ") :\n"
 	for _, strike := range strikes {
-		msg += strike.Date.String() + " | " + strike.Reason + "\n"
+		msg += "* " + strike.Date.Format("02/01/2006") + " | " + strike.Reason + "\n"
 	}
 
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
