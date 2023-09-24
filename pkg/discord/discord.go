@@ -64,12 +64,14 @@ func (d *Discord) Run(ctx context.Context) error {
 			case <-stopCh:
 				return // S'arrête immédiatement si un autre goroutine a signalé une erreur
 			default:
+				zap.L().Info("Registering command " + command.Name)
 				cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
 				if err != nil {
 					errCh <- err
 					close(stopCh) // Ferme le canal pour signaler aux autres goroutines de s'arrêter
 				}
 				registeredCommands[commandName] = cmd
+				zap.L().Info("Command " + command.Name + " registered")
 			}
 		}()
 	}
@@ -85,11 +87,13 @@ func (d *Discord) Run(ctx context.Context) error {
 
 	<-ctx.Done()
 	if d.DeleteCommands {
-		for _, v := range registeredCommands {
-			err := d.s.ApplicationCommandDelete(d.s.State.User.ID, strconv.Itoa(d.guildID), v.ID)
+		for _, value := range registeredCommands {
+			zap.L().Info("Deleting command " + value.Name)
+			err := d.s.ApplicationCommandDelete(d.s.State.User.ID, strconv.Itoa(d.guildID), value.ID)
 			if err != nil {
 				return fmt.Errorf("discord - Run - d.s.ApplicationCommandDelete: %w", err)
 			}
+			zap.L().Info("Command " + value.Name + " deleted")
 		}
 	}
 	return nil
