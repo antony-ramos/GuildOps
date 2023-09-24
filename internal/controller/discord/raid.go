@@ -43,31 +43,13 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-raid-list",
-		Description: "Lister les raids",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "name",
-				Description: "ex: Milowenn",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "date",
-				Description: "ex: Milowenn",
-				Required:    false,
-			},
-		},
-	},
-	{
 		Name:        "coven-raid-del",
 		Description: "Supprimer un raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Type:        discordgo.ApplicationCommandOptionString,
+				Type:        discordgo.ApplicationCommandOptionInteger,
 				Name:        "id",
-				Description: "ex: 4444-4444-4444",
+				Description: "ex: 4546646",
 				Required:    true,
 			},
 		},
@@ -93,7 +75,7 @@ func (d Discord) CreateRaidHandler(
 	name := optionMap["name"].StringValue()
 	date, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
-		msg = "Erreur lors de la création du raid: " + err.Error()
+		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -106,7 +88,7 @@ func (d Discord) CreateRaidHandler(
 
 	raid, err := d.CreateRaid(ctx, name, difficulty, date[0])
 	if err != nil {
-		msg = "Erreur lors de la création du raid: " + err.Error()
+		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
 		returnErr = err
 	} else {
 		msg = "Raid " + strconv.Itoa(raid.ID) + " créé avec succès"
@@ -137,17 +119,14 @@ func (d Discord) DeleteRaidHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	raidID, err := strconv.Atoi(optionMap["raidID"].StringValue())
-	if err != nil {
-		return fmt.Errorf("discord - DeleteRaidHandler - strconv.Atoi: %w", err)
-	}
+	raidID := optionMap["raidID"].IntValue()
 
-	err = d.DeleteRaid(ctx, raidID)
+	err := d.DeleteRaid(ctx, int(raidID))
 	if err != nil {
-		msg = "Erreur lors de la suppression du joueur: " + err.Error()
+		msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
 		returnErr = err
 	} else {
-		msg = "Joueur " + strconv.Itoa(raidID) + " supprimé avec succès"
+		msg = "Joueur " + strconv.Itoa(int(raidID)) + " supprimé avec succès"
 	}
 
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{

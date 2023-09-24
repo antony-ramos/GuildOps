@@ -89,7 +89,7 @@ func (d Discord) PlayerHandler(
 	if interaction.ApplicationCommandData().Name == "coven-player-create" {
 		id, err := d.CreatePlayer(ctx, name)
 		if err != nil {
-			msg = "Erreur lors de la création du joueur: " + err.Error()
+			msg = "Erreur lors de la création du joueur: " + HumanReadableError(err)
 			returnErr = err
 		} else {
 			msg = "Joueur " + name + " créé avec succès : ID " + strconv.Itoa(id)
@@ -97,19 +97,21 @@ func (d Discord) PlayerHandler(
 	} else {
 		err := d.DeletePlayer(ctx, name)
 		if err != nil {
-			msg = "Erreur lors de la suppression du joueur: " + err.Error()
+			msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
 			returnErr = err
 		} else {
 			msg = "Joueur " + name + " supprimé avec succès"
 		}
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return returnErr
 }
 
@@ -131,13 +133,15 @@ func (d Discord) GetPlayerHandler(
 	player, err := d.ReadPlayer(ctx, name)
 	// Show on string all info about player
 	if err != nil {
-		msg = "Erreur lors de la récupération du joueur: " + err.Error()
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("database - GetPlayerHandler - r.ReadPlayer: %w", err)
 	}
 	msg += "Name : **" + player.Name + "**\n"
@@ -162,7 +166,7 @@ func (d Discord) GetPlayerHandler(
 		msg += "**Strikes (" + strconv.Itoa(len(player.Strikes)) + ") :** \n"
 		for _, strike := range player.Strikes {
 			msg += "  " + strike.Reason +
-				" | " + strike.Date.Format("02/01/06") + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
+				" | " + strike.Date.Format("02/01/2006") + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
 		}
 	}
 	if len(player.MissedRaids) > 0 {
@@ -182,14 +186,45 @@ func (d Discord) GetPlayerHandler(
 				" | " + loot.Name + "\n"
 		}
 	}
-
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return nil
+}
+
+func (d Discord) GenerateLinkPlayerMsg(ctx context.Context, discordName, playerName string) (string, error) {
+	select {
+	case <-ctx.Done():
+		return ctxError,
+			fmt.Errorf("discord - GenerateLinkPlayerMsg - ctx.Done: %w", ctx.Err())
+	default:
+		var msg string
+
+		player, err := d.ReadPlayer(ctx, playerName)
+		if err != nil {
+			msg = "Error while reading player: " + HumanReadableError(err)
+			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)
+		}
+
+		err = d.LinkPlayer(ctx, player.Name, discordName)
+		if err != nil {
+			msg = "Error while linking player: " + HumanReadableError(err)
+			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
+		}
+
+		msg += "Vous êtes maintenant lié à ce joueur : \n"
+		msg += "Name : **" + player.Name + "**\n"
+		msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
+		if player.DiscordName != "" {
+			msg += "Discord ID : **" + discordName + "**\n"
+		}
+		return msg, nil
+	}
 }
 
 func (d Discord) LinkPlayerHandler(
@@ -206,43 +241,16 @@ func (d Discord) LinkPlayerHandler(
 	}
 
 	var msg string
-	name := optionMap["name"].StringValue()
-	player, err := d.ReadPlayer(ctx, name)
-	// Show on string all info about player
-	if err != nil {
-		msg = "Erreur lors de la récupération du joueur: " + err.Error()
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)
-	}
+	playerName := optionMap["name"].StringValue()
+	discordName := interaction.Member.User.Username
 
-	err = d.LinkPlayer(ctx, player.Name, interaction.Member.User.Username)
-	if err != nil {
-		msg = "Erreur lors de la liaison avec le joueur : " + err.Error()
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
-	}
+	msg, err := d.GenerateLinkPlayerMsg(ctx, discordName, playerName)
 
-	msg += "Vous êtes maintenant lié à ce joueur : \n"
-	msg += "Name : **" + player.Name + "**\n"
-	msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
-	if player.DiscordName != "" {
-		msg += "Discord ID : **" + interaction.Member.User.ID + "**\n"
-	}
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
 		},
 	})
-	return nil
+	return err
 }

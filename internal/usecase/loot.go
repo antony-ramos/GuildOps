@@ -26,6 +26,9 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 		if err != nil {
 			return fmt.Errorf("CreateLoot - backend.ReadRaid: %w", err)
 		}
+		if raid.ID == 0 {
+			return fmt.Errorf("raid not found")
+		}
 
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {

@@ -97,7 +97,7 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		}
 		defer rows.Close()
 		if rows.Next() {
-			return entity.Raid{}, fmt.Errorf("database - CreateRaid - raid already exists")
+			return entity.Raid{}, fmt.Errorf("raid already exists")
 		}
 		sql, _, errInsert := pg.Builder.
 			Insert("raids").

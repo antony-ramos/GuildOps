@@ -13,7 +13,6 @@ import (
 	"github.com/antony-ramos/guildops/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -82,7 +81,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	ctx, span := otel.Tracer(spanName).Start(ctx, "main", trace.WithTimestamp(time.Now()))
+	ctx, span := otel.Tracer(spanName).Start(ctx, "main")
 
 	// Metrics
 	zap.L().Info(fmt.Sprintf("Starting metrics server on port %s", cfg.Metrics.Port))
@@ -96,12 +95,12 @@ func main() {
 		if err != nil {
 			span.RecordError(err)
 			zap.L().Fatal(err.Error())
-			span.End(trace.WithTimestamp(time.Now()))
+			span.End()
 		}
 	}()
 
 	// Run
 	zap.L().Info("Starting app")
 	app.Run(ctx, cfg)
-	span.End(trace.WithTimestamp(time.Now()))
+	span.End()
 }

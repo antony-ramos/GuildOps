@@ -34,3 +34,9 @@ func Command(m []*discordgo.ApplicationCommand) Option {
 		d.commands = m
 	}
 }
+
+func DeleteCommands(b bool) Option {
+	return func(d *Discord) {
+		d.DeleteCommands = b
+	}
+}

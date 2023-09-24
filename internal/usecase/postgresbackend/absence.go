@@ -66,7 +66,7 @@ func (pg *PG) SearchAbsence(
 				return nil, err
 			}
 			absences = append(absences, a...)
-		case playerID != -1 && playerName != "" && !date.IsZero():
+		case playerID == -1 && playerName == "" && !date.IsZero():
 			a, err := pg.searchAbsenceOnParam(ctx, "date", date)
 			if err != nil {
 				return nil, err

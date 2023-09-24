@@ -18,10 +18,14 @@ help: ## Display this message
 ##
 
 artifact: ## Compile app from sources (linux)
+	@echo "### Building artifact ..."
 	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o ${BINARY_NAME} ./cmd/${BINARY_NAME}
+	@echo "### Artifact built successfully"
 
 artifact.osx: ## Compile app from sources (osx)
+	@echo "### Building artifact ..."
 	@CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o ${BINARY_NAME} ./cmd/${BINARY_NAME}
+	@echo "### Artifact built successfully"
 
 image-ci: ## Build an image for CI Test Helm
 	docker build . --tag "ghcr.io/antony-ramos/${BINARY_NAME}:ci"

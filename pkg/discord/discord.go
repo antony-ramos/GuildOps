@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -41,11 +42,15 @@ func (d *Discord) Run(ctx context.Context) error {
 		return fmt.Errorf("discord - Run - d.s.Open: %w", err)
 	}
 
-	d.s.AddHandler(func(session *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := d.commandHandlers[i.ApplicationCommandData().Name]; ok {
-			err := h(ctx, session, i)
+	d.s.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+		if h, ok := d.commandHandlers[interaction.ApplicationCommandData().Name]; ok {
+			ctx := context.Background()
+			ctx, span := otel.Tracer("discordHandler").Start(ctx, interaction.ApplicationCommandData().Name)
+			defer span.End()
+			err := h(ctx, session, interaction)
 			if err != nil {
-				zap.L().Error(fmt.Sprintf("Error while handling command %s : %s", i.ApplicationCommandData().Name, err.Error()))
+				zap.L().Error(
+					fmt.Sprintf("Error while handling command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
 			}
 		}
 	})
@@ -64,12 +69,14 @@ func (d *Discord) Run(ctx context.Context) error {
 			case <-stopCh:
 				return // S'arrête immédiatement si un autre goroutine a signalé une erreur
 			default:
+				zap.L().Info("Registering command " + command.Name)
 				cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
 				if err != nil {
 					errCh <- err
 					close(stopCh) // Ferme le canal pour signaler aux autres goroutines de s'arrêter
 				}
 				registeredCommands[commandName] = cmd
+				zap.L().Info("Command " + command.Name + " registered")
 			}
 		}()
 	}
@@ -85,11 +92,13 @@ func (d *Discord) Run(ctx context.Context) error {
 
 	<-ctx.Done()
 	if d.DeleteCommands {
-		for _, v := range registeredCommands {
-			err := d.s.ApplicationCommandDelete(d.s.State.User.ID, strconv.Itoa(d.guildID), v.ID)
+		for _, value := range registeredCommands {
+			zap.L().Info("Deleting command " + value.Name)
+			err := d.s.ApplicationCommandDelete(d.s.State.User.ID, strconv.Itoa(d.guildID), value.ID)
 			if err != nil {
 				return fmt.Errorf("discord - Run - d.s.ApplicationCommandDelete: %w", err)
 			}
+			zap.L().Info("Command " + value.Name + " deleted")
 		}
 	}
 	return nil

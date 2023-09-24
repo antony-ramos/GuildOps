@@ -9,7 +9,11 @@ logger:
 metrics:
   port: 2213
 
+discord:
+  delete_commands: true
+
 postgres:
   pool_max: 10
   conn_attempts: 10
   conn_timeout: 2s
+  url: user=coven-bot dbname=coven password=JcJXS6FFsRjHD60vgbajSQ host=coven-bot-9798.8nj.cockroachlabs.cloud port=26257 sslmode=verify-full

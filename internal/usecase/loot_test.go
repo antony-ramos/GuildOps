@@ -164,3 +164,57 @@ func TestLootUseCase_DeleteLoot(t *testing.T) {
 		mockBackend.AssertExpectations(t)
 	})
 }
+
+func TestLootUseCase_CreateLoot(t *testing.T) {
+	t.Parallel()
+
+	t.Run("context is done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		LootUseCase := usecase.NewLootUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := LootUseCase.CreateLoot(ctx, "lootone", 1, "gilbert")
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		LootUseCase := usecase.NewLootUseCase(mockBackend)
+
+		mockBackend.On("ReadRaid", mock.Anything, mock.Anything).Return(entity.Raid{ID: 1}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.On("CreateLoot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(entity.Loot{}, nil)
+
+		err := LootUseCase.CreateLoot(context.Background(), "lootone", 1, "gilbert")
+		assert.NoError(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Backend Error", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		LootUseCase := usecase.NewLootUseCase(mockBackend)
+
+		mockBackend.On("ReadRaid", mock.Anything, mock.Anything).Return(entity.Raid{ID: 1}, nil)
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.On("CreateLoot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(entity.Loot{}, errors.New("Backend Error"))
+
+		err := LootUseCase.CreateLoot(context.Background(), "lootone", 1, "gilbert")
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+}
