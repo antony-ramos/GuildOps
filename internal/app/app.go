@@ -76,7 +76,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 		discord.CommandHandlers(mapHandler),
 		discord.Token(cfg.Discord.Token),
 		discord.Command(handlers),
-		discord.GuildID(cfg.Discord.GuildID))
+		discord.GuildID(cfg.Discord.GuildID),
+		discord.DeleteCommands(cfg.Discord.DeleteCommands))
 
 	zap.L().Info("starting to serve to discord webhooks")
 	err = serve.Run(ctx)
