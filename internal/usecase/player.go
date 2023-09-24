@@ -41,7 +41,7 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: %w", ctx.Err())
 	default:
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.SearchPlayer: %w", err)
 		}
@@ -73,7 +73,7 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: %w", ctx.Err())
 	default:
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
 		}
@@ -89,5 +89,35 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 		player[0].Strikes = strikes
 
 		return player[0], nil
+	}
+}
+
+func (puc PlayerUseCase) LinkPlayer(ctx context.Context, playerName string, discordID string) error {
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("PlayerUseCase - LinkPlayer - ctx.Done: %w", ctx.Err())
+	default:
+		alreadyLinked, err := puc.backend.SearchPlayer(ctx, -1, "", discordID)
+		if err != nil {
+			return fmt.Errorf("database - LinkPlayer - r.SearchPlayer: %w", err)
+		}
+		if len(alreadyLinked) > 0 {
+			return fmt.Errorf("discord account already linked to player name %s. Contact Staff for modification",
+				alreadyLinked[0].Name)
+		}
+
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
+		if err != nil {
+			return fmt.Errorf("database - LinkPlayer - r.SearchPlayer: %w", err)
+		}
+		if len(player) == 0 {
+			return fmt.Errorf("player %s not found", playerName)
+		}
+		player[0].DiscordName = discordID
+		err = puc.backend.UpdatePlayer(ctx, player[0])
+		if err != nil {
+			return fmt.Errorf("database - LinkPlayer - r.UpdatePlayer: %w", err)
+		}
+		return nil
 	}
 }

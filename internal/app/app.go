@@ -27,7 +27,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 	}
 
 	backend := postgresbackend.PG{Postgres: pgHandler}
-	err = backend.Init(cfg.URL)
+	err = backend.Init(cfg.URL, nil)
 	if err != nil {
 		zap.L().Fatal(err.Error())
 		return
@@ -65,7 +65,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 		&discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1],
 		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
 	handlers = append(handlers,
-		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1], &discordHandler.PlayerDescriptors[2])
+		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1],
+		&discordHandler.PlayerDescriptors[2], &discordHandler.PlayerDescriptors[3])
 	handlers = append(handlers,
 		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
 	handlers = append(handlers,

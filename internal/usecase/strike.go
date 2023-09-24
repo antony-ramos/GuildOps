@@ -43,7 +43,7 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 			return fmt.Errorf("database - CreateStrike - r.Validate: %w", err)
 		}
 
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return fmt.Errorf("database - CreateStrike - r.SearchPlayer: %w", err)
 		}
@@ -78,7 +78,7 @@ func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]
 	case <-ctx.Done():
 		return nil, fmt.Errorf("StrikeUseCase - ReadStrikes - ctx.Done: %w", ctx.Err())
 	default:
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName)
+		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return nil, fmt.Errorf("database - ReadStrikes - r.SearchPlayer: %w", err)
 		}

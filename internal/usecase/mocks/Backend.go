@@ -368,25 +368,25 @@ func (_m *Backend) SearchLoot(ctx context.Context, name string, date time.Time, 
 	return r0, r1
 }
 
-// SearchPlayer provides a mock function with given fields: ctx, id, name
-func (_m *Backend) SearchPlayer(ctx context.Context, id int, name string) ([]entity.Player, error) {
-	ret := _m.Called(ctx, id, name)
+// SearchPlayer provides a mock function with given fields: ctx, id, name, discordName
+func (_m *Backend) SearchPlayer(ctx context.Context, id int, name string, discordName string) ([]entity.Player, error) {
+	ret := _m.Called(ctx, id, name, discordName)
 
 	var r0 []entity.Player
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, string) ([]entity.Player, error)); ok {
-		return rf(ctx, id, name)
+	if rf, ok := ret.Get(0).(func(context.Context, int, string, string) ([]entity.Player, error)); ok {
+		return rf(ctx, id, name, discordName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, string) []entity.Player); ok {
-		r0 = rf(ctx, id, name)
+	if rf, ok := ret.Get(0).(func(context.Context, int, string, string) []entity.Player); ok {
+		r0 = rf(ctx, id, name, discordName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entity.Player)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, string) error); ok {
-		r1 = rf(ctx, id, name)
+	if rf, ok := ret.Get(1).(func(context.Context, int, string, string) error); ok {
+		r1 = rf(ctx, id, name, discordName)
 	} else {
 		r1 = ret.Error(1)
 	}

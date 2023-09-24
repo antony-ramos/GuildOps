@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
+
+	"github.com/jackc/pgx/v4"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 // SearchPlayer is a function which call backend to Search a Player Object.
-func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name string) ([]entity.Player, error) {
+func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName string) ([]entity.Player, error) {
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("database - SearchPlayer - ctx.Done: %w", ctx.Err())
@@ -18,89 +21,104 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name string) ([]en
 
 		var sql string
 		var err error
+		var rows pgx.Rows
 		switch {
 		case playerID != -1:
-			sql, _, err = pg.Builder.Select("id", "name").From("players").Where("player_id = $1").ToSql()
+			sql, _, err = pg.Builder.Select("id", "name", "discord_id").From("players").Where("player_id = $1").ToSql()
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
+			}
+			rows, err = pg.Pool.Query(ctx, sql, playerID)
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
 			}
 		case name != "":
-			sql, _, err = pg.Builder.Select("id", "name").From("players").Where("name = $1").ToSql()
+			sql, _, err = pg.Builder.Select("id", "name", "discord_id").From("players").Where("name = $1").ToSql()
 			if err != nil {
 				return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
 			}
-		}
-
-		rows, err := pg.Pool.Query(ctx, sql, name)
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
-		}
-		defer rows.Close()
-		for rows.Next() {
-			player, err := func() (entity.Player, error) {
-				var player entity.Player
-				err := rows.Scan(&player.ID, &player.Name)
-				if err != nil {
-					return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
-				}
-
-				// populate player.Loot list
-				sql, _, err = pg.Builder.
-					Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").
-					From("loots").
-					Join("raids ON raids.id = loots.raid_id").
-					Where("loots.player_id = $1").ToSql()
-				if err != nil {
-					return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
-				}
-				playerRows, err := pg.Pool.Query(ctx, sql, strconv.FormatInt(int64(player.ID), 10))
-				if err != nil {
-					return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Pool.Query: %w", err)
-				}
-				defer playerRows.Close()
-				for playerRows.Next() {
-					loot := entity.Loot{}
-					raid := entity.Raid{}
-
-					err := playerRows.Scan(&loot.ID, &loot.Name, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
-					if err != nil {
-						return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
-					}
-					loot.Raid = &raid
-					loot.Player = &player
-					player.Loots = append(player.Loots, loot)
-				}
-
-				// populate player.MissedRaids list
-				sql, _, err = pg.Builder.
-					Select("absences.id", "absences.player_id", "absences.raid_id",
-						"raids.name", "raids.difficulty", "raids.date").
-					From("absences").
-					Join("raids ON raids.id = absences.raid_id").
-					Where("absences.player_id = $1").ToSql()
-				if err != nil {
-					return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
-				}
-				playerRows, err = pg.Pool.Query(ctx, sql, strconv.FormatInt(int64(player.ID), 10))
-				if err != nil {
-					return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Pool.Query: %w", err)
-				}
-				defer playerRows.Close()
-				for playerRows.Next() {
-					raid := entity.Raid{}
-					err := playerRows.Scan(nil, nil, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
-					if err != nil {
-						return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
-					}
-
-					player.MissedRaids = append(player.MissedRaids, raid)
-				}
-				return player, nil
-			}()
+			rows, err = pg.Pool.Query(ctx, sql, name)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
 			}
-			players = append(players, player)
+		case discordName != "":
+			sql, _, err = pg.Builder.Select("id", "name", "discord_id").From("players").Where("discord_id = $1").ToSql()
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
+			}
+			rows, err = pg.Pool.Query(ctx, sql, discordName)
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
+			}
+		}
+		if rows != nil {
+			defer rows.Close()
+			for rows.Next() {
+				player, err := func() (entity.Player, error) {
+					var player entity.Player
+					err := rows.Scan(&player.ID, &player.Name, &player.DiscordName)
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+					}
+
+					// populate player.Loot list
+					sql, _, err = pg.Builder.
+						Select("loots.id", "loots.name", "loots.raid_id", "raids.name", "raids.difficulty", "raids.date").
+						From("loots").
+						Join("raids ON raids.id = loots.raid_id").
+						Where("loots.player_id = $1").ToSql()
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
+					}
+					playerRows, err := pg.Pool.Query(ctx, sql, strconv.FormatInt(int64(player.ID), 10))
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Pool.Query: %w", err)
+					}
+					defer playerRows.Close()
+					for playerRows.Next() {
+						loot := entity.Loot{}
+						raid := entity.Raid{}
+
+						err := playerRows.Scan(&loot.ID, &loot.Name, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
+						if err != nil {
+							return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+						}
+						loot.Raid = &raid
+						loot.Player = &player
+						player.Loots = append(player.Loots, loot)
+					}
+
+					// populate player.MissedRaids list
+					sql, _, err = pg.Builder.
+						Select("absences.id", "absences.player_id", "absences.raid_id",
+							"raids.name", "raids.difficulty", "raids.date").
+						From("absences").
+						Join("raids ON raids.id = absences.raid_id").
+						Where("absences.player_id = $1").ToSql()
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
+					}
+					playerRows, err = pg.Pool.Query(ctx, sql, strconv.FormatInt(int64(player.ID), 10))
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Pool.Query: %w", err)
+					}
+					defer playerRows.Close()
+					for playerRows.Next() {
+						raid := entity.Raid{}
+						err := playerRows.Scan(nil, nil, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date)
+						if err != nil {
+							return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+						}
+
+						player.MissedRaids = append(player.MissedRaids, raid)
+					}
+					return player, nil
+				}()
+				if err != nil {
+					return nil, err
+				}
+				players = append(players, player)
+			}
 		}
 		return players, nil
 	}
@@ -124,7 +142,15 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 		if rows.Next() {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - player already exists")
 		}
-		sql, args, errInsert := pg.Builder.Insert("players").Columns("name").Values(player.Name).ToSql()
+
+		if player.DiscordName == "" {
+			player.DiscordName = "tmp_" + strconv.FormatInt(time.Now().Unix(), 10)
+		}
+
+		sql, args, errInsert := pg.Builder.
+			Insert("players").
+			Columns("name", "discord_id").
+			Values(player.Name, player.DiscordName).ToSql()
 		if errInsert != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Builder.Insert: %w", errInsert)
 		}
@@ -132,7 +158,7 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Pool.Exec: %w", err)
 		}
-		player, err := pg.SearchPlayer(ctx, -1, player.Name)
+		player, err := pg.SearchPlayer(ctx, -1, player.Name, "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.SearchPlayer: %w", err)
 		}
@@ -146,7 +172,7 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: %w", ctx.Err())
 	default:
-		sql, _, err := pg.Builder.Select("id", "name").From("players").Where("name = $1").ToSql()
+		sql, _, err := pg.Builder.Select("id", "name").From("players").Where("id = $1").ToSql()
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.Builder.Select: %w", err)
 		}
@@ -173,7 +199,13 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 	case <-ctx.Done():
 		return fmt.Errorf("database - UpdatePlayer - ctx.Done: %w", ctx.Err())
 	default:
-		sql, args, err := pg.Builder.Update("players").Set("name", player.Name).Where("id = ?", player.ID).ToSql()
+		if player.DiscordName == "" {
+			player.DiscordName = "tmp_" + strconv.FormatInt(time.Now().Unix(), 10)
+		}
+		sql, args, err := pg.Builder.Update("players").
+			Set("name", player.Name).
+			Set("discord_id", player.DiscordName).
+			Where("id = ?", player.ID).ToSql()
 		if err != nil {
 			return fmt.Errorf("database - UpdatePlayer - r.Builder.Update: %w", err)
 		}

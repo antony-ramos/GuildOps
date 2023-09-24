@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/driftprogramming/pgxpoolmock"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -24,7 +26,7 @@ type Postgres struct {
 	connTimeout  time.Duration
 
 	Builder squirrel.StatementBuilderType
-	Pool    *pgxpool.Pool
+	Pool    pgxpoolmock.PgxPool
 }
 
 // New -.

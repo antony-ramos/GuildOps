@@ -16,7 +16,7 @@ type Backend interface {
 }
 
 type Player interface {
-	SearchPlayer(ctx context.Context, id int, name string) ([]entity.Player, error)
+	SearchPlayer(ctx context.Context, id int, name, discordName string) ([]entity.Player, error)
 	CreatePlayer(ctx context.Context, player entity.Player) (entity.Player, error)
 	ReadPlayer(ctx context.Context, playerID int) (entity.Player, error)
 	UpdatePlayer(ctx context.Context, player entity.Player) error

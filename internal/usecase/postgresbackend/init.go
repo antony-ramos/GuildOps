@@ -17,12 +17,16 @@ type PG struct {
 var isNotDeleted = "DELETE 0"
 
 // Init Database Tables.
-func (pg *PG) Init(connStr string) error {
-	// Open a connection to the database
-	database, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
+func (pg *PG) Init(connStr string, db *sql.DB) error {
+	database := db
+	var err error
+	if db == nil {
+		database, err = sql.Open("postgres", connStr)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
@@ -40,12 +44,18 @@ func (pg *PG) Init(connStr string) error {
 	createTableSQL := `
         CREATE TABLE IF NOT EXISTS players (
             id serial PRIMARY KEY,
-            name VARCHAR(255) UNIQUE
+            name VARCHAR(255) UNIQUE,
+            discord_id VARCHAR(255) UNIQUE
         );
     `
 
+	_, err = database.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("database - Init - database.Exec: %w", err)
+	}
+
 	// Create a table for raid
-	createTableSQL += `
+	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS raids (
 			id serial PRIMARY KEY,
 			name VARCHAR(255),
@@ -55,8 +65,13 @@ func (pg *PG) Init(connStr string) error {
 		);
 	`
 
+	_, err = database.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("database - Init - database.Exec: %w", err)
+	}
+
 	// Create a table for strikes
-	createTableSQL += `
+	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS strikes (
 			id serial PRIMARY KEY,
 			player_id INTEGER REFERENCES players(id),
@@ -66,8 +81,13 @@ func (pg *PG) Init(connStr string) error {
 		);
 	`
 
+	_, err = database.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("database - Init - database.Exec: %w", err)
+	}
+
 	// Create a table for loots
-	createTableSQL += `
+	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS loots (
 			id serial PRIMARY KEY,
 			name VARCHAR(255),
@@ -78,15 +98,20 @@ func (pg *PG) Init(connStr string) error {
 		);
 	`
 
+	_, err = database.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("database - Init - database.Exec: %w", err)
+	}
+
 	// Create a table for absences
-	createTableSQL += `
+	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS absences (
-		    			id serial PRIMARY KEY,
-		    			player_id INTEGER REFERENCES players(id),
-		    			raid_id INTEGER REFERENCES raids(id),
-		    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		    			CONSTRAINT unique_absence_entry UNIQUE (player_id, raid_id)
-		    		);
+			id serial PRIMARY KEY,
+			player_id INTEGER REFERENCES players(id),
+			raid_id INTEGER REFERENCES raids(id),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT unique_absence_entry UNIQUE (player_id, raid_id)
+		);
 	`
 
 	_, err = database.Exec(createTableSQL)
