@@ -4,7 +4,6 @@
 - [ ] Add more logs for each level
 - [ ] Add tracing for each request
 - [ ] Add API as controller
-- [ ] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
 - [ ] Add notes to players (for example: player cannot play on wednesday)
 
 ### In Progress
@@ -23,3 +22,4 @@
 - [X] Add In CreatePlayer id to player entity
 - [X] Add Usecase: player name is not discord name. Must implement a way to link them
 - [X] Fix in SearchPlayer: player strikes must be import there not in usecase
+- [X] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
