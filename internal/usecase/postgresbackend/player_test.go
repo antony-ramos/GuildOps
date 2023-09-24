@@ -72,6 +72,12 @@ func TestPG_CreatePlayer(t *testing.T) {
 				"WHERE absences.player_id = $1", "1").
 			Return(pgxRows, nil)
 
+		columnsStrike := []string{"id", "season", "reason", "created_at"}
+		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
+			Return(pgxRowsStrike, nil)
+
 		p, err := pgBackend.CreatePlayer(context.Background(), player)
 		assert.NoError(t, err)
 		assert.Equal(t, player, p)
