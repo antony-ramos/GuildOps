@@ -267,7 +267,7 @@ func TestPG_ReadPlayer(t *testing.T) {
 	})
 }
 
-//nolint:dupl
+//nolint:dupl,maintidx
 func TestPG_SearchPlayer(t *testing.T) {
 	t.Parallel()
 	t.Run("Success with playerID", func(t *testing.T) {
@@ -502,6 +502,39 @@ func TestPG_SearchPlayer(t *testing.T) {
 		mockPool.EXPECT().Query(gomock.Any(),
 			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
 			Return(nil, errors.New("error"))
+
+		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
+		assert.Error(t, err)
+	})
+
+	t.Run("Failed with discordName, Rows are incorrect", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		playerID := -1
+		name := ""
+		discordName := "discordName"
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{
+			Postgres: &postgres.Postgres{
+				Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+				Pool:    mockPool,
+			},
+		}
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+
+		columns := []string{"id", "name"}
+		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
+			Return(pgxRows, nil)
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
 		assert.Error(t, err)
