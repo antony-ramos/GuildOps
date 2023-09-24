@@ -4,7 +4,6 @@
 - [ ] Add more logs for each level
 - [ ] Add tracing for each request
 - [ ] Add API as controller
-- [ ] Add Usecase: player name is not discord name. Must implement a way to link them
 - [ ] Fix In UpdatePlayer: placeholder $1 already has type int, cannot assign varchar
 - [ ] Fix in SearchPlayer: player strikes must be import there not in usecase
 - [ ] Add notes to players (for example: player cannot play on wednesday)
@@ -23,3 +22,4 @@
 - [X] Add Log Level to config
 - [X] Fix DeleteStrike always return success
 - [X] Add In CreatePlayer id to player entity
+- [X] Add Usecase: player name is not discord name. Must implement a way to link them
