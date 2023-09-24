@@ -26,8 +26,8 @@ type (
 
 	// Discord -.
 	Discord struct {
-		Token          string `env:"DISCORD_TOKEN"    env-required:"true" yaml:"token"`
-		GuildID        int    `env:"DISCORD_GUILD_ID" env-required:"true" yaml:"guild_id"`
+		Token          string `env:"DISCORD_TOKEN"           env-required:"true" yaml:"token"`
+		GuildID        int    `env:"DISCORD_GUILD_ID"        env-required:"true" yaml:"guild_id"`
 		DeleteCommands bool   `env:"DISCORD_DELETE_COMMANDS" env-required:"true" yaml:"delete_commands"`
 	}
 
