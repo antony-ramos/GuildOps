@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/antony-ramos/guildops/internal/entity"
@@ -115,5 +116,51 @@ func TestLootUseCase_SelectPlayerToAssign(t *testing.T) {
 		p, err := LootUseCase.SelectPlayerToAssign(context.Background(), playersNames, "mythic")
 		assert.Error(t, err)
 		assert.Equal(t, entity.Player{}, p)
+	})
+}
+
+func TestLootUseCase_DeleteLoot(t *testing.T) {
+	t.Parallel()
+
+	t.Run("context is done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		LootUseCase := usecase.NewLootUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := LootUseCase.DeleteLoot(ctx, 1)
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		LootUseCase := usecase.NewLootUseCase(mockBackend)
+
+		mockBackend.On("DeleteLoot", mock.Anything, mock.Anything).Return(nil)
+
+		err := LootUseCase.DeleteLoot(context.Background(), 1)
+		assert.NoError(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Backend Error", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		LootUseCase := usecase.NewLootUseCase(mockBackend)
+
+		mockBackend.On("DeleteLoot", mock.Anything, mock.Anything).Return(errors.New("Backend Error"))
+
+		err := LootUseCase.DeleteLoot(context.Background(), 1)
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
 	})
 }
