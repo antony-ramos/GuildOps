@@ -57,7 +57,8 @@ func (d Discord) InitAbsence() map[string]func(
 }
 
 func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string) (string, error) {
-	errorMsg := "Error while getting absence list: "
+	errorMsg := "Error while listing absences" +
+		": "
 
 	select {
 	case <-ctx.Done():
@@ -69,10 +70,11 @@ func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string)
 		if err != nil {
 			msg = errorMsg + HumanReadableError(err)
 		} else {
-			msg = "Absences pour le " + dates[0].Format("02-01-2006") + ":\n"
+			msg = "Absence(s) pour le " + dates[0].Format("02-01-2006") + " :\n"
 			absences, err := d.ListAbsence(ctx, dates[0])
 			if err != nil {
 				msg = errorMsg + HumanReadableError(err)
+				return msg, err
 			} else {
 				for _, absence := range absences {
 					msg += "* " + absence.Player.Name + "\n"
