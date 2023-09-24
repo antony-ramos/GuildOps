@@ -355,3 +355,55 @@ func TestPG_ReadStrike(t *testing.T) {
 		assert.Equal(t, strike, strikeInput)
 	})
 }
+
+func TestPG_UpdateStrike(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		strike := entity.Strike{
+			ID:     1,
+			Reason: "valid reason",
+			Date:   time.Now(),
+			Season: "DF/S2",
+		}
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"UPDATE strikes SET season = $1, reason = $2 WHERE id = $1", strike.ID).
+			Return(nil, nil)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		err := pgBackend.UpdateStrike(context.Background(), strike)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Context cancelled", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		strike := entity.Strike{
+			ID:     1,
+			Reason: "valid reason",
+			Date:   time.Now(),
+			Season: "DF/S2",
+		}
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := pgBackend.UpdateStrike(ctx, strike)
+		assert.Error(t, err)
+	})
+}
