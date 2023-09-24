@@ -104,12 +104,14 @@ func (d Discord) PlayerHandler(
 		}
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return returnErr
 }
 
@@ -132,12 +134,14 @@ func (d Discord) GetPlayerHandler(
 	// Show on string all info about player
 	if err != nil {
 		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("database - GetPlayerHandler - r.ReadPlayer: %w", err)
 	}
 	msg += "Name : **" + player.Name + "**\n"
@@ -182,13 +186,14 @@ func (d Discord) GetPlayerHandler(
 				" | " + loot.Name + "\n"
 		}
 	}
-
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return nil
 }
 

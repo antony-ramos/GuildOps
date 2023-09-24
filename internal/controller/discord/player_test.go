@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
+
+	"github.com/bwmarrin/discordgo"
 
 	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
 	"github.com/antony-ramos/guildops/internal/controller/discord/mocks"
@@ -111,5 +114,192 @@ func TestDiscord_GenerateLinkPlayerMsg(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, "Error while linking player: Link Failed", msg)
 		mockPlayerUseCase.AssertExpectations(t)
+	})
+}
+
+func TestDiscord_PlayerHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success Create Player", func(t *testing.T) {
+		t.Parallel()
+		mockPlayerUseCase := mocks.NewPlayerUseCase(t)
+
+		discord := discordHandler.Discord{
+			AbsenceUseCase: nil,
+			PlayerUseCase:  mockPlayerUseCase,
+			StrikeUseCase:  nil,
+			LootUseCase:    nil,
+			RaidUseCase:    nil,
+			Fake:           true,
+		}
+
+		mockPlayerUseCase.On("CreatePlayer", mock.Anything, mock.Anything).
+			Return(1, nil)
+
+		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "coven-player-create",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "name",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "TestPlayer",
+						},
+					},
+				},
+			},
+		}
+
+		err := discord.PlayerHandler(context.Background(), session, interaction)
+		if err != nil {
+			return
+		}
+		mockPlayerUseCase.AssertExpectations(t)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Success Delete Player", func(t *testing.T) {
+		t.Parallel()
+		mockPlayerUseCase := mocks.NewPlayerUseCase(t)
+
+		discord := discordHandler.Discord{
+			AbsenceUseCase: nil,
+			PlayerUseCase:  mockPlayerUseCase,
+			StrikeUseCase:  nil,
+			LootUseCase:    nil,
+			RaidUseCase:    nil,
+			Fake:           true,
+		}
+
+		mockPlayerUseCase.On("DeletePlayer", mock.Anything, mock.Anything).
+			Return(nil)
+
+		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "coven-player-delete",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "name",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "TestPlayer",
+						},
+					},
+				},
+			},
+		}
+
+		err := discord.PlayerHandler(context.Background(), session, interaction)
+		if err != nil {
+			return
+		}
+		mockPlayerUseCase.AssertExpectations(t)
+		assert.NoError(t, err)
+	})
+}
+
+func TestDiscord_GetPlayerHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success Get Player", func(t *testing.T) {
+		t.Parallel()
+		mockPlayerUseCase := mocks.NewPlayerUseCase(t)
+
+		discord := discordHandler.Discord{
+			AbsenceUseCase: nil,
+			PlayerUseCase:  mockPlayerUseCase,
+			StrikeUseCase:  nil,
+			LootUseCase:    nil,
+			RaidUseCase:    nil,
+			Fake:           true,
+		}
+
+		player := entity.Player{
+			Name: "TestPlayer",
+			ID:   1,
+		}
+
+		strikes := []entity.Strike{
+			{
+				ID:     1,
+				Reason: "TestReason",
+				Season: "DF/S2",
+				Date:   time.Now(),
+			},
+			{
+				ID:     1,
+				Reason: "TestReason",
+				Season: "DF/S2",
+				Date:   time.Now(),
+			},
+		}
+		player.Strikes = strikes
+
+		loots := []entity.Loot{
+			{
+				ID:   1,
+				Name: "TestLoot",
+				Raid: &entity.Raid{
+					ID:         1,
+					Name:       "TestRaid",
+					Difficulty: "TestDifficulty",
+					Date:       time.Now(),
+				},
+			},
+		}
+
+		player.Loots = loots
+
+		missedRaids := []entity.Raid{
+			{
+				ID:         1,
+				Name:       "TestRaid",
+				Difficulty: "TestDifficulty",
+				Date:       time.Now(),
+			},
+		}
+
+		player.MissedRaids = missedRaids
+
+		mockPlayerUseCase.On("ReadPlayer", mock.Anything, mock.Anything).
+			Return(player, nil)
+
+		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "coven-player-create",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "name",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "TestPlayer",
+						},
+					},
+				},
+			},
+		}
+
+		err := discord.GetPlayerHandler(context.Background(), session, interaction)
+		if err != nil {
+			return
+		}
+		mockPlayerUseCase.AssertExpectations(t)
+		assert.NoError(t, err)
 	})
 }
