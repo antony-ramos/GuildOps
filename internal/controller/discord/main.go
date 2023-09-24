@@ -1,25 +1,39 @@
 package discordhandler
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 
 	"github.com/antony-ramos/guildops/internal/usecase"
 )
 
 type Discord struct {
-	*usecase.AbsenceUseCase
+	AbsenceUseCase
 	*usecase.PlayerUseCase
 	*usecase.StrikeUseCase
 	*usecase.LootUseCase
 	*usecase.RaidUseCase
 }
 
+type AbsenceUseCase interface {
+	CreateAbsence(ctx context.Context, playerName string, date time.Time) error
+	DeleteAbsence(ctx context.Context, playerName string, date time.Time) error
+	ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error)
+}
+
 // HumanReadableError returns the error message without the package name.
 func HumanReadableError(err error) string {
-	// output only what is after ": " in the error message. If multiple :, give all after the first one.
-	return strings.Split(err.Error(), ": ")[1]
+	str := strings.Split(err.Error(), ": ")
+	if len(str) == 1 {
+		return str[0]
+	} else if len(str) > 1 {
+		return strings.Join(str[1:], ": ")
+	}
+	return err.Error()
 }
 
 func parseDate(dateStr string) ([]time.Time, error) {
