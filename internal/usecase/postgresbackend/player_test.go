@@ -323,6 +323,32 @@ func TestPG_SearchPlayer(t *testing.T) {
 		assert.Equal(t, player, p[0])
 	})
 
+	t.Run("Failed with playerID", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		playerID := 1
+		name := ""
+		discordName := ""
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{
+			Postgres: &postgres.Postgres{
+				Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+				Pool:    mockPool,
+			},
+		}
+
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, name, discord_id FROM players WHERE player_id = $1", playerID).
+			Return(nil, errors.New("error"))
+
+		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
+		assert.Error(t, err)
+	})
+
 	t.Run("Success with name", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -376,6 +402,32 @@ func TestPG_SearchPlayer(t *testing.T) {
 		assert.Equal(t, player, p[0])
 	})
 
+	t.Run("Failed with name", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		playerID := -1
+		name := "miss"
+		discordName := ""
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{
+			Postgres: &postgres.Postgres{
+				Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+				Pool:    mockPool,
+			},
+		}
+
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, name, discord_id FROM players WHERE name = $1", name).
+			Return(nil, errors.New("error"))
+
+		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
+		assert.Error(t, err)
+	})
+
 	t.Run("Success with discordName", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -427,6 +479,32 @@ func TestPG_SearchPlayer(t *testing.T) {
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
 		assert.NoError(t, err)
 		assert.Equal(t, player, p[0])
+	})
+
+	t.Run("Failed with discordID", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		playerID := -1
+		name := ""
+		discordName := "miss"
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{
+			Postgres: &postgres.Postgres{
+				Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+				Pool:    mockPool,
+			},
+		}
+
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
+			Return(nil, errors.New("error"))
+
+		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
+		assert.Error(t, err)
 	})
 
 	t.Run("Context is done", func(t *testing.T) {
