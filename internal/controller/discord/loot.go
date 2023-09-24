@@ -143,24 +143,28 @@ func (d Discord) ListLootsOnPlayerHandler(
 	lootList, err := d.LootUseCase.ListLootOnPLayer(ctx, playerName)
 	if err != nil {
 		msg := "Erreur lors de la récupération des loots: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
 	}
 	msg := "Tous les loots de " + playerName + ":\n"
 	for _, loot := range lootList {
 		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
 	}
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return nil
 }
 
@@ -185,21 +189,25 @@ func (d Discord) DeleteLootHandler(
 	err = d.LootUseCase.DeleteLoot(ctx, id)
 	if err != nil {
 		msg := "Erreur lors de la suppression du loot: " + HumanReadableError(err)
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
+		return fmt.Errorf("discord - DeleteLootHandler - d.LootUseCase.DeleteLoot: %w", err)
+	}
+	msg := "Loot supprimé avec succès"
+	if !d.Fake {
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return fmt.Errorf("discord - DeleteLootHandler - d.LootUseCase.DeleteLoot: %w", err)
 	}
-	msg := "Loot supprimé avec succès"
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
 	return nil
 }
 
