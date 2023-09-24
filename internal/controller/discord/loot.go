@@ -105,7 +105,7 @@ func (d Discord) AttributeLootHandler(
 
 	err := d.LootUseCase.CreateLoot(ctx, lootName, int(raidID), playerName)
 	if err != nil {
-		msg := "Erreur lors de l'attribution du loot: " + err.Error()
+		msg := "Erreur lors de l'attribution du loot: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -138,7 +138,7 @@ func (d Discord) ListLootsOnPlayerHandler(
 
 	lootList, err := d.LootUseCase.ListLootOnPLayer(ctx, playerName)
 	if err != nil {
-		msg := "Erreur lors de la récupération des loots: " + err.Error()
+		msg := "Erreur lors de la récupération des loots: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -180,7 +180,7 @@ func (d Discord) DeleteLootHandler(
 
 	err = d.LootUseCase.DeleteLoot(ctx, id)
 	if err != nil {
-		msg := "Erreur lors de la suppression du loot: " + err.Error()
+		msg := "Erreur lors de la suppression du loot: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -217,7 +217,7 @@ func (d Discord) LootCounterCheckerHandler(
 
 	player, err := d.LootUseCase.SelectPlayerToAssign(ctx, playerNames, difficulty)
 	if err != nil {
-		msg := "Erreur lors de l'assignation du loot: " + err.Error()
+		msg := "Erreur lors de l'assignation du loot: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{

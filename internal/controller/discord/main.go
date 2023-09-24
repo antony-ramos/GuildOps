@@ -16,6 +16,12 @@ type Discord struct {
 	*usecase.RaidUseCase
 }
 
+// HumanReadableError returns the error message without the package name.
+func HumanReadableError(err error) string {
+	// output only what is after ": " in the error message. If multiple :, give all after the first one.
+	return strings.Split(err.Error(), ": ")[1]
+}
+
 func parseDate(dateStr string) ([]time.Time, error) {
 	dateStr = strings.TrimSpace(dateStr)
 	dateParts := strings.Split(dateStr, " au ")

@@ -93,7 +93,7 @@ func (d Discord) CreateRaidHandler(
 	name := optionMap["name"].StringValue()
 	date, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
-		msg = "Erreur lors de la création du raid: " + err.Error()
+		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -106,7 +106,7 @@ func (d Discord) CreateRaidHandler(
 
 	raid, err := d.CreateRaid(ctx, name, difficulty, date[0])
 	if err != nil {
-		msg = "Erreur lors de la création du raid: " + err.Error()
+		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
 		returnErr = err
 	} else {
 		msg = "Raid " + strconv.Itoa(raid.ID) + " créé avec succès"
@@ -144,7 +144,7 @@ func (d Discord) DeleteRaidHandler(
 
 	err = d.DeleteRaid(ctx, raidID)
 	if err != nil {
-		msg = "Erreur lors de la suppression du joueur: " + err.Error()
+		msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
 		returnErr = err
 	} else {
 		msg = "Joueur " + strconv.Itoa(raidID) + " supprimé avec succès"

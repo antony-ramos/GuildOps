@@ -89,7 +89,7 @@ func (d Discord) PlayerHandler(
 	if interaction.ApplicationCommandData().Name == "coven-player-create" {
 		id, err := d.CreatePlayer(ctx, name)
 		if err != nil {
-			msg = "Erreur lors de la création du joueur: " + err.Error()
+			msg = "Erreur lors de la création du joueur: " + HumanReadableError(err)
 			returnErr = err
 		} else {
 			msg = "Joueur " + name + " créé avec succès : ID " + strconv.Itoa(id)
@@ -97,7 +97,7 @@ func (d Discord) PlayerHandler(
 	} else {
 		err := d.DeletePlayer(ctx, name)
 		if err != nil {
-			msg = "Erreur lors de la suppression du joueur: " + err.Error()
+			msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
 			returnErr = err
 		} else {
 			msg = "Joueur " + name + " supprimé avec succès"
@@ -131,7 +131,7 @@ func (d Discord) GetPlayerHandler(
 	player, err := d.ReadPlayer(ctx, name)
 	// Show on string all info about player
 	if err != nil {
-		msg = "Erreur lors de la récupération du joueur: " + err.Error()
+		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -210,7 +210,7 @@ func (d Discord) LinkPlayerHandler(
 	player, err := d.ReadPlayer(ctx, name)
 	// Show on string all info about player
 	if err != nil {
-		msg = "Erreur lors de la récupération du joueur: " + err.Error()
+		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -222,7 +222,7 @@ func (d Discord) LinkPlayerHandler(
 
 	err = d.LinkPlayer(ctx, player.Name, interaction.Member.User.Username)
 	if err != nil {
-		msg = "Erreur lors de la liaison avec le joueur : " + err.Error()
+		msg = "Erreur lors de la liaison avec le joueur : " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{

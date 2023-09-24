@@ -82,7 +82,7 @@ func (d Discord) StrikeOnPlayerHandler(
 	err := d.CreateStrike(ctx, reason, name)
 	returnErr := error(nil)
 	if err != nil {
-		msg = "Erreurs lors de la création du strike: " + err.Error()
+		msg = "Erreurs lors de la création du strike: " + HumanReadableError(err)
 		returnErr = err
 	} else {
 		msg = "Strike créé avec succès"
@@ -115,7 +115,7 @@ func (d Discord) ListStrikesOnPlayerHandler(
 
 	strikes, err := d.ReadStrikes(ctx, playerName)
 	if err != nil {
-		msg = "Erreurs lors de la récupération des strikes: " + err.Error()
+		msg = "Erreurs lors de la récupération des strikes: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -157,12 +157,12 @@ func (d Discord) DeleteStrikeHandler(
 	strikeID, err := strconv.ParseInt(idString, 10, 64)
 	returnErr := error(nil)
 	if err != nil {
-		msg = "Erreurs lors de la suppression du strike: " + err.Error()
+		msg = "Erreurs lors de la suppression du strike: " + HumanReadableError(err)
 		returnErr = err
 	} else {
 		err = d.DeleteStrike(ctx, int(strikeID))
 		if err != nil {
-			msg = "Erreurs lors de la suppression du strike: " + err.Error()
+			msg = "Erreurs lors de la suppression du strike: " + HumanReadableError(err)
 			returnErr = err
 		} else {
 			msg = "Strike supprimé avec succès"

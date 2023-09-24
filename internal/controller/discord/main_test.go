@@ -1,0 +1,39 @@
+package discordhandler_test
+
+import (
+	"fmt"
+	"testing"
+
+	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
+)
+
+func TestHumanReadableError(t *testing.T) {
+	t.Parallel()
+	type args struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			"Success",
+			args{
+				err: fmt.Errorf("discord - parseDate - time.Parse: parsing time \"01/01/21\" month out of range"),
+			},
+			"parsing time \"01/01/21\" month out of range",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			want := tt.want
+			args := tt.args
+			t.Parallel()
+			if got := discordHandler.HumanReadableError(args.err); got != want {
+				t.Errorf("HumanReadableError() = %v, want %v", got, want)
+			}
+		})
+	}
+}

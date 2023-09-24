@@ -70,12 +70,12 @@ func (d Discord) ListAbsenceHandler(
 	var msg string
 	dates, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
-		msg = "Erreur lors de la récupération des absences: " + err.Error()
+		msg = "Erreur lors de la récupération des absences: " + HumanReadableError(err)
 	} else {
 		msg = "Absences pour le " + dates[0].Format("02-01-2006") + ":\n"
 		absences, err := d.ListAbsence(ctx, dates[0])
 		if err != nil {
-			msg = "Erreur lors de la récupération des absences: " + err.Error()
+			msg = "Erreur lors de la récupération des absences: " + HumanReadableError(err)
 		} else {
 			for _, absence := range absences {
 				msg += absence.Player.Name + "\n"
