@@ -112,6 +112,29 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 
 						player.MissedRaids = append(player.MissedRaids, raid)
 					}
+
+					// populate player.Strikes list
+					sql, _, err = pg.Builder.
+						Select("id", "season", "reason", "created_at").
+						From("strikes").
+						Where("player_id = $1").ToSql()
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
+					}
+					strikesRows, err := pg.Pool.Query(ctx, sql, strconv.FormatInt(int64(player.ID), 10))
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Pool.Query: %w", err)
+					}
+					defer strikesRows.Close()
+					for strikesRows.Next() {
+						strike := entity.Strike{}
+						err := strikesRows.Scan(&strike.ID, &strike.Season, &strike.Reason, &strike.Date)
+						if err != nil {
+							return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+						}
+						player.Strikes = append(player.Strikes, strike)
+					}
+
 					return player, nil
 				}()
 				if err != nil {
