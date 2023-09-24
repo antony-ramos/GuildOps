@@ -192,6 +192,36 @@ func (d Discord) GetPlayerHandler(
 	return nil
 }
 
+func (d Discord) GenerateLinkPlayerMsg(ctx context.Context, discordName, playerName string) (string, error) {
+	select {
+	case <-ctx.Done():
+		return ctxError,
+			fmt.Errorf("discord - GenerateLinkPlayerMsg - ctx.Done: %w", ctx.Err())
+	default:
+		var msg string
+
+		player, err := d.ReadPlayer(ctx, playerName)
+		if err != nil {
+			msg = "Error while reading player: " + HumanReadableError(err)
+			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)
+		}
+
+		err = d.LinkPlayer(ctx, player.Name, discordName)
+		if err != nil {
+			msg = "Error while linking player: " + HumanReadableError(err)
+			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
+		}
+
+		msg += "Vous êtes maintenant lié à ce joueur : \n"
+		msg += "Name : **" + player.Name + "**\n"
+		msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
+		if player.DiscordName != "" {
+			msg += "Discord ID : **" + discordName + "**\n"
+		}
+		return msg, nil
+	}
+}
+
 func (d Discord) LinkPlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
@@ -206,43 +236,16 @@ func (d Discord) LinkPlayerHandler(
 	}
 
 	var msg string
-	name := optionMap["name"].StringValue()
-	player, err := d.ReadPlayer(ctx, name)
-	// Show on string all info about player
-	if err != nil {
-		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)
-	}
+	playerName := optionMap["name"].StringValue()
+	discordName := interaction.Member.User.Username
 
-	err = d.LinkPlayer(ctx, player.Name, interaction.Member.User.Username)
-	if err != nil {
-		msg = "Erreur lors de la liaison avec le joueur : " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
-	}
+	msg, err := d.GenerateLinkPlayerMsg(ctx, discordName, playerName)
 
-	msg += "Vous êtes maintenant lié à ce joueur : \n"
-	msg += "Name : **" + player.Name + "**\n"
-	msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
-	if player.DiscordName != "" {
-		msg += "Discord ID : **" + interaction.Member.User.ID + "**\n"
-	}
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: msg,
 		},
 	})
-	return nil
+	return err
 }

@@ -13,16 +13,25 @@ import (
 
 type Discord struct {
 	AbsenceUseCase
-	*usecase.PlayerUseCase
+	PlayerUseCase
 	*usecase.StrikeUseCase
 	*usecase.LootUseCase
 	*usecase.RaidUseCase
 }
 
+var ctxError = "Error because request took too much time to complete"
+
 type AbsenceUseCase interface {
 	CreateAbsence(ctx context.Context, playerName string, date time.Time) error
 	DeleteAbsence(ctx context.Context, playerName string, date time.Time) error
 	ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error)
+}
+
+type PlayerUseCase interface {
+	CreatePlayer(ctx context.Context, playerName string) (int, error)
+	DeletePlayer(ctx context.Context, playerName string) error
+	ReadPlayer(ctx context.Context, playerName string) (entity.Player, error)
+	LinkPlayer(ctx context.Context, playerName string, discordID string) error
 }
 
 // HumanReadableError returns the error message without the package name.

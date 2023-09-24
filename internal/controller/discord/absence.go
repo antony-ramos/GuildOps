@@ -62,7 +62,7 @@ func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string)
 
 	select {
 	case <-ctx.Done():
-		return "Error because request took too much time to complete",
+		return ctxError,
 			fmt.Errorf("discord - GenerateListAbsenceHandlerMsg - ctx.Done: %w", ctx.Err())
 	default:
 		var msg string
@@ -114,7 +114,7 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 	}
 	select {
 	case <-ctx.Done():
-		return "Error because request took too much time to complete",
+		return ctxError,
 			fmt.Errorf("discord - GenerateAbsenceHandlerMsg - ctx.Done: %w", ctx.Err())
 	default:
 		dates, err := parseDate(dates)
