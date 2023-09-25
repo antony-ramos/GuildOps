@@ -32,9 +32,6 @@ func main() {
 
 	// Configuration
 	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		configPath = "config/config.yml"
-	}
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
 		log.Fatalf("error while loading config : %s", err.Error())
