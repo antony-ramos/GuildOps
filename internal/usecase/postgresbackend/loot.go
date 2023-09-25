@@ -11,7 +11,7 @@ import (
 func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchLoot - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		var loots []entity.Loot
 		sql, _, err := pg.Builder.
@@ -49,7 +49,7 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Loot{}, fmt.Errorf("database - CreateLoot - ctx.Done: %w", ctx.Err())
+		return entity.Loot{}, fmt.Errorf("database - CreateLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.
 			Select("name", "raid_id", "player_id").
@@ -87,7 +87,7 @@ func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, er
 func (pg *PG) ReadLoot(ctx context.Context, lootID int) (entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Loot{}, fmt.Errorf("database - ReadLoot - ctx.Done: %w", ctx.Err())
+		return entity.Loot{}, fmt.Errorf("database - ReadLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Select("id", "name", "raid_id", "player_id").From("loots").Where("id = $1").ToSql()
 		if err != nil {
@@ -127,7 +127,7 @@ func (pg *PG) ReadLoot(ctx context.Context, lootID int) (entity.Loot, error) {
 func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - UpdateLoot - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - UpdateLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, args, err := pg.Builder.
 			Update("loots").
@@ -149,7 +149,7 @@ func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
 func (pg *PG) DeleteLoot(ctx context.Context, lootID int) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeleteLoot - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - DeleteLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, errInsert := pg.Builder.Delete("loots").Where("id = $1").ToSql()
 		if errInsert != nil {

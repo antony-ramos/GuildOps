@@ -11,7 +11,8 @@ import (
 func (pg *PG) searchAbsenceOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchAbsence - searchAbsenceOnParam - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchAbsence - searchAbsenceOnParam - " +
+			"ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Select("absences.id", "absences.player_id", "absences.raid_id",
 			"raids.name", "raids.difficulty", "raids.date", "players.name").
@@ -50,7 +51,7 @@ func (pg *PG) SearchAbsence(
 ) ([]entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchAbsence - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		var absences []entity.Absence
 		switch {
@@ -80,7 +81,7 @@ func (pg *PG) SearchAbsence(
 func (pg *PG) CreateAbsence(ctx context.Context, absence entity.Absence) (entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  ctx.Done: %w", ctx.Err())
+		return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  ctx.Done: request took too much time to be proceed")
 	default:
 		sql, args, errInsert := pg.Builder.
 			Insert("absences").
@@ -100,7 +101,7 @@ func (pg *PG) CreateAbsence(ctx context.Context, absence entity.Absence) (entity
 func (pg *PG) ReadAbsence(ctx context.Context, absenceID int) (entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Absence{}, fmt.Errorf("database - ReadAbsence - ctx.Done: %w", ctx.Err())
+		return entity.Absence{}, fmt.Errorf("database - ReadAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Select("id", "player_id", "raid_id").From("absences").Where("id = $1").ToSql()
 		if err != nil {
@@ -126,7 +127,7 @@ func (pg *PG) ReadAbsence(ctx context.Context, absenceID int) (entity.Absence, e
 func (pg *PG) UpdateAbsence(ctx context.Context, absence entity.Absence) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - UpdateAbsence - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - UpdateAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, args, err := pg.Builder.
 			Update("absences").
@@ -147,7 +148,7 @@ func (pg *PG) UpdateAbsence(ctx context.Context, absence entity.Absence) error {
 func (pg *PG) DeleteAbsence(ctx context.Context, absenceID int) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeleteAbsence - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - DeleteAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Delete("absences").Where("id = $1").ToSql()
 		if err != nil {

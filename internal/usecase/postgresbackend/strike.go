@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
+	"github.com/antony-ramos/guildops/pkg/logger"
+
 	"go.uber.org/zap"
 )
 
@@ -13,7 +15,8 @@ import (
 func (pg *PG) SearchStrikeOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Strike, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - " +
+			"ctx.Done: request took too much time to be proceed")
 	default:
 		var strikes []entity.Strike
 		condition := fmt.Sprintf("%s = $1", paramName)
@@ -52,7 +55,7 @@ func (pg *PG) SearchStrike(
 		zap.String("reason", reason))
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchStrike - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		var strikes []entity.Strike
 		if playerID != -1 {
@@ -95,7 +98,7 @@ func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player ent
 		zap.String("player", player.Name))
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - CreateStrike - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - CreateStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, args, errInsert := pg.Builder.
 			Insert("strikes").
@@ -116,7 +119,7 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 	zap.L().Debug("ReadStrike", zap.Int("strikeID", strikeID))
 	select {
 	case <-ctx.Done():
-		return entity.Strike{}, fmt.Errorf("database - ReadStrike - ctx.Done: %w", ctx.Err())
+		return entity.Strike{}, fmt.Errorf("database - ReadStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		// Find Strike from id on database
 		sql, _, err := pg.Builder.
@@ -149,7 +152,7 @@ func (pg *PG) UpdateStrike(ctx context.Context, strike entity.Strike) error {
 		zap.String("reason", strike.Reason))
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - UpdateStrike - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - UpdateStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		// Update strike on database
 		sql, _, err := pg.Builder.Update("strikes").
@@ -171,7 +174,7 @@ func (pg *PG) DeleteStrike(ctx context.Context, strikeID int) error {
 	zap.L().Debug("DeleteStrike", zap.Int("strikeID", strikeID))
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeleteStrike - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - DeleteStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, errInsert := pg.Builder.Delete("strikes").Where("id = $1").ToSql()
 		if errInsert != nil {

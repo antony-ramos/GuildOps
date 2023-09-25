@@ -31,7 +31,7 @@ func SeasonCalculator(date time.Time) string {
 func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("StrikeUseCase - CreateStrike - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("StrikeUseCase - CreateStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		strike := entity.Strike{
 			Reason: strikeReason,
@@ -62,7 +62,7 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("StrikeUseCase - DeleteStrike - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("StrikeUseCase - DeleteStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		err := puc.backend.DeleteStrike(ctx, id)
 		if err != nil {
@@ -76,7 +76,7 @@ func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
 func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]entity.Strike, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("StrikeUseCase - ReadStrikes - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("StrikeUseCase - ReadStrikes - ctx.Done: request took too much time to be proceed")
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {

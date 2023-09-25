@@ -63,7 +63,7 @@ func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string)
 	select {
 	case <-ctx.Done():
 		return ctxError,
-			fmt.Errorf("discord - GenerateListAbsenceHandlerMsg - ctx.Done: %w", ctx.Err())
+			fmt.Errorf("discord - GenerateListAbsenceHandlerMsg - ctx.Done: request took too much time to be proceed")
 	default:
 		var msg string
 		dates, err := parseDate(date)
@@ -119,7 +119,7 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 	select {
 	case <-ctx.Done():
 		return ctxError,
-			fmt.Errorf("discord - GenerateAbsenceHandlerMsg - ctx.Done: %w", ctx.Err())
+			fmt.Errorf("discord - GenerateAbsenceHandlerMsg - ctx.Done: request took too much time to be proceed")
 	default:
 		dates, err := parseDate(dates)
 		if err != nil {

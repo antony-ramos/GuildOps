@@ -22,7 +22,7 @@ func NewAbsenceUseCase(bk Backend) *AbsenceUseCase {
 func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, date time.Time) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("AbsenceUseCase - CreateAbsence:  ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("AbsenceUseCase - CreateAbsence:  ctx.Done: request took too much time to be proceed")
 	default:
 		// Get player ID
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
@@ -66,7 +66,7 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, date time.Time) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("AbsenceUseCase - DeleteAbsence - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("AbsenceUseCase - DeleteAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
@@ -100,7 +100,7 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 func (a AbsenceUseCase) ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("AbsenceUseCase - ListAbsence - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("AbsenceUseCase - ListAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		absences, err := a.backend.SearchAbsence(ctx, "", -1, date)
 		if err != nil {

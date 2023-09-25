@@ -25,7 +25,7 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (i
 	defer span.End()
 	select {
 	case <-ctx.Done():
-		return -1, fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: %w", ctx.Err())
+		return -1, fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		player := entity.Player{
 			Name: playerName,
@@ -50,7 +50,7 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (i
 func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
@@ -82,7 +82,7 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (entity.Player, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: %w", ctx.Err())
+		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
@@ -106,7 +106,7 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 func (puc PlayerUseCase) LinkPlayer(ctx context.Context, playerName string, discordID string) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("PlayerUseCase - LinkPlayer - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("PlayerUseCase - LinkPlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		alreadyLinked, err := puc.backend.SearchPlayer(ctx, -1, "", discordID)
 		if err != nil {

@@ -24,7 +24,7 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchPlayer - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchPlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		var players []entity.Player
 
@@ -163,7 +163,7 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 	defer span.End()
 	select {
 	case <-ctx.Done():
-		return entity.Player{}, fmt.Errorf("database - CreatePlayer - ctx.Done: %w", ctx.Err())
+		return entity.Player{}, fmt.Errorf("database - CreatePlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Select("name").From("players").Where("name = $1").ToSql()
 		if err != nil {
@@ -175,7 +175,7 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 		}
 		defer rows.Close()
 		if rows.Next() {
-			return entity.Player{}, fmt.Errorf("database - CreatePlayer - player already exists")
+			return entity.Player{}, fmt.Errorf("database - CreatePlayer: player already exists")
 		}
 
 		if player.DiscordName == "" {
@@ -210,7 +210,7 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 
 	select {
 	case <-ctx.Done():
-		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: %w", ctx.Err())
+		return entity.Player{}, fmt.Errorf("database - ReadPlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Select("id", "name").From("players").Where("id = $1").ToSql()
 		if err != nil {
@@ -244,7 +244,7 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - UpdatePlayer - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - UpdatePlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		if player.DiscordName == "" {
 			player.DiscordName = "tmp_" + strconv.FormatInt(time.Now().Unix(), 10)
@@ -273,7 +273,7 @@ func (pg *PG) DeletePlayer(ctx context.Context, playerID int) error {
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeletePlayer - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - DeletePlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Delete("players").Where("id = $1").ToSql()
 		if err != nil {
