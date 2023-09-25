@@ -24,13 +24,13 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionInteger,
 				Name:        "raid-id",
-				Description: "ex: 4488766425",
+				Description: "(ex: 123456789)",
 				Required:    true,
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "player-name",
-				Description: "ex: Milowenn",
+				Description: "(ex: milowenn)",
 				Required:    true,
 			},
 		},
@@ -42,7 +42,7 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "player-name",
-				Description: "ex: Milowenn",
+				Description: "(ex: milowenn)",
 				Required:    true,
 			},
 		},
@@ -54,7 +54,7 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "id",
-				Description: "ex: 5465-4444-5557",
+				Description: "(ex: 123456789)",
 				Required:    true,
 			},
 		},
@@ -66,13 +66,13 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "player-list",
-				Description: "ex: Milowenn,Arthas,Jailer",
+				Description: "(ex: arthas,jailer,garrosh)",
 				Required:    true,
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "difficulty",
-				Description: "ex: HM",
+				Description: "(ex: mythic, heroic, normal)",
 				Required:    true,
 			},
 		},

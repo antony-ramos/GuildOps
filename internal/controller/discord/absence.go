@@ -16,7 +16,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "(ex: 11-05-23 | ou 11-05-23 au 13-05-23)",
+				Description: "(ex: 11/05/23 | ou 11/05/23 au 13/05/23)",
 				Required:    true,
 			},
 		},
@@ -28,7 +28,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "(ex: 11-05-23 | ou 11-05-23 au 13-05-23)",
+				Description: "(ex: 11/05/23 | ou 11/05/23 au 13/05/23)",
 				Required:    true,
 			},
 		},
@@ -40,7 +40,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "example : 09/09/23",
+				Description: "(ex: 09/09/23)",
 				Required:    true,
 			},
 		},
