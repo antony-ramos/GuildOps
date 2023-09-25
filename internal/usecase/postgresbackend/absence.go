@@ -80,18 +80,18 @@ func (pg *PG) SearchAbsence(
 func (pg *PG) CreateAbsence(ctx context.Context, absence entity.Absence) (entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Absence{}, fmt.Errorf("database - CreateAbsence - ctx.Done: %w", ctx.Err())
+		return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  ctx.Done: %w", ctx.Err())
 	default:
 		sql, args, errInsert := pg.Builder.
 			Insert("absences").
 			Columns("player_id", "raid_id").
 			Values(absence.Player.ID, absence.Raid.ID).ToSql()
 		if errInsert != nil {
-			return entity.Absence{}, fmt.Errorf("database - CreateAbsence - r.Builder: %w", errInsert)
+			return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  r.Builder: %w", errInsert)
 		}
 		_, err := pg.Pool.Exec(ctx, sql, args...)
 		if err != nil {
-			return entity.Absence{}, fmt.Errorf("database - CreateAbsence - r.Pool.Exec: %w", err)
+			return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  r.Pool.Exec: %w", err)
 		}
 		return absence, nil
 	}

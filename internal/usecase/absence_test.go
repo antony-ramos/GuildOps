@@ -188,7 +188,7 @@ func TestCreateAbsence(t *testing.T) {
 		date := time.Now()
 		err := absenceUseCase.CreateAbsence(context.Background(), "PlayerName", date)
 
-		assert.Error(t, err, "CreateAbsence - no raid found on %s", date)
+		assert.Error(t, err, "CreateAbsence:  no raid found on %s", date)
 		mockBackend.AssertExpectations(t)
 		t.Cleanup(func() {
 			mockBackend.AssertExpectations(t)
@@ -207,7 +207,7 @@ func TestCreateAbsence(t *testing.T) {
 		cancel()
 		err := absenceUseCase.CreateAbsence(ctx, "PlayerName", date)
 
-		assert.Error(t, err, "AbsenceUseCase - CreateAbsence - ctx.Done: %w", ctx.Err())
+		assert.Error(t, err, "AbsenceUseCase - CreateAbsence:  ctx.Done: %w", ctx.Err())
 		mockBackend.AssertExpectations(t)
 	})
 }
