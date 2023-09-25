@@ -70,8 +70,12 @@ func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string)
 		if err != nil {
 			msg = errorMsg + HumanReadableError(err)
 		} else {
-			msg = "Absence(s) pour le " + dates[0].Format("02-01-2006") + " :\n"
 			absences, err := d.ListAbsence(ctx, dates[0])
+			if len(absences) == 0 {
+				msg = "Aucune absence pour le " + date + "\n"
+				return msg, err
+			}
+			msg = "Absence(s) pour le " + dates[0].Format("02-01-2006") + " :\n"
 			if err != nil {
 				msg = errorMsg + HumanReadableError(err)
 				return msg, err
