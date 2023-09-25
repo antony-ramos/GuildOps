@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 type Player struct {
@@ -15,7 +16,7 @@ type Player struct {
 	MissedRaids []Raid
 }
 
-func (p Player) Validate() error {
+func (p *Player) Validate() error {
 	if len(p.Name) == 0 {
 		return fmt.Errorf("name cannot be empty")
 	}
@@ -25,14 +26,13 @@ func (p Player) Validate() error {
 		return fmt.Errorf("name must be between 1 and 12 characters")
 	}
 	// only a-z characters
-	for _, c := range p.Name {
-		if c < 'a' || c > 'z' {
-			return fmt.Errorf("name must only contain a-z characters")
+	for _, char := range p.Name {
+		if !unicode.IsLetter(char) {
+			return fmt.Errorf("name must only contain letters")
 		}
 	}
 
-	if p.Name != strings.ToLower(p.Name) {
-		return fmt.Errorf("name must be lowercase")
-	}
+	p.Name = strings.ToLower(p.Name)
+
 	return nil
 }
