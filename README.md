@@ -42,6 +42,9 @@
 
 ## Install
 
+Before anything, you need to edit the config at config/config.yml to add your discord bot token, guild id and postgres credentials
+You can also provides them via environment variables. dotenv is required for docker-compose.
+
 ### Go
 
 ```shell
@@ -51,9 +54,15 @@ guildops ...
 
 ### Docker
 
+
 ```shell
-docker pull ghcr.io/antony-ramos/guildops
-docker run --publish 8080 ghcr.io/antony-ramos/guildops
+docker run  ghcr.io/antony-ramos/guildops
+```
+
+### Docker-compose
+
+```shell
+docker-compose up
 ```
 
 ### Debian

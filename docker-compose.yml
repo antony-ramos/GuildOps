@@ -1,0 +1,8 @@
+---
+version: '3'
+services:
+  guildops:
+    image: ghcr.io/antony-ramos/guildops:latest
+    restart: always
+    env_file:
+      - .env
