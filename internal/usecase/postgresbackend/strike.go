@@ -3,6 +3,7 @@ package postgresbackend
 import (
 	"context"
 	"fmt"
+	"github.com/antony-ramos/guildops/pkg/logger"
 	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
@@ -48,7 +49,7 @@ func (pg *PG) SearchStrikeOnParam(ctx context.Context, paramName string, param i
 func (pg *PG) SearchStrike(
 	ctx context.Context, playerID int, date time.Time, season, reason string,
 ) ([]entity.Strike, error) {
-	zap.L().Debug("SearchStrike",
+	logger.FromContext(ctx).Debug("SearchStrike",
 		zap.Int("playerID", playerID),
 		zap.Time("date", date),
 		zap.String("season", season),
@@ -92,7 +93,7 @@ func (pg *PG) SearchStrike(
 
 // CreateStrike is a function which call backend to Create a Strike Object.
 func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error {
-	zap.L().Debug("CreateStrike",
+	logger.FromContext(ctx).Debug("CreateStrike",
 		zap.String("season", strike.Season),
 		zap.String("reason", strike.Reason),
 		zap.String("player", player.Name))
@@ -116,7 +117,7 @@ func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player ent
 }
 
 func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, error) {
-	zap.L().Debug("ReadStrike", zap.Int("strikeID", strikeID))
+	logger.FromContext(ctx).Debug("ReadStrike", zap.Int("strikeID", strikeID))
 	select {
 	case <-ctx.Done():
 		return entity.Strike{}, fmt.Errorf("database - ReadStrike - ctx.Done: request took too much time to be proceed")
@@ -146,7 +147,7 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 }
 
 func (pg *PG) UpdateStrike(ctx context.Context, strike entity.Strike) error {
-	zap.L().Debug("UpdateStrike",
+	logger.FromContext(ctx).Debug("UpdateStrike",
 		zap.Int("strikeID", strike.ID),
 		zap.String("season", strike.Season),
 		zap.String("reason", strike.Reason))
@@ -171,7 +172,7 @@ func (pg *PG) UpdateStrike(ctx context.Context, strike entity.Strike) error {
 }
 
 func (pg *PG) DeleteStrike(ctx context.Context, strikeID int) error {
-	zap.L().Debug("DeleteStrike", zap.Int("strikeID", strikeID))
+	logger.FromContext(ctx).Debug("DeleteStrike", zap.Int("strikeID", strikeID))
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - DeleteStrike - ctx.Done: request took too much time to be proceed")

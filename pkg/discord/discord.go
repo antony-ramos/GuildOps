@@ -6,9 +6,12 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/antony-ramos/guildops/pkg/logger"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/bwmarrin/discordgo"
 	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
 )
 
 type Discord struct {
@@ -29,32 +32,42 @@ func New(opts ...Option) *Discord {
 }
 
 func (d *Discord) Run(ctx context.Context) error {
-	var err error
-	d.s, err = discordgo.New("Bot " + d.token)
+	logger.FromContext(ctx).Info("create discord session")
+	session, err := discordgo.New("Bot " + d.token)
 	if err != nil {
-		return fmt.Errorf("discord - Run - discordgo.New: %w", err)
+		return errors.Wrap(err, "new discord session")
 	}
+	d.s = session
 
+	logger.FromContext(ctx).Debug("adding handler to discord ready event")
 	d.s.AddHandler(func(session *discordgo.Session, r *discordgo.Ready) {
 	})
 	err = d.s.Open()
 	if err != nil {
-		return fmt.Errorf("discord - Run - d.s.Open: %w", err)
+		return errors.Wrap(err, "add handler to discord ready event")
 	}
 
+	logger.FromContext(ctx).Debug("create handlers to discord interaction create event")
+	loggerHandler := logger.FromContext(ctx)
 	d.s.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-		if h, ok := d.commandHandlers[interaction.ApplicationCommandData().Name]; ok {
+		if handler, ok := d.commandHandlers[interaction.ApplicationCommandData().Name]; ok {
 			ctx := context.Background()
+			ctx = logger.AddLoggerToContext(ctx, loggerHandler)
+
+			logger.FromContext(ctx).Debug("handling command " + interaction.ApplicationCommandData().Name)
 			ctx, span := otel.Tracer("discordHandler").Start(ctx, interaction.ApplicationCommandData().Name)
+			ctx = logger.AddLoggerToContext(ctx, logger.FromContext(ctx).
+				With(zap.String("discordHandler", interaction.ApplicationCommandData().Name)))
 			defer span.End()
-			err := h(ctx, session, interaction)
+			err := handler(ctx, session, interaction)
 			if err != nil {
-				zap.L().Error(
-					fmt.Sprintf("Error while handling command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
+				logger.FromContext(ctx).Error(
+					fmt.Sprintf("handle command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
 			}
 		}
 	})
 
+	logger.FromContext(ctx).Debug("register commands to discord")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(d.commands))
 	var waitGroup sync.WaitGroup
 	errCh := make(chan error, len(d.commands))
@@ -67,16 +80,16 @@ func (d *Discord) Run(ctx context.Context) error {
 			defer waitGroup.Done()
 			select {
 			case <-stopCh:
-				return // S'arrête immédiatement si un autre goroutine a signalé une erreur
+				return
 			default:
-				zap.L().Info("Registering command " + command.Name)
+				logger.FromContext(ctx).Info("register command " + command.Name)
 				cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
 				if err != nil {
 					errCh <- err
-					close(stopCh) // Ferme le canal pour signaler aux autres goroutines de s'arrêter
+					close(stopCh)
 				}
 				registeredCommands[commandName] = cmd
-				zap.L().Info("Command " + command.Name + " registered")
+				logger.FromContext(ctx).Info("command " + command.Name + " registered")
 			}
 		}()
 	}
@@ -84,21 +97,24 @@ func (d *Discord) Run(ctx context.Context) error {
 	close(errCh)
 
 	defer func(session *discordgo.Session) {
+		logger.FromContext(ctx).Info("close discord session")
 		err := session.Close()
 		if err != nil {
-			zap.L().Error(err.Error())
+			logger.FromContext(ctx).Error(err.Error())
 		}
 	}(d.s)
 
 	<-ctx.Done()
+
+	logger.FromContext(ctx).Info("delete commands")
 	if d.DeleteCommands {
 		for _, value := range registeredCommands {
-			zap.L().Info("Deleting command " + value.Name)
+			logger.FromContext(ctx).Info("delete command " + value.Name)
 			err := d.s.ApplicationCommandDelete(d.s.State.User.ID, strconv.Itoa(d.guildID), value.ID)
 			if err != nil {
 				return fmt.Errorf("discord - Run - d.s.ApplicationCommandDelete: %w", err)
 			}
-			zap.L().Info("Command " + value.Name + " deleted")
+			logger.FromContext(ctx).Info("command " + value.Name + " deleted")
 		}
 	}
 	return nil

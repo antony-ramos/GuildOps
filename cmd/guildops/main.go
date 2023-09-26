@@ -8,11 +8,12 @@ import (
 	"os"
 	"time"
 
+	logger "github.com/antony-ramos/guildops/pkg/logger"
+
 	"github.com/antony-ramos/guildops/config"
 	"github.com/antony-ramos/guildops/internal/app"
 	"github.com/antony-ramos/guildops/pkg/tracing"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -28,7 +29,6 @@ var LogLevels = map[string]zapcore.Level{
 
 func main() {
 	ctx := context.Background()
-	spanName := "main function"
 
 	// Configuration
 	configPath := os.Getenv("CONFIG_PATH")
@@ -38,14 +38,14 @@ func main() {
 		return
 	}
 
-	// Starting Log
+	// Logs
 	atom := zap.NewAtomicLevel()
 	atom.SetLevel(LogLevels[cfg.Log.Level])
 
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.TimeKey = ""
 
-	logger := zap.New(zapcore.NewCore(
+	zapLog := zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stdout),
 		atom,
@@ -55,22 +55,19 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-	}(logger)
+	}(zapLog)
 
-	undo := zap.ReplaceGlobals(logger)
-	defer undo()
+	zapLog = zapLog.With(zap.String("service", cfg.Name), zap.String("version", cfg.Version), zap.String("env", cfg.Env))
 
-	zap.L().Info("replaced zap's global loggers")
-
-	// Setup Zap Log Level
+	ctx = logger.AddLoggerToContext(ctx, zapLog)
 
 	// Tracing
-	zap.L().Info("Starting telemetry")
+	logger.FromContext(ctx).Info("Starting telemetry")
+	logger.FromContext(ctx).Info("Starting telemetry")
 
-	// Tracing
 	shutdown, err := tracing.InstallExportPipeline(ctx, cfg.Name, cfg.Version)
 	if err != nil {
-		zap.L().Error(err.Error())
+		logger.FromContext(ctx).Error(err.Error())
 		return
 	}
 	defer func() {
@@ -78,10 +75,9 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	ctx, span := otel.Tracer(spanName).Start(ctx, "main")
 
 	// Metrics
-	zap.L().Info(fmt.Sprintf("Starting metrics server on port %s", cfg.Metrics.Port))
+	logger.FromContext(ctx).Info(fmt.Sprintf("Starting metrics server on port %s", cfg.Metrics.Port))
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
 		server := &http.Server{
@@ -90,14 +86,11 @@ func main() {
 		}
 		err := server.ListenAndServe()
 		if err != nil {
-			span.RecordError(err)
-			zap.L().Fatal(err.Error())
-			span.End()
+			logger.FromContext(ctx).Fatal(err.Error())
 		}
 	}()
 
 	// Run
-	zap.L().Info("Starting app")
+	logger.FromContext(ctx).Info("Starting app")
 	app.Run(ctx, cfg)
-	span.End()
 }

@@ -1,13 +1,15 @@
 package postgresbackend
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 
+	"github.com/antony-ramos/guildops/pkg/logger"
+
 	"github.com/antony-ramos/guildops/pkg/postgres"
 	_ "github.com/lib/pq"
-	"go.uber.org/zap"
 )
 
 type PG struct {
@@ -17,7 +19,7 @@ type PG struct {
 var isNotDeleted = "DELETE 0"
 
 // Init Database Tables.
-func (pg *PG) Init(connStr string, db *sql.DB) error {
+func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 	database := db
 	var err error
 	if db == nil {
@@ -30,7 +32,7 @@ func (pg *PG) Init(connStr string, db *sql.DB) error {
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-			zap.L().Error(err.Error())
+			logger.FromContext(ctx).Error(err.Error())
 		}
 	}(database)
 
@@ -119,7 +121,5 @@ func (pg *PG) Init(connStr string, db *sql.DB) error {
 		return fmt.Errorf("database - Init - database.Exec: %w", err)
 	}
 
-	zap.L().With(zap.String("table", "raids"))
-	zap.L().Info("Player table created (if it didn't exist)")
 	return nil
 }
