@@ -3,7 +3,6 @@ package postgresbackend
 import (
 	"context"
 	"fmt"
-	"github.com/antony-ramos/guildops/pkg/logger"
 	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
