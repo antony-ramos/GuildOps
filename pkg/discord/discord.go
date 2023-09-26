@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 
+	"github.com/alitto/pond"
 	"github.com/antony-ramos/guildops/pkg/logger"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 )
 
 type Discord struct {
@@ -39,7 +38,7 @@ func (d *Discord) Run(ctx context.Context) error {
 	}
 	d.s = session
 
-	logger.FromContext(ctx).Debug("adding handler to discord ready event")
+	logger.FromContext(ctx).Debug("add handler to discord ready event")
 	d.s.AddHandler(func(session *discordgo.Session, r *discordgo.Ready) {
 	})
 	err = d.s.Open()
@@ -69,32 +68,24 @@ func (d *Discord) Run(ctx context.Context) error {
 
 	logger.FromContext(ctx).Debug("register commands to discord")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(d.commands))
-	var waitGroup sync.WaitGroup
-	errCh := make(chan error, len(d.commands))
-	stopCh := make(chan struct{})
+
+	pool := pond.New(100, 1000)
+	group, ctx := pool.GroupContext(ctx)
+
 	for i, v := range d.commands {
-		commandName := i
-		waitGroup.Add(1)
-		command := v
-		go func() {
-			defer waitGroup.Done()
-			select {
-			case <-stopCh:
-				return
-			default:
-				logger.FromContext(ctx).Info("register command " + command.Name)
-				cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
-				if err != nil {
-					errCh <- err
-					close(stopCh)
-				}
-				registeredCommands[commandName] = cmd
-				logger.FromContext(ctx).Info("command " + command.Name + " registered")
+		group.Submit(func() error {
+			commandName := i
+			command := v
+			logger.FromContext(ctx).Info("register command " + command.Name)
+			cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
+			if err != nil {
+				return errors.Wrap(err, "try to create command "+command.Name)
 			}
-		}()
+			registeredCommands[commandName] = cmd
+			logger.FromContext(ctx).Info("command " + command.Name + " registered")
+			return nil
+		})
 	}
-	waitGroup.Wait()
-	close(errCh)
 
 	defer func(session *discordgo.Session) {
 		logger.FromContext(ctx).Info("close discord session")
@@ -104,6 +95,11 @@ func (d *Discord) Run(ctx context.Context) error {
 		}
 	}(d.s)
 
+	logger.FromContext(ctx).Info("ready to handle commands")
+	err = group.Wait()
+	if err != nil {
+		return fmt.Errorf("wait command creation: %w", err)
+	}
 	<-ctx.Done()
 
 	logger.FromContext(ctx).Info("delete commands")

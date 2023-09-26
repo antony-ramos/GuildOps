@@ -85,7 +85,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 		discord.GuildID(cfg.Discord.GuildID),
 		discord.DeleteCommands(cfg.Discord.DeleteCommands))
 
-	logger.FromContext(ctx).Info("starting to serve to discord webhooks")
+	logger.FromContext(ctx).Info("start guildOps")
 	err = serve.Run(ctx)
 	if err != nil {
 		logger.FromContext(ctx).Error(errors.Wrap(err, "run discord").Error())
