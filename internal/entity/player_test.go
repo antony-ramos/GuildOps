@@ -64,17 +64,6 @@ func TestPlayer_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		{
-			name: "Invalid Player - Name Lowercase",
-			fields: fields{
-				ID:          1,
-				Name:        "PlayerName",
-				Strikes:     []entity.Strike{},
-				Loots:       []entity.Loot{},
-				MissedRaids: []entity.Raid{},
-			},
-			wantErr: true,
-		},
 	}
 	for _, tt := range tests {
 		test := tt

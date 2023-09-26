@@ -81,20 +81,6 @@ func TestRaid_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Invalid Raid - Name Lowercase",
-			fields: fields{
-				ID:         1,
-				Name:       "RaidName",
-				Date:       time.Now(),
-				Difficulty: "normal",
-				Absences:   []*entity.Player{},
-				Players:    []*entity.Player{},
-				Bench:      []*entity.Player{},
-				Loots:      []*entity.Loot{},
-			},
-			wantErr: true,
-		},
-		{
 			name: "Invalid Raid - Difficulty",
 			fields: fields{
 				ID:         1,

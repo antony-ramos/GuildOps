@@ -37,7 +37,7 @@ func (r *Raid) Validate() error {
 	}
 
 	for _, char := range r.Name {
-		if !unicode.IsLetter(char) {
+		if !unicode.IsLetter(char) && !unicode.IsSpace(char) {
 			return fmt.Errorf("name must only contain letters")
 		}
 	}
