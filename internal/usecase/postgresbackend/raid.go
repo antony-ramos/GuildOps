@@ -14,7 +14,7 @@ func (pg *PG) SearchRaid(
 ) ([]entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("database - SearchRaid - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("database - SearchRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		var raids []entity.Raid
 		if raidName != "" {
@@ -82,7 +82,7 @@ func (pg *PG) SearchRaid(
 func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Raid{}, fmt.Errorf("database - CreateRaid - ctx.Done: %w", ctx.Err())
+		return entity.Raid{}, fmt.Errorf("database - CreateRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.
 			Select("name", "date", "difficulty").
@@ -135,7 +135,7 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: %w", ctx.Err())
+		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Select("id", "name", "date", "difficulty").From("raids").Where("id = $1").ToSql()
 		if err != nil {
@@ -161,7 +161,7 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - UpdateRaid - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - UpdateRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		oldRaid, err := pg.ReadRaid(ctx, raid.ID)
 		if err != nil {
@@ -200,7 +200,7 @@ func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 func (pg *PG) DeleteRaid(ctx context.Context, raidID int) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeleteRaid - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("database - DeleteRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, err := pg.Builder.Delete("raids").Where("id = $1").ToSql()
 		if err != nil {

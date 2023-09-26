@@ -201,7 +201,7 @@ func (d Discord) GenerateLinkPlayerMsg(ctx context.Context, discordName, playerN
 	select {
 	case <-ctx.Done():
 		return ctxError,
-			fmt.Errorf("discord - GenerateLinkPlayerMsg - ctx.Done: %w", ctx.Err())
+			fmt.Errorf("discord - GenerateLinkPlayerMsg - ctx.Done: request took too much time to be proceed")
 	default:
 		var msg string
 

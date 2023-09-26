@@ -242,7 +242,7 @@ func TestDiscord_GenerateListAbsenceHandlerMsg(t *testing.T) {
 		msg, err := discord.GenerateListAbsenceHandlerMsg(context.Background(), "01/01/21")
 
 		assert.Error(t, err)
-		assert.Equal(t, "Error while listing absences: Backend Error", msg)
+		assert.Equal(t, "Aucune absence pour le 01/01/21\n", msg)
 		mockAbsenceUseCase.AssertExpectations(t)
 	})
 }

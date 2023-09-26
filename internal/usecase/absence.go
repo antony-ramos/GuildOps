@@ -22,12 +22,12 @@ func NewAbsenceUseCase(bk Backend) *AbsenceUseCase {
 func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, date time.Time) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("AbsenceUseCase - CreateAbsence - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("AbsenceUseCase - CreateAbsence:  ctx.Done: request took too much time to be proceed")
 	default:
 		// Get player ID
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
-			return fmt.Errorf("CreateAbsence - backend.SearchPlayer: %w", err)
+			return fmt.Errorf("CreateAbsence:  backend.SearchPlayer: %w", err)
 		}
 		if len(player) == 0 {
 			return fmt.Errorf("no player found")
@@ -36,10 +36,10 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 		// Get raid ID
 		raids, err := a.backend.SearchRaid(ctx, "", date, "")
 		if err != nil {
-			return fmt.Errorf("CreateAbsence - backend.SearchRaid: %w", err)
+			return fmt.Errorf("CreateAbsence:  backend.SearchRaid: %w", err)
 		}
 		if len(raids) == 0 {
-			return fmt.Errorf("CreateAbsence - no raid found on %s", date)
+			return fmt.Errorf("CreateAbsence:  no raid found on %s", date.Format("02-01-2006"))
 		}
 
 		// For each raid ID, create an absence
@@ -51,11 +51,11 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 			}
 			err := absence.Validate()
 			if err != nil {
-				return fmt.Errorf("CreateAbsence - absence.Validate: %w", err)
+				return fmt.Errorf("CreateAbsence:  absence.Validate: %w", err)
 			}
 			_, err = a.backend.CreateAbsence(ctx, absence)
 			if err != nil {
-				return fmt.Errorf("CreateAbsence - backend.CreateAbsence: %w", err)
+				return fmt.Errorf("CreateAbsence:  backend.CreateAbsence: %w", err)
 			}
 		}
 		return nil
@@ -66,7 +66,7 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, date time.Time) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("AbsenceUseCase - DeleteAbsence - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("AbsenceUseCase - DeleteAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
@@ -100,7 +100,7 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 func (a AbsenceUseCase) ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("AbsenceUseCase - ListAbsence - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("AbsenceUseCase - ListAbsence - ctx.Done: request took too much time to be proceed")
 	default:
 		absences, err := a.backend.SearchAbsence(ctx, "", -1, date)
 		if err != nil {

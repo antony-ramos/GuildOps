@@ -21,7 +21,7 @@ func (puc RaidUseCase) CreateRaid(
 ) (entity.Raid, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Raid{}, fmt.Errorf("RaidUseCase - CreateRaid - ctx.Done: %w", ctx.Err())
+		return entity.Raid{}, fmt.Errorf("RaidUseCase - CreateRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		raid := entity.Raid{
 			Name:       raidName,
@@ -43,7 +43,7 @@ func (puc RaidUseCase) CreateRaid(
 func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("RaidUseCase - DeleteRaid - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("RaidUseCase - DeleteRaid - ctx.Done: request took too much time to be proceed")
 	default:
 		err := puc.backend.DeleteRaid(ctx, raidID)
 		if err != nil {

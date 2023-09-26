@@ -54,12 +54,14 @@ type (
 func NewConfig(configPath string) (*Config, error) {
 	cfg := &Config{}
 
-	err := cleanenv.ReadConfig(configPath, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("config error: %w", err)
+	if configPath != "" {
+		err := cleanenv.ReadConfig(configPath, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("config error: %w", err)
+		}
 	}
 
-	err = cleanenv.ReadEnv(cfg)
+	err := cleanenv.ReadEnv(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("config error: %w", err)
 	}

@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 
+	"github.com/antony-ramos/guildops/pkg/logger"
+	"github.com/pkg/errors"
+
 	"github.com/antony-ramos/guildops/config"
 	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
 	"github.com/antony-ramos/guildops/internal/usecase"
@@ -14,7 +17,7 @@ import (
 )
 
 func Run(ctx context.Context, cfg *config.Config) {
-	zap.L().Info("loading backend")
+	logger.FromContext(ctx).Info("loading backend")
 
 	pgHandler, err := postgres.New(
 		ctx,
@@ -23,13 +26,15 @@ func Run(ctx context.Context, cfg *config.Config) {
 		postgres.ConnAttempts(cfg.ConnAttempts),
 		postgres.ConnTimeout(cfg.ConnTimeOut))
 	if err != nil {
-		zap.L().Fatal(err.Error())
+		logger.FromContext(ctx).Fatal(err.Error())
 	}
 
+	ctx = logger.AddLoggerToContext(ctx, logger.FromContext(ctx).With(zap.String("backend", "postgres")))
+
 	backend := postgresbackend.PG{Postgres: pgHandler}
-	err = backend.Init(cfg.URL, nil)
+	err = backend.Init(ctx, cfg.URL, nil)
 	if err != nil {
-		zap.L().Fatal(err.Error())
+		logger.FromContext(ctx).Fatal(err.Error())
 		return
 	}
 
@@ -80,10 +85,10 @@ func Run(ctx context.Context, cfg *config.Config) {
 		discord.GuildID(cfg.Discord.GuildID),
 		discord.DeleteCommands(cfg.Discord.DeleteCommands))
 
-	zap.L().Info("starting to serve to discord webhooks")
+	logger.FromContext(ctx).Info("start guildOps")
 	err = serve.Run(ctx)
 	if err != nil {
-		zap.L().Error(err.Error())
+		logger.FromContext(ctx).Error(errors.Wrap(err, "run discord").Error())
 		return
 	}
 }

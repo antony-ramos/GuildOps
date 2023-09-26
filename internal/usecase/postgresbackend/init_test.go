@@ -1,7 +1,11 @@
 package postgresbackend_test
 
 import (
+	"context"
 	"testing"
+
+	"github.com/antony-ramos/guildops/pkg/logger"
+	"go.uber.org/zap"
 
 	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
 
@@ -10,9 +14,12 @@ import (
 )
 
 func TestPG_Init(t *testing.T) {
+	ctx := logger.AddLoggerToContext(context.Background(), zap.NewNop())
+
 	t.Parallel()
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
+
 		database, mock, err := sqlmock.New()
 		if err != nil {
 			t.Fatalf("Error creating mock database: %v", err)
@@ -27,7 +34,7 @@ func TestPG_Init(t *testing.T) {
 		mock.ExpectExec(".*CREATE TABLE IF NOT EXISTS loots.*").WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectExec(".*CREATE TABLE IF NOT EXISTS absences.*").WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err = pgBackend.Init("mock_conn_string", database)
+		err = pgBackend.Init(ctx, "mock_conn_string", database)
 		assert.NoError(t, err)
 		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Errorf("Unfulfilled expectations: %s", err)
@@ -38,7 +45,7 @@ func TestPG_Init(t *testing.T) {
 		t.Parallel()
 
 		pgBackend := &postgresbackend.PG{nil}
-		err := pgBackend.Init("mock_conn_string", nil)
+		err := pgBackend.Init(ctx, "mock_conn_string", nil)
 		assert.Error(t, err)
 	})
 }

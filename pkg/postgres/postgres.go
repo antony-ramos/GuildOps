@@ -33,7 +33,7 @@ type Postgres struct {
 func New(ctx context.Context, url string, opts ...Option) (*Postgres, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("postgres - New - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("postgres - New - ctx.Done: request took too much time to be proceed")
 	default:
 		postgres := &Postgres{
 			maxPoolSize:  _defaultMaxPoolSize,

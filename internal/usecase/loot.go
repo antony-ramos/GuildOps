@@ -20,7 +20,7 @@ func NewLootUseCase(bk Backend) *LootUseCase {
 func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID int, playerName string) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("LootUseCase - CreateLoot - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("LootUseCase - CreateLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		raid, err := puc.backend.ReadRaid(ctx, raidID)
 		if err != nil {
@@ -64,7 +64,7 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID i
 func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) ([]entity.Loot, error) {
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: %w", ctx.Err())
+		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: request took too much time to be proceed")
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
@@ -80,7 +80,8 @@ func (puc LootUseCase) SelectPlayerToAssign(
 ) (entity.Player, error) {
 	select {
 	case <-ctx.Done():
-		return entity.Player{}, fmt.Errorf("LootUseCase - SelectPlayerToAssign - ctx.Done: %w", ctx.Err())
+		return entity.Player{}, fmt.Errorf("LootUseCase - SelectPlayerToAssign - " +
+			"ctx.Done: request took too much time to be proceed")
 	default:
 		if len(playerNames) == 0 {
 			return entity.Player{}, fmt.Errorf("player list empty")
@@ -133,7 +134,7 @@ func (puc LootUseCase) SelectPlayerToAssign(
 func (puc LootUseCase) DeleteLoot(ctx context.Context, lootID int) error {
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("LootUseCase - DeleteLoot - ctx.Done: %w", ctx.Err())
+		return fmt.Errorf("LootUseCase - DeleteLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		err := puc.backend.DeleteLoot(ctx, lootID)
 		if err != nil {

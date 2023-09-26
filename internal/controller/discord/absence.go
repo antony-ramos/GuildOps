@@ -16,7 +16,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "(ex: 11-05-23 | ou 11-05-23 au 13-05-23)",
+				Description: "(ex: 11/05/23 | ou 11/05/23 au 13/05/23)",
 				Required:    true,
 			},
 		},
@@ -28,7 +28,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "(ex: 11-05-23 | ou 11-05-23 au 13-05-23)",
+				Description: "(ex: 11/05/23 | ou 11/05/23 au 13/05/23)",
 				Required:    true,
 			},
 		},
@@ -40,7 +40,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "date",
-				Description: "example : 09/09/23",
+				Description: "(ex: 09/09/23)",
 				Required:    true,
 			},
 		},
@@ -63,15 +63,19 @@ func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string)
 	select {
 	case <-ctx.Done():
 		return ctxError,
-			fmt.Errorf("discord - GenerateListAbsenceHandlerMsg - ctx.Done: %w", ctx.Err())
+			fmt.Errorf("discord - GenerateListAbsenceHandlerMsg - ctx.Done: request took too much time to be proceed")
 	default:
 		var msg string
 		dates, err := parseDate(date)
 		if err != nil {
 			msg = errorMsg + HumanReadableError(err)
 		} else {
-			msg = "Absence(s) pour le " + dates[0].Format("02-01-2006") + " :\n"
 			absences, err := d.ListAbsence(ctx, dates[0])
+			if len(absences) == 0 {
+				msg = "Aucune absence pour le " + date + "\n"
+				return msg, err
+			}
+			msg = "Absence(s) pour le " + dates[0].Format("02-01-2006") + " :\n"
 			if err != nil {
 				msg = errorMsg + HumanReadableError(err)
 				return msg, err
@@ -115,7 +119,7 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 	select {
 	case <-ctx.Done():
 		return ctxError,
-			fmt.Errorf("discord - GenerateAbsenceHandlerMsg - ctx.Done: %w", ctx.Err())
+			fmt.Errorf("discord - GenerateAbsenceHandlerMsg - ctx.Done: request took too much time to be proceed")
 	default:
 		dates, err := parseDate(dates)
 		if err != nil {
