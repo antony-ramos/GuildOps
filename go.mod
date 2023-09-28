@@ -19,7 +19,7 @@ require (
 	go.opentelemetry.io/otel v1.19.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.18.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.18.0
-	go.opentelemetry.io/otel/sdk v1.18.0
+	go.opentelemetry.io/otel/sdk v1.19.0
 	go.uber.org/zap v1.26.0
 )
 
