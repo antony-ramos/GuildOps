@@ -40,6 +40,30 @@ func (_m *Backend) CreateAbsence(ctx context.Context, absence entity.Absence) (e
 	return r0, r1
 }
 
+// CreateFail provides a mock function with given fields: ctx, fail
+func (_m *Backend) CreateFail(ctx context.Context, fail entity.Fail) (entity.Fail, error) {
+	ret := _m.Called(ctx, fail)
+
+	var r0 entity.Fail
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Fail) (entity.Fail, error)); ok {
+		return rf(ctx, fail)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Fail) entity.Fail); ok {
+		r0 = rf(ctx, fail)
+	} else {
+		r0 = ret.Get(0).(entity.Fail)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entity.Fail) error); ok {
+		r1 = rf(ctx, fail)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateLoot provides a mock function with given fields: ctx, loot
 func (_m *Backend) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, error) {
 	ret := _m.Called(ctx, loot)
@@ -140,6 +164,20 @@ func (_m *Backend) DeleteAbsence(ctx context.Context, absenceID int) error {
 	return r0
 }
 
+// DeleteFail provides a mock function with given fields: ctx, failID
+func (_m *Backend) DeleteFail(ctx context.Context, failID int) error {
+	ret := _m.Called(ctx, failID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
+		r0 = rf(ctx, failID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteLoot provides a mock function with given fields: ctx, lootID
 func (_m *Backend) DeleteLoot(ctx context.Context, lootID int) error {
 	ret := _m.Called(ctx, lootID)
@@ -213,6 +251,30 @@ func (_m *Backend) ReadAbsence(ctx context.Context, absenceID int) (entity.Absen
 
 	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
 		r1 = rf(ctx, absenceID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ReadFail provides a mock function with given fields: ctx, failID
+func (_m *Backend) ReadFail(ctx context.Context, failID int) (entity.Fail, error) {
+	ret := _m.Called(ctx, failID)
+
+	var r0 entity.Fail
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) (entity.Fail, error)); ok {
+		return rf(ctx, failID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) entity.Fail); ok {
+		r0 = rf(ctx, failID)
+	} else {
+		r0 = ret.Get(0).(entity.Fail)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, failID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -342,6 +404,32 @@ func (_m *Backend) SearchAbsence(ctx context.Context, playerName string, playerI
 	return r0, r1
 }
 
+// SearchFail provides a mock function with given fields: ctx, playerName, playerID, raidID, reason
+func (_m *Backend) SearchFail(ctx context.Context, playerName string, playerID int, raidID int, reason string) ([]entity.Fail, error) {
+	ret := _m.Called(ctx, playerName, playerID, raidID, reason)
+
+	var r0 []entity.Fail
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int, string) ([]entity.Fail, error)); ok {
+		return rf(ctx, playerName, playerID, raidID, reason)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int, string) []entity.Fail); ok {
+		r0 = rf(ctx, playerName, playerID, raidID, reason)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Fail)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, int, int, string) error); ok {
+		r1 = rf(ctx, playerName, playerID, raidID, reason)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SearchLoot provides a mock function with given fields: ctx, name, date, difficulty
 func (_m *Backend) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
 	ret := _m.Called(ctx, name, date, difficulty)
@@ -453,6 +541,20 @@ func (_m *Backend) UpdateAbsence(ctx context.Context, absence entity.Absence) er
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, entity.Absence) error); ok {
 		r0 = rf(ctx, absence)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateFail provides a mock function with given fields: ctx, fail
+func (_m *Backend) UpdateFail(ctx context.Context, fail entity.Fail) error {
+	ret := _m.Called(ctx, fail)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Fail) error); ok {
+		r0 = rf(ctx, fail)
 	} else {
 		r0 = ret.Error(0)
 	}
