@@ -3,13 +3,14 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 	"github.com/antony-ramos/guildops/internal/usecase"
 	"github.com/antony-ramos/guildops/internal/usecase/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
 func TestFailUseCase_CreateFail(t *testing.T) {
@@ -32,8 +33,12 @@ func TestFailUseCase_CreateFail(t *testing.T) {
 		t.Parallel()
 		mockBackend := mocks.NewBackend(t)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{{ID: 1}}, nil)
-		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Raid{}, nil)
+		mockBackend.
+			On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{}, nil)
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
@@ -46,7 +51,9 @@ func TestFailUseCase_CreateFail(t *testing.T) {
 	t.Run("player not found", func(t *testing.T) {
 		t.Parallel()
 		mockBackend := mocks.NewBackend(t)
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{}, nil)
+		mockBackend.
+			On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{}, nil)
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
@@ -54,14 +61,17 @@ func TestFailUseCase_CreateFail(t *testing.T) {
 		err := FailUseCase.CreateFail(ctx, "failreason", time.Now(), "playerone")
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
-
 	})
 
 	t.Run("fail validate", func(t *testing.T) {
 		t.Parallel()
 		mockBackend := mocks.NewBackend(t)
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{{ID: 1}}, nil)
-		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Raid{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{{ID: 1}}, nil)
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
@@ -83,7 +93,9 @@ func TestFailUseCase_CreateFail(t *testing.T) {
 			Name:       "raidname",
 			Difficulty: "normal",
 		}}, nil)
-		mockBackend.On("CreateFail", mock.Anything, mock.Anything).Return(entity.Fail{}, errors.New("Backend Error"))
+		mockBackend.
+			On("CreateFail", mock.Anything, mock.Anything).
+			Return(entity.Fail{}, errors.New("Backend Error"))
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
@@ -96,15 +108,19 @@ func TestFailUseCase_CreateFail(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		mockBackend := mocks.NewBackend(t)
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{{
-			ID:   1,
-			Name: "playername",
-		}}, nil)
-		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Raid{{
-			ID:         1,
-			Name:       "raidname",
-			Difficulty: "normal",
-		}}, nil)
+		mockBackend.
+			On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{
+				ID:   1,
+				Name: "playername",
+			}}, nil)
+		mockBackend.
+			On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{{
+				ID:         1,
+				Name:       "raidname",
+				Difficulty: "normal",
+			}}, nil)
 		mockBackend.On("CreateFail", mock.Anything, mock.Anything).Return(entity.Fail{}, nil)
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
@@ -158,9 +174,9 @@ func TestFailUseCase_DeleteFail(t *testing.T) {
 		assert.NoError(t, err)
 		mockBackend.AssertExpectations(t)
 	})
-
 }
 
+//nolint:dupl
 func TestFailUseCase_ListFailOnPLayer(t *testing.T) {
 	t.Parallel()
 	t.Run("context is done", func(t *testing.T) {
@@ -186,8 +202,12 @@ func TestFailUseCase_ListFailOnPLayer(t *testing.T) {
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{{ID: 1}}, nil)
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Fail{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Fail{{ID: 1}}, nil)
 
 		_, err := FailUseCase.ListFailOnPLayer(context.Background(), "playerone")
 		assert.NoError(t, err)
@@ -195,6 +215,7 @@ func TestFailUseCase_ListFailOnPLayer(t *testing.T) {
 	})
 }
 
+//nolint:dupl
 func TestFailUseCase_ListFailOnRaid(t *testing.T) {
 	t.Parallel()
 	t.Run("context is done", func(t *testing.T) {
@@ -220,8 +241,12 @@ func TestFailUseCase_ListFailOnRaid(t *testing.T) {
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
-		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Raid{{ID: 1}}, nil)
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Fail{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Fail{{ID: 1}}, nil)
 
 		_, err := FailUseCase.ListFailOnRaid(context.Background(), "raidone")
 		assert.NoError(t, err)
@@ -254,15 +279,20 @@ func TestFailUseCase_ListFailOnRaidAndPlayer(t *testing.T) {
 
 		FailUseCase := usecase.NewFailUseCase(mockBackend)
 
-		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Raid{{ID: 1}}, nil)
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Player{{ID: 1}}, nil)
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]entity.Fail{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.
+			On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Fail{{ID: 1}}, nil)
 
 		_, err := FailUseCase.ListFailOnRaidAndPlayer(context.Background(), "raidone", "playerone")
 		assert.NoError(t, err)
 		mockBackend.AssertExpectations(t)
 	})
-
 }
 
 func TestFailUseCase_ReadFail(t *testing.T) {
@@ -309,9 +339,7 @@ func TestFailUseCase_ReadFail(t *testing.T) {
 		_, err := FailUseCase.ReadFail(context.Background(), 1)
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
-
 	})
-
 }
 
 func TestFailUseCase_UpdateFail(t *testing.T) {
@@ -384,6 +412,5 @@ func TestFailUseCase_UpdateFail(t *testing.T) {
 		err := FailUseCase.UpdateFail(context.Background(), 1, "failreason")
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
-
 	})
 }
