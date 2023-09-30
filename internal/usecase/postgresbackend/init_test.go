@@ -33,6 +33,7 @@ func TestPG_Init(t *testing.T) {
 		mock.ExpectExec(".*CREATE TABLE IF NOT EXISTS strikes.*").WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectExec(".*CREATE TABLE IF NOT EXISTS loots.*").WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectExec(".*CREATE TABLE IF NOT EXISTS absences.*").WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectExec(".*CREATE TABLE IF NOT EXISTS fails.*").WillReturnResult(sqlmock.NewResult(0, 0))
 
 		err = pgBackend.Init(ctx, "mock_conn_string", database)
 		assert.NoError(t, err)

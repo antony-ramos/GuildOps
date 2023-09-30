@@ -206,8 +206,10 @@ func TestFailUseCase_ListFailOnPLayer(t *testing.T) {
 			Return([]entity.Player{{ID: 1}}, nil)
 		mockBackend.
 			On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Fail{{ID: 1}}, nil)
-
+			Return([]entity.Fail{{ID: 1, Player: &entity.Player{ID: 1}, Raid: &entity.Raid{ID: 1}}}, nil)
+		mockBackend.
+			On("ReadRaid", mock.Anything, mock.Anything).
+			Return(entity.Raid{ID: 1}, nil)
 		_, err := FailUseCase.ListFailOnPLayer(context.Background(), "playerone")
 		assert.NoError(t, err)
 		mockBackend.AssertExpectations(t)
@@ -244,7 +246,10 @@ func TestFailUseCase_ListFailOnRaid(t *testing.T) {
 			Return([]entity.Raid{{ID: 1}}, nil)
 		mockBackend.
 			On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Fail{{ID: 1}}, nil)
+			Return([]entity.Fail{{ID: 1, Player: &entity.Player{ID: 1}}}, nil)
+		mockBackend.
+			On("ReadPlayer", mock.Anything, mock.Anything).
+			Return(entity.Player{ID: 1}, nil)
 
 		_, err := FailUseCase.ListFailOnRaid(context.Background(), time.Now())
 		assert.NoError(t, err)
