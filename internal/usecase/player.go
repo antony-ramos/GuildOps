@@ -61,10 +61,24 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 		}
 
 		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
+		if err != nil {
+			return fmt.Errorf("database - DeletePlayer - r.SearchStrike: %w", err)
+		}
 		for _, strike := range strikes {
 			err = puc.backend.DeleteStrike(ctx, strike.ID)
 			if err != nil {
 				return fmt.Errorf("database - DeletePlayer - r.DeleteStrike: %w", err)
+			}
+		}
+
+		fails, err := puc.backend.SearchFail(ctx, "", player[0].ID, -1, "")
+		if err != nil {
+			return fmt.Errorf("database - DeletePlayer - r.SearchFail: %w", err)
+		}
+		for _, fail := range fails {
+			err = puc.backend.DeleteFail(ctx, fail.ID)
+			if err != nil {
+				return fmt.Errorf("database - DeletePlayer - r.DeleteFail: %w", err)
 			}
 		}
 
@@ -98,6 +112,12 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchStrike: %w", err)
 		}
 		player[0].Strikes = strikes
+
+		fails, err := puc.backend.SearchFail(ctx, "", player[0].ID, -1, "")
+		if err != nil {
+			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchFail: %w", err)
+		}
+		player[0].Fails = fails
 
 		return player[0], nil
 	}
