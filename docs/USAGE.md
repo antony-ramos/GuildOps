@@ -45,7 +45,7 @@ It will link the discord user to the player specified. It outputs the player id.
 It is required to perform some actions, as create absence or get info about myself.
 
 ```shell
-/coven-player-link name: milowenn
+/guildops-player-link name: milowenn
 
 Vous êtes maintenant lié à ce joueur : 
 Name : milowenn
@@ -62,7 +62,7 @@ It will create an absence for the player linked to the discord user. It outputs 
 
 
 ```shell
-/coven-absence-create date: 30/09/23
+/guildops-absence-create date: 30/09/23
 
 Absence(s) créée(s) pour le(s) :
 30-09-2023
@@ -74,16 +74,16 @@ Absence(s) créée(s) pour le(s) :
 
 It will delete the absence specified on a date or a range of date. It outputs the success of the deletion. 
 
-If you need to get info about your absences, you can use `/coven-player-info`.
+If you need to get info about your absences, you can use `/guildops-player-info`.
 
 ```shell
-/coven-absence-delete date: 30/09/23
+/guildops-absence-delete date: 30/09/23
 
 Absence(s) supprimée(s) pour le(s) :
 30-09-2023
 ```
 * Date must be in format : dd/mm/yy or `dd/mm/yy au dd/mm/yy` for a range of date.
-* Absences must have been created by `/coven-absence-create` or it will fail.
+* Absences must have been created by `/guildops-absence-create` or it will fail.
 
 ### Get info about myself
 
@@ -91,7 +91,7 @@ It will get info about the player linked to the discord user. It outputs the pla
 It outputs only the info of the current season.
 
 ```shell
-/coven-player-info
+/guildops-player-info
 
 Name : milowenn
 ID : 902837533056499713
@@ -109,7 +109,7 @@ mythic | 27/09/23 | loot1
 Fails (1) : 
 28/09/2023 | p3
 ```
-* Your discord must be linked to a player created by `/coven-player-create` - by a guild officer - and linked by `/coven-player-link` yourself.
+* Your discord must be linked to a player created by `/guildops-player-create` - by a guild officer - and linked by `/guildops-player-link` yourself.
 
 
 ---
@@ -126,7 +126,7 @@ Strikes, Fails and Loots should only be used by guild officers.
 It will create a raid with the name, date and difficulty specified. It outputs the raid id.
 
 ```shell
-/coven-raid-create name: example date: 30/09/23 difficulté: Mythic
+/guildops-raid-create name: example date: 30/09/23 difficulté: Mythic
 
 Raid 904508030127702017 créé avec succès
 ```
@@ -139,7 +139,7 @@ Raid 904508030127702017 créé avec succès
 It will create a player with the name specified. It outputs the player id.
 
 ```shell
-/coven-player-create name: example
+/guildops-player-create name: example
 
 Joueur example créé avec succès : ID 904508329427959809
 ```
@@ -151,7 +151,7 @@ Joueur example créé avec succès : ID 904508329427959809
 It will get info about the player specified. It outputs the player info.
 
 ```shell
-/coven-player-get name: milowenn
+/guildops-player-get name: milowenn
 Name : milowenn
 ID : 902837533056499713
 Discord ID : 271946692805263371
@@ -168,7 +168,7 @@ mythic | 27/09/23 | loot1
 Fails (1) : 
 28/09/2023 | p3
 ```
-* Player must be created by `/coven-player-create`.
+* Player must be created by `/guildops-player-create`.
 * If there is not Loots, Fails, Absences or Strikes, it does not output them.
 
 
@@ -183,7 +183,7 @@ Not implemented yet
 It will create a strike for the player specified. It outputs the strike id.
 
 ```shell
-/coven-strike-create name: milowenn reason: example of strike
+/guildops-strike-create name: milowenn reason: example of strike
 
 Strike créé avec succès
 ```
@@ -193,7 +193,7 @@ Strike créé avec succès
 It will list the strikes on the player specified. It outputs the strikes.
 
 ```shell
-/coven-strike-list name: milowenn
+/guildops-strike-list name: milowenn
 
 Strikes de milowenn (2) :
 25/09/2023 | why not
@@ -202,10 +202,10 @@ Strikes de milowenn (2) :
 
 ### Delete a strike
 
-It will delete the strike specified. To get the strike id, you can use `/coven-strike-list`.
+It will delete the strike specified. To get the strike id, you can use `/guildops-strike-list`.
 
 ```shell
-/coven-strike-del id: 903072156068708353
+/guildops-strike-del id: 903072156068708353
 
 Strike supprimé avec succès
 ```
@@ -215,12 +215,12 @@ Strike supprimé avec succès
 It will create a fail for the player specified. It outputs the fail id.
 
 ```shell
-/coven-fail-create name: milowenn reason: Erreur P3 Sarkareth date: 30/09/23
+/guildops-fail-create name: milowenn reason: Erreur P3 Sarkareth date: 30/09/23
 
 Fail créé avec succès
 ```
 * Date must be in format : dd/mm/yy
-* Date should be a date of a raid created by `/coven-raid-create`
+* Date should be a date of a raid created by `/guildops-raid-create`
 * Name should be a string without space. If there is uppercase, it will be converted to lowercase.
 * Name should be the name of a player already created.
 * Reason should be a string
@@ -230,61 +230,61 @@ Fail créé avec succès
 It will list the fails on the player or on the raid specified. It outputs the fails.
 
 ```shell
-/coven-fail-list-player name: milowenn
+/guildops-fail-list-player name: milowenn
 
 Fails de milowenn (2) :
 28-09-2023 - p3 - 903072156068708353
 30-09-2023 - Erreur P3 Sarkareth - 903072156068708353
 ```
 ```shell
-/coven-fail-list-raid date: 30/09/23
+/guildops-fail-list-raid date: 30/09/23
 
 Fails du 30/09/2023 (1) :
 milowenn - Erreur P3 Sarkareth - 903072156068708353
 ```
 
 * Date must be in format : dd/mm/yy
-* Date should be a date of a raid created by `/coven-raid-create`
+* Date should be a date of a raid created by `/guildops-raid-create`
 * Name should be a string without space. If there is uppercase, it will be converted to lowercase.
 * Name should be the name of a player already created.
 
 ### Delete a fail
 
-It will delete the fail specified. To get the fail id, you can use `/coven-fail-list-player name: <player_name>`.
+It will delete the fail specified. To get the fail id, you can use `/guildops-fail-list-player name: <player_name>`.
 
 ```shell
-/coven-fail-del id: 904435308715671553
+/guildops-fail-del id: 904435308715671553
 
 Fail supprimé avec succès
 ```
 
-* Id should be the id of a fail created by `/coven-fail-create`
+* Id should be the id of a fail created by `/guildops-fail-create`
 
 ### Attribute a loot
 
 It attribute a loot to a player. 
 
 ```shell
-/coven-loot-attribute loot-name: example object raid-id: 64546465464 player-name: milowenn
+/guildops-loot-attribute loot-name: example object raid-id: 64546465464 player-name: milowenn
 
 Loot attribué avec succès
 ```
 * Loot-name should be a string.
-* Raid-id should be the id of a raid created by `/coven-raid-create`
-* Player-name should be the name of a player already created by `/coven-player-create`.
+* Raid-id should be the id of a raid created by `/guildops-raid-create`
+* Player-name should be the name of a player already created by `/guildops-player-create`.
 
 ### Select a player to attribute a loot
 
 It takes a list of players and randomly pick a player with the lesser loots on the same difficulty and give a name. It does attribute directly the loot.
 
 ```shell
-/coven-loot-select difficulty: mythic players: milowenn, example, example2
+/guildops-loot-select difficulty: mythic players: milowenn, example, example2
 
 Le joueur milowenn a été sélectionné pour recevoir le loot
 ```
 * Difficulty should be : Normal, Heroic, Mythic
 * Players should be a list of players separated by a comma. If there is uppercase, it will be converted to lowercase.
-* Players should be the name of a player already created by `/coven-player-create`.
+* Players should be the name of a player already created by `/guildops-player-create`.
 
 
 ### List loots on a player
@@ -292,46 +292,46 @@ Le joueur milowenn a été sélectionné pour recevoir le loot
 It will list the loots on the player specified. It outputs the loots.
 
 ```shell
-/coven-loot-list player-name: milowenn
+/guildops-loot-list player-name: milowenn
 
 Tous les loots de milowenn:
   loot1 2023-09-27 00:00:00 +0000 UTC mythic
 ```
 
-* Player-name should be the name of a player already created by `/coven-player-create`.
+* Player-name should be the name of a player already created by `/guildops-player-create`.
 
 ### List Absences on a date
 
 It will list the absences on the date specified. It outputs the absences.
 
 ```shell
-/coven-absence-list date: 28/09/23
+/guildops-absence-list date: 28/09/23
 
 Absence(s) pour le 28-09-2023 :
 * milowenn
 ```
 
 * Date must be in format : dd/mm/yy
-* Date should be a date of a raid created by `/coven-raid-create`
+* Date should be a date of a raid created by `/guildops-raid-create`
 
 ###  Delete a raid
 **Warning : it will delete all the loots, fails, strikes and absences of the raid.**
 
-It will delete the raid specified. To get the raid id, you can use `/coven-raid-list`.
+It will delete the raid specified. To get the raid id, you can use `/guildops-raid-list`.
 
 ```shell
-/coven-raid-delete id:465465465465465465
+/guildops-raid-delete id:465465465465465465
 
 Raid supprimé avec succès
 ```
-* Id should be the id of a raid created by `/coven-raid-create`
+* Id should be the id of a raid created by `/guildops-raid-create`
 
 ### Delete a loot 
 
-It will delete the loot specified. To get the loot id, you can use `/coven-loot-list`.
+It will delete the loot specified. To get the loot id, you can use `/guildops-loot-list`.
 
 ```shell
-/coven-loot-delete id:465465465465465465
+/guildops-loot-delete id:465465465465465465
 
 Loot supprimé avec succès
 ```

@@ -12,7 +12,7 @@ import (
 
 var LootDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-loot-attribute",
+		Name:        "guildops-loot-attribute",
 		Description: "Attribuer un Loot à un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -36,7 +36,7 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-loot-list",
+		Name:        "guildops-loot-list",
 		Description: "Donner un Loot à un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -48,7 +48,7 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-loot-delete",
+		Name:        "guildops-loot-delete",
 		Description: "Supprimer un Loot à un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -60,7 +60,7 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-loot-selector",
+		Name:        "guildops-loot-selector",
 		Description: "Donner la liste des joueurs qui peuvent avoir un loot",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -82,10 +82,10 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) InitLoot() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-loot-attribute": d.AttributeLootHandler,
-		"coven-loot-list":      d.ListLootsOnPlayerHandler,
-		"coven-loot-delete":    d.DeleteLootHandler,
-		"coven-loot-selector":  d.LootCounterCheckerHandler,
+		"guildops-loot-attribute": d.AttributeLootHandler,
+		"guildops-loot-list":      d.ListLootsOnPlayerHandler,
+		"guildops-loot-delete":    d.DeleteLootHandler,
+		"guildops-loot-selector":  d.LootCounterCheckerHandler,
 	}
 }
 

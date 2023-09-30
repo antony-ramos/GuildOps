@@ -11,7 +11,7 @@ import (
 
 var StrikeDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-strike-create", // Tested
+		Name:        "guildops-strike-create", // Tested
 		Description: "Générer un Strike sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -29,7 +29,7 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-strike-list",
+		Name:        "guildops-strike-list",
 		Description: "Lister les strikes sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -41,7 +41,7 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-strike-del",
+		Name:        "guildops-strike-del",
 		Description: "Supprimer un strike via son ID (ListStrikes pour l'avoir)",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -57,9 +57,9 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) InitStrike() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-strike-create": d.StrikeOnPlayerHandler,
-		"coven-strike-del":    d.DeleteStrikeHandler,
-		"coven-strike-list":   d.ListStrikesOnPlayerHandler,
+		"guildops-strike-create": d.StrikeOnPlayerHandler,
+		"guildops-strike-del":    d.DeleteStrikeHandler,
+		"guildops-strike-list":   d.ListStrikesOnPlayerHandler,
 	}
 }
 

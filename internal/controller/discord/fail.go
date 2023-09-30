@@ -13,7 +13,7 @@ import (
 
 var FailDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-fail-create", // Tested
+		Name:        "guildops-fail-create", // Tested
 		Description: "Générer un Fail sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -37,7 +37,7 @@ var FailDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-fail-list-player",
+		Name:        "guildops-fail-list-player",
 		Description: "Lister les fails sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -49,7 +49,7 @@ var FailDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-fail-list-raid",
+		Name:        "guildops-fail-list-raid",
 		Description: "Lister les fails sur un raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -61,7 +61,7 @@ var FailDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-fail-del",
+		Name:        "guildops-fail-del",
 		Description: "Supprimer un fail via son ID (ListFails pour l'avoir)",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -77,10 +77,10 @@ var FailDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) InitFail() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-fail-create":      d.FailOnPlayerHandler,
-		"coven-fail-del":         d.DeleteFailHandler,
-		"coven-fail-list-player": d.ListFailsOnPlayerHandler,
-		"coven-fail-list-raid":   d.ListFailsOnRaidHandler,
+		"guildops-fail-create":      d.FailOnPlayerHandler,
+		"guildops-fail-del":         d.DeleteFailHandler,
+		"guildops-fail-list-player": d.ListFailsOnPlayerHandler,
+		"guildops-fail-list-raid":   d.ListFailsOnRaidHandler,
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 
 var PlayerDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-player-create",
+		Name:        "guildops-player-create",
 		Description: "Créer un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -23,7 +23,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-delete",
+		Name:        "guildops-player-delete",
 		Description: "Supprimer un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -35,7 +35,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-get",
+		Name:        "guildops-player-get",
 		Description: "Infos sur le joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -47,7 +47,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-link",
+		Name:        "guildops-player-link",
 		Description: "link your discord account to your player name",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -63,10 +63,10 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) InitPlayer() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-player-create": d.PlayerHandler,
-		"coven-player-delete": d.PlayerHandler,
-		"coven-player-get":    d.GetPlayerHandler,
-		"coven-player-link":   d.LinkPlayerHandler,
+		"guildops-player-create": d.PlayerHandler,
+		"guildops-player-delete": d.PlayerHandler,
+		"guildops-player-get":    d.GetPlayerHandler,
+		"guildops-player-link":   d.LinkPlayerHandler,
 	}
 }
 
@@ -86,7 +86,7 @@ func (d Discord) PlayerHandler(
 	var msg string
 	var returnErr error
 	name := optionMap["name"].StringValue()
-	if interaction.ApplicationCommandData().Name == "coven-player-create" {
+	if interaction.ApplicationCommandData().Name == "guildops-player-create" {
 		id, err := d.CreatePlayer(ctx, name)
 		if err != nil {
 			msg = "Erreur lors de la création du joueur: " + HumanReadableError(err)

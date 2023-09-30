@@ -12,14 +12,14 @@ import (
 func (d Discord) InitRaid() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-raid-create": d.CreateRaidHandler,
-		"coven-raid-del":    d.DeleteRaidHandler,
+		"guildops-raid-create": d.CreateRaidHandler,
+		"guildops-raid-del":    d.DeleteRaidHandler,
 	}
 }
 
 var RaidDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-raid-create",
+		Name:        "guildops-raid-create",
 		Description: "Créer un raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -43,7 +43,7 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-raid-del",
+		Name:        "guildops-raid-del",
 		Description: "Supprimer un raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
