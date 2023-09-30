@@ -90,13 +90,21 @@ func (fuc FailUseCase) ListFailOnPLayer(ctx context.Context, playerName string) 
 		if err != nil {
 			return nil, errors.Wrap(err, "list fail on player search fail")
 		}
+		for k, fail := range fails {
+			r, err := fuc.backend.ReadRaid(ctx, fail.Raid.ID)
+			if err != nil {
+				return nil, errors.Wrap(err, "list fail on player read raid")
+			}
+			fails[k].Raid = &r
+		}
+
 		return fails, nil
 	}
 }
 
-func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, raidName string) ([]entity.Fail, error) {
+func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, date time.Time) ([]entity.Fail, error) {
 	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/ListFailOnRaid")
-	span.SetAttributes(attribute.String("raidName", raidName))
+	span.SetAttributes(attribute.String("date", date.String()))
 	defer span.End()
 	logger.FromContext(ctx).Debug("list fail on raid use case")
 
@@ -105,7 +113,7 @@ func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, raidName string) ([]e
 		return nil, errors.Wrap(ctx.Err(), "list fail on raid")
 	default:
 
-		raid, err := fuc.backend.SearchRaid(ctx, raidName, time.Time{}, "")
+		raid, err := fuc.backend.SearchRaid(ctx, "", date, "")
 		if err != nil {
 			return nil, errors.Wrap(err, "list fail on raid search raid")
 		}
@@ -114,6 +122,14 @@ func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, raidName string) ([]e
 		}
 
 		fails, err := fuc.backend.SearchFail(ctx, "", -1, raid[0].ID, "")
+		for k, fail := range fails {
+			p, err := fuc.backend.ReadPlayer(ctx, fail.Player.ID)
+			if err != nil {
+				return nil, errors.Wrap(err, "list fail on raid read player")
+			}
+			fails[k].Player = &p
+		}
+
 		if err != nil {
 			return nil, errors.Wrap(err, "list fail on raid search fail")
 		}

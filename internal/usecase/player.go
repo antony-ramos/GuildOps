@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/antony-ramos/guildops/pkg/logger"
+	"github.com/pkg/errors"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -94,6 +97,11 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 }
 
 func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (entity.Player, error) {
+	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/ReadPlayer")
+	span.SetAttributes(attribute.String("playerName", playerName))
+	defer span.End()
+	logger.FromContext(ctx).Debug("read player use case")
+
 	select {
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: request took too much time to be proceed")
@@ -118,6 +126,14 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchFail: %w", err)
 		}
 		player[0].Fails = fails
+
+		for k, fail := range fails {
+			r, err := puc.backend.ReadRaid(ctx, fail.Raid.ID)
+			if err != nil {
+				return entity.Player{}, errors.Wrap(err, "read player, for each fail, read raid")
+			}
+			fails[k].Raid = &r
+		}
 
 		return player[0], nil
 	}

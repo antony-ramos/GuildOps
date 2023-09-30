@@ -162,6 +162,8 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 					defer failsRows.Close()
 					for failsRows.Next() {
 						fail := entity.Fail{}
+						fail.Player = &player
+						fail.Raid = &entity.Raid{}
 						err := failsRows.Scan(&fail.ID, &fail.Player.ID, &fail.Raid.ID, &fail.Reason)
 						if err != nil {
 							return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)

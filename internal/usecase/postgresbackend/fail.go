@@ -43,7 +43,9 @@ func (pg *PG) SearchFailOnParam(ctx context.Context, paramName string, param int
 		defer rows.Close()
 		for rows.Next() {
 			var fail entity.Fail
-			err := rows.Scan(&fail.ID, nil, nil, &fail.Reason)
+			fail.Raid = &entity.Raid{}
+			fail.Player = &entity.Player{}
+			err := rows.Scan(&fail.ID, &fail.Player.ID, &fail.Raid.ID, &fail.Reason)
 			if err != nil {
 				return nil, errors.Wrap(err, "scan query to search fail with param")
 			}
@@ -85,7 +87,7 @@ func (pg *PG) SearchFail(
 			fails = append(fails, s...)
 		}
 		if raidID != -1 {
-			s, err := pg.SearchFailOnParam(ctx, "raid_ID", playerID)
+			s, err := pg.SearchFailOnParam(ctx, "raid_ID", raidID)
 			if err != nil {
 				return nil, err
 			}

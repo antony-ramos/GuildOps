@@ -176,7 +176,6 @@ func TestFailUseCase_DeleteFail(t *testing.T) {
 	})
 }
 
-//nolint:dupl
 func TestFailUseCase_ListFailOnPLayer(t *testing.T) {
 	t.Parallel()
 	t.Run("context is done", func(t *testing.T) {
@@ -215,7 +214,6 @@ func TestFailUseCase_ListFailOnPLayer(t *testing.T) {
 	})
 }
 
-//nolint:dupl
 func TestFailUseCase_ListFailOnRaid(t *testing.T) {
 	t.Parallel()
 	t.Run("context is done", func(t *testing.T) {
@@ -228,7 +226,7 @@ func TestFailUseCase_ListFailOnRaid(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
-			_, err := FailUseCase.ListFailOnRaid(ctx, "raidone")
+			_, err := FailUseCase.ListFailOnRaid(ctx, time.Now())
 			assert.Error(t, err)
 			mockBackend.AssertExpectations(t)
 		})
@@ -248,7 +246,7 @@ func TestFailUseCase_ListFailOnRaid(t *testing.T) {
 			On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Fail{{ID: 1}}, nil)
 
-		_, err := FailUseCase.ListFailOnRaid(context.Background(), "raidone")
+		_, err := FailUseCase.ListFailOnRaid(context.Background(), time.Now())
 		assert.NoError(t, err)
 		mockBackend.AssertExpectations(t)
 	})
