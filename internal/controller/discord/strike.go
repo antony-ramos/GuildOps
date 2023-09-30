@@ -139,7 +139,6 @@ func (d Discord) ListStrikesOnPlayerHandler(
 	return nil
 }
 
-//nolint:dupl
 func (d Discord) DeleteStrikeHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {

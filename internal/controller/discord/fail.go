@@ -102,13 +102,15 @@ func (d Discord) FailOnPlayerHandler(
 	reason := optionMap["reason"].StringValue()
 	raidDate, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
-		msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("database - FailOnPlayerHandler - parseDate: %w", err)
 	}
 	err = d.CreateFail(ctx, reason, raidDate[0], name)
@@ -120,12 +122,14 @@ func (d Discord) FailOnPlayerHandler(
 		msg = "Fail créé avec succès"
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return returnErr
 }
 
@@ -147,13 +151,15 @@ func (d Discord) ListFailsOnPlayerHandler(
 
 	fails, err := d.ListFailOnPLayer(ctx, playerName)
 	if err != nil {
-		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("database - ListFailsOnPlayerHandler - r.ReadFails: %w", err)
 	}
 
@@ -162,12 +168,14 @@ func (d Discord) ListFailsOnPlayerHandler(
 		msg += "* " + fail.Raid.Date.Format("02-01-2006") + " - " + fail.Reason + "\n"
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return nil
 }
 
@@ -188,24 +196,28 @@ func (d Discord) ListFailsOnRaidHandler(
 	raidDate, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
 		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("database - ListFailsOnRaid - parseDate: %w", err)
 	}
 
 	fails, err := d.ListFailOnRaid(ctx, raidDate[0])
 	if err != nil {
 		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("database - ListFailsOnPlayerHandler - r.ReadFails: %w", err)
 	}
 
@@ -221,16 +233,17 @@ func (d Discord) ListFailsOnRaidHandler(
 		}
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return nil
 }
 
-//nolint:dupl
 func (d Discord) DeleteFailHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
@@ -261,11 +274,13 @@ func (d Discord) DeleteFailHandler(
 		}
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return returnErr
 }
