@@ -1,13 +1,18 @@
-package entity
+package entity_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/antony-ramos/guildops/internal/entity"
+)
 
 func TestFail_Validate(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		ID     int
 		Reason string
-		Player *Player
-		Raid   *Raid
+		Player *entity.Player
+		Raid   *entity.Raid
 	}
 	tests := []struct {
 		name    string
@@ -19,11 +24,11 @@ func TestFail_Validate(t *testing.T) {
 			fields: fields{
 				ID:     1,
 				Reason: "reason",
-				Player: &Player{
+				Player: &entity.Player{
 					ID:   1,
 					Name: "playername",
 				},
-				Raid: &Raid{
+				Raid: &entity.Raid{
 					ID:         1,
 					Name:       "raidname",
 					Difficulty: "normal",
@@ -37,7 +42,7 @@ func TestFail_Validate(t *testing.T) {
 				ID:     1,
 				Reason: "reason",
 				Player: nil,
-				Raid:   &Raid{},
+				Raid:   &entity.Raid{},
 			},
 			wantErr: true,
 		},
@@ -46,7 +51,7 @@ func TestFail_Validate(t *testing.T) {
 			fields: fields{
 				ID:     1,
 				Reason: "reason",
-				Player: &Player{},
+				Player: &entity.Player{},
 				Raid:   nil,
 			},
 			wantErr: true,
@@ -56,22 +61,24 @@ func TestFail_Validate(t *testing.T) {
 			fields: fields{
 				ID:     1,
 				Reason: "",
-				Player: &Player{},
+				Player: &entity.Player{},
 				Raid:   nil,
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := Fail{
-				ID:     tt.fields.ID,
-				Reason: tt.fields.Reason,
-				Player: tt.fields.Player,
-				Raid:   tt.fields.Raid,
+		test := tt
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			fail := entity.Fail{
+				ID:     test.fields.ID,
+				Reason: test.fields.Reason,
+				Player: test.fields.Player,
+				Raid:   test.fields.Raid,
 			}
-			if err := f.Validate(); (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			if err := fail.Validate(); (err != nil) != test.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
 			}
 		})
 	}
