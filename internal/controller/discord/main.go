@@ -15,6 +15,7 @@ type Discord struct {
 	StrikeUseCase
 	LootUseCase
 	RaidUseCase
+	FailUseCase
 
 	Fake bool // Used for testing
 }
@@ -52,6 +53,18 @@ type LootUseCase interface {
 		ctx context.Context, playerNames []string, difficulty string,
 	) (entity.Player, error)
 	DeleteLoot(ctx context.Context, lootID int) error
+}
+
+type FailUseCase interface {
+	CreateFail(ctx context.Context, failReason string, date time.Time, playerName string) error
+	ListFailOnPLayer(ctx context.Context, playerName string) ([]entity.Fail, error)
+	ListFailOnRaid(ctx context.Context, date time.Time) ([]entity.Fail, error)
+	ListFailOnRaidAndPlayer(
+		ctx context.Context, raidName string, playerName string,
+	) ([]entity.Fail, error)
+	DeleteFail(ctx context.Context, failID int) error
+	UpdateFail(ctx context.Context, failID int, failReason string) error
+	ReadFail(ctx context.Context, failID int) (entity.Fail, error)
 }
 
 // HumanReadableError returns the error message without the package name.

@@ -158,34 +158,43 @@ func (d Discord) GetPlayerHandler(
 	if len(lootCounter) > 0 {
 		msg += "**Loots Count:** \n"
 		for difficulty, count := range lootCounter {
-			msg += "  " + difficulty + " | " + strconv.Itoa(count) + " loots \n"
+			msg += "*  " + difficulty + " | " + strconv.Itoa(count) + " loots \n"
 		}
 	}
 
 	if len(player.Strikes) > 0 {
 		msg += "**Strikes (" + strconv.Itoa(len(player.Strikes)) + ") :** \n"
 		for _, strike := range player.Strikes {
-			msg += "  " + strike.Reason +
-				" | " + strike.Date.Format("02/01/2006") + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
+			msg += "*  " + strike.Date.Format("02/01/2006") +
+				" | " + strike.Reason + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
 		}
 	}
 	if len(player.MissedRaids) > 0 {
 		msg += "**Absences (" + strconv.Itoa(len(player.MissedRaids)) + ") :** \n"
 		for _, raid := range player.MissedRaids {
-			msg += "  " + raid.Name +
+			msg += "*  " + raid.Date.Format("02/01/06") +
 				" | " + raid.Difficulty +
-				" | " + raid.Date.Format("02/01/06") + "\n"
+				" | " + raid.Name + "\n"
 		}
 	}
 
 	if len(player.Loots) > 0 {
-		msg += "**Loots :** \n"
+		msg += "**Loots (" + strconv.Itoa(len(player.Loots)) + ") :** \n"
 		for _, loot := range player.Loots {
-			msg += "  " + loot.Raid.Difficulty +
+			msg += "*  " + loot.Raid.Difficulty +
 				" | " + loot.Raid.Date.Format("02/01/06") +
 				" | " + loot.Name + "\n"
 		}
 	}
+
+	if len(player.Fails) > 0 {
+		msg += "**Fails (" + strconv.Itoa(len(player.Fails)) + ") :** \n"
+		for _, fail := range player.Fails {
+			msg += "*  " + fail.Raid.Date.Format("02/01/2006") +
+				" | " + fail.Reason + "\n"
+		}
+	}
+
 	if !d.Fake {
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
