@@ -121,5 +121,22 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 		return fmt.Errorf("database - Init - database.Exec: %w", err)
 	}
 
+	// Create a table for fails
+	createTableSQL = `
+		CREATE TABLE IF NOT EXISTS fails (
+		    			id serial PRIMARY KEY,
+		    			player_id INTEGER REFERENCES players(id),
+		    			raid_id INTEGER REFERENCES raids(id),
+		    			reason VARCHAR(100),
+		    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		    			CONSTRAINT unique_fail_entry UNIQUE (player_id, raid_id)
+		    		);
+
+	`
+	_, err = database.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("database - Init - database.Exec: %w", err)
+	}
+
 	return nil
 }
