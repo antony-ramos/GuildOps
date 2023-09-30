@@ -10,7 +10,7 @@ import (
 
 var AbsenceDescriptor = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-absence-create",
+		Name:        "guildops-absence-create",
 		Description: "Créer une absence pour un ou plusieurs raids",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -22,7 +22,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-absence-delete",
+		Name:        "guildops-absence-delete",
 		Description: "Supprimer une absence pour un ou plusieurs raids",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -34,7 +34,7 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-absence-list",
+		Name:        "guildops-absence-list",
 		Description: "Lister les absences pour un raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -50,9 +50,9 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 func (d Discord) InitAbsence() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-absence-create": d.AbsenceHandler,
-		"coven-absence-delete": d.AbsenceHandler,
-		"coven-absence-list":   d.ListAbsenceHandler,
+		"guildops-absence-create": d.AbsenceHandler,
+		"guildops-absence-delete": d.AbsenceHandler,
+		"guildops-absence-list":   d.ListAbsenceHandler,
 	}
 }
 
@@ -166,7 +166,7 @@ func (d Discord) AbsenceHandler(
 	}
 
 	msg, err := d.GenerateAbsenceHandlerMsg(
-		ctx, user, optionMap["date"].StringValue(), interaction.ApplicationCommandData().Name == "coven-absence-create")
+		ctx, user, optionMap["date"].StringValue(), interaction.ApplicationCommandData().Name == "guildops-absence-create")
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{

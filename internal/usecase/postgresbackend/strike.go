@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 	"github.com/antony-ramos/guildops/pkg/logger"
 
@@ -48,6 +51,14 @@ func (pg *PG) SearchStrikeOnParam(ctx context.Context, paramName string, param i
 func (pg *PG) SearchStrike(
 	ctx context.Context, playerID int, date time.Time, season, reason string,
 ) ([]entity.Strike, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "SearchStrike")
+	span.SetAttributes(
+		attribute.Int("playerID", playerID),
+		attribute.String("season", season),
+		attribute.String("reason", reason),
+		attribute.String("date", date.String()))
+
+	defer span.End()
 	logger.FromContext(ctx).Debug("SearchStrike",
 		zap.Int("playerID", playerID),
 		zap.Time("date", date),

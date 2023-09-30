@@ -4,171 +4,87 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-var LootDescriptors = []discordgo.ApplicationCommand{
+var FailDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "guildops-loot-attribute",
-		Description: "Attribuer un Loot à un joueur",
+		Name:        "guildops-fail-create", // Tested
+		Description: "Générer un Fail sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "loot-name",
-				Description: "ex: Tête de Nefarian",
-				Required:    true,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionInteger,
-				Name:        "raid-id",
-				Description: "(ex: 123456789)",
+				Name:        "name",
+				Description: "ex: Milowenn",
 				Required:    true,
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "player-name",
-				Description: "(ex: milowenn)",
+				Name:        "reason",
+				Description: "ex: Erreur P3 Sarkareth",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "date",
+				Description: "ex: 03/05/2023",
 				Required:    true,
 			},
 		},
 	},
 	{
-		Name:        "guildops-loot-list",
-		Description: "Donner un Loot à un joueur",
+		Name:        "guildops-fail-list-player",
+		Description: "Lister les fails sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "player-name",
-				Description: "(ex: milowenn)",
+				Name:        "name",
+				Description: "ex: Milowenn",
 				Required:    true,
 			},
 		},
 	},
 	{
-		Name:        "guildops-loot-delete",
-		Description: "Supprimer un Loot à un joueur",
+		Name:        "guildops-fail-list-raid",
+		Description: "Lister les fails sur un raid",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "date",
+				Description: "ex: 03/05/2021",
+				Required:    true,
+			},
+		},
+	},
+	{
+		Name:        "guildops-fail-del",
+		Description: "Supprimer un fail via son ID (ListFails pour l'avoir)",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "id",
-				Description: "(ex: 123456789)",
-				Required:    true,
-			},
-		},
-	},
-	{
-		Name:        "guildops-loot-selector",
-		Description: "Donner la liste des joueurs qui peuvent avoir un loot",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "player-list",
-				Description: "(ex: arthas,jailer,garrosh)",
-				Required:    true,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "difficulty",
-				Description: "(ex: mythic, heroic, normal)",
+				Description: "ex: qzdq-qzdqz-qddq",
 				Required:    true,
 			},
 		},
 	},
 }
 
-func (d Discord) InitLoot() map[string]func(
+func (d Discord) InitFail() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"guildops-loot-attribute": d.AttributeLootHandler,
-		"guildops-loot-list":      d.ListLootsOnPlayerHandler,
-		"guildops-loot-delete":    d.DeleteLootHandler,
-		"guildops-loot-selector":  d.LootCounterCheckerHandler,
+		"guildops-fail-create":      d.FailOnPlayerHandler,
+		"guildops-fail-del":         d.DeleteFailHandler,
+		"guildops-fail-list-player": d.ListFailsOnPlayerHandler,
+		"guildops-fail-list-raid":   d.ListFailsOnRaidHandler,
 	}
 }
 
-func (d Discord) AttributeLootHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
-	options := interaction.ApplicationCommandData().Options
-	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
-	for _, opt := range options {
-		optionMap[opt.Name] = opt
-	}
-
-	lootName := optionMap["loot-name"].StringValue()
-	raidID := optionMap["raid-id"].IntValue()
-	playerName := optionMap["player-name"].StringValue()
-
-	err := d.LootUseCase.CreateLoot(ctx, lootName, int(raidID), playerName)
-	if err != nil {
-		msg := "Erreur lors de l'attribution du loot: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - AttributeLootHandler - d.LootUseCase.CreateLoot: %w", err)
-	}
-	msg := "Loot attribué avec succès"
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return nil
-}
-
-func (d Discord) ListLootsOnPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
-	options := interaction.ApplicationCommandData().Options
-	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
-	for _, opt := range options {
-		optionMap[opt.Name] = opt
-	}
-
-	playerName := optionMap["player-name"].StringValue()
-
-	lootList, err := d.LootUseCase.ListLootOnPLayer(ctx, playerName)
-	if err != nil {
-		msg := "Erreur lors de la récupération des loots: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
-	}
-	msg := "Tous les loots de " + playerName + ":\n"
-	for _, loot := range lootList {
-		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
-	}
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return nil
-}
-
-func (d Discord) DeleteLootHandler(
+func (d Discord) FailOnPlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
@@ -181,15 +97,13 @@ func (d Discord) DeleteLootHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	id, err := strconv.Atoi(optionMap["id"].StringValue())
+	var msg string
+	name := optionMap["name"].StringValue()
+	reason := optionMap["reason"].StringValue()
+	raidDate, err := parseDate(optionMap["date"].StringValue())
 	if err != nil {
-		return fmt.Errorf("discord - DeleteLootHandler - strconv.Atoi: %w", err)
-	}
-
-	err = d.LootUseCase.DeleteLoot(ctx, id)
-	if err != nil {
-		msg := "Erreur lors de la suppression du loot: " + HumanReadableError(err)
 		if !d.Fake {
+			msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
 			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -197,9 +111,17 @@ func (d Discord) DeleteLootHandler(
 				},
 			})
 		}
-		return fmt.Errorf("discord - DeleteLootHandler - d.LootUseCase.DeleteLoot: %w", err)
+		return fmt.Errorf("database - FailOnPlayerHandler - parseDate: %w", err)
 	}
-	msg := "Loot supprimé avec succès"
+	err = d.CreateFail(ctx, reason, raidDate[0], name)
+	returnErr := error(nil)
+	if err != nil {
+		msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
+		returnErr = err
+	} else {
+		msg = "Fail créé avec succès"
+	}
+
 	if !d.Fake {
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -208,10 +130,10 @@ func (d Discord) DeleteLootHandler(
 			},
 		})
 	}
-	return nil
+	return returnErr
 }
 
-func (d Discord) LootCounterCheckerHandler(
+func (d Discord) ListFailsOnPlayerHandler(
 	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
@@ -224,28 +146,141 @@ func (d Discord) LootCounterCheckerHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	playerNames := strings.Split(optionMap["player-list"].StringValue(), ",")
-	difficulty := optionMap["difficulty"].StringValue()
+	var msg string
+	playerName := optionMap["name"].StringValue()
 
-	player, err := d.LootUseCase.SelectPlayerToAssign(ctx, playerNames, difficulty)
+	fails, err := d.ListFailOnPLayer(ctx, playerName)
 	if err != nil {
-		msg := "Erreur lors de l'assignation du loot: " + HumanReadableError(err)
+		if !d.Fake {
+			msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
+		return fmt.Errorf("database - ListFailsOnPlayerHandler - r.ReadFails: %w", err)
+	}
+
+	msg = "Fails de " + playerName + " (" + strconv.Itoa(len(fails)) + ") :\n"
+	for _, fail := range fails {
+		msg += "* " + fail.Raid.Date.Format("02-01-2006") + " - " + fail.Reason + "\n"
+	}
+
+	if !d.Fake {
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: msg,
 			},
 		})
-		return fmt.Errorf("discord - LootCounterCheckerHandler - d.LootUseCase.SelectPlayerToAssign: %w", err)
+	}
+	return nil
+}
+
+func (d Discord) ListFailsOnRaidHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	options := interaction.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
 	}
 
-	msg := "Le joueur " + player.Name + " a été sélectionné pour recevoir le loot"
+	var msg string
+	raidDate, err := parseDate(optionMap["date"].StringValue())
+	if err != nil {
+		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
+		return fmt.Errorf("database - ListFailsOnRaid - parseDate: %w", err)
+	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	fails, err := d.ListFailOnRaid(ctx, raidDate[0])
+	if err != nil {
+		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
+		return fmt.Errorf("database - ListFailsOnPlayerHandler - r.ReadFails: %w", err)
+	}
+
+	msg = "Fails du " + raidDate[0].Format("02/01/2006") + " (" + strconv.Itoa(len(fails)) + ") :\n"
+	var players []entity.Player
+	for _, fail := range fails {
+		players = append(players, *fail.Player)
+		players[len(players)-1].Fails = append(players[len(players)-1].Fails, fail)
+	}
+	for _, player := range players {
+		for _, fail := range player.Fails {
+			msg += "* " + player.Name + " - " + fail.Reason + "\n"
+		}
+	}
+
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return nil
+}
+
+func (d Discord) DeleteFailHandler(
+	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	options := interaction.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+
+	var msg string
+	idString := optionMap["id"].StringValue()
+	failID, err := strconv.ParseInt(idString, 10, 64)
+	returnErr := error(nil)
+	if err != nil {
+		msg = "Erreurs lors de la suppression du fail: " + HumanReadableError(err)
+		returnErr = err
+	} else {
+		err = d.DeleteFail(ctx, int(failID))
+		if err != nil {
+			msg = "Erreurs lors de la suppression du fail: " + HumanReadableError(err)
+			returnErr = err
+		} else {
+			msg = "Fail supprimé avec succès"
+		}
+	}
+
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
+	return returnErr
 }

@@ -142,7 +142,7 @@ func TestDiscord_PlayerHandler(t *testing.T) {
 				Type: discordgo.InteractionApplicationCommand,
 				Data: discordgo.ApplicationCommandInteractionData{
 					ID:       "mock",
-					Name:     "coven-player-create",
+					Name:     "guildops-player-create",
 					TargetID: "mock",
 					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
 					Options: []*discordgo.ApplicationCommandInteractionDataOption{
@@ -186,7 +186,7 @@ func TestDiscord_PlayerHandler(t *testing.T) {
 				Type: discordgo.InteractionApplicationCommand,
 				Data: discordgo.ApplicationCommandInteractionData{
 					ID:       "mock",
-					Name:     "coven-player-delete",
+					Name:     "guildops-player-delete",
 					TargetID: "mock",
 					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
 					Options: []*discordgo.ApplicationCommandInteractionDataOption{
@@ -281,7 +281,7 @@ func TestDiscord_GetPlayerHandler(t *testing.T) {
 				Type: discordgo.InteractionApplicationCommand,
 				Data: discordgo.ApplicationCommandInteractionData{
 					ID:       "mock",
-					Name:     "coven-player-create",
+					Name:     "guildops-player-create",
 					TargetID: "mock",
 					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
 					Options: []*discordgo.ApplicationCommandInteractionDataOption{

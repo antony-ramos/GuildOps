@@ -13,6 +13,7 @@ type Backend interface {
 	Raid
 	Loot
 	Absence
+	Fail
 }
 
 type Player interface {
@@ -53,4 +54,12 @@ type Absence interface {
 	ReadAbsence(ctx context.Context, absenceID int) (entity.Absence, error)
 	UpdateAbsence(ctx context.Context, absence entity.Absence) error
 	DeleteAbsence(ctx context.Context, absenceID int) error
+}
+
+type Fail interface {
+	SearchFail(ctx context.Context, playerName string, playerID int, raidID int, reason string) ([]entity.Fail, error)
+	CreateFail(ctx context.Context, fail entity.Fail) (entity.Fail, error)
+	ReadFail(ctx context.Context, failID int) (entity.Fail, error)
+	UpdateFail(ctx context.Context, fail entity.Fail) error
+	DeleteFail(ctx context.Context, failID int) error
 }

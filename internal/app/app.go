@@ -45,6 +45,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 	luc := usecase.NewLootUseCase(&backend)
 	ruc := usecase.NewRaidUseCase(&backend)
 	suc := usecase.NewStrikeUseCase(&backend)
+	fuc := usecase.NewFailUseCase(&backend)
 
 	disc := discordHandler.Discord{
 		AbsenceUseCase: auc,
@@ -52,12 +53,13 @@ func Run(ctx context.Context, cfg *config.Config) {
 		LootUseCase:    luc,
 		RaidUseCase:    ruc,
 		StrikeUseCase:  suc,
+		FailUseCase:    fuc,
 		Fake:           false,
 	}
 
 	var inits []func() map[string]func(
 		ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error
-	inits = append(inits, disc.InitAbsence, disc.InitLoot, disc.InitPlayer, disc.InitRaid, disc.InitStrike)
+	inits = append(inits, disc.InitAbsence, disc.InitLoot, disc.InitPlayer, disc.InitRaid, disc.InitStrike, disc.InitFail)
 	for _, v := range inits {
 		for k, v := range v() {
 			mapHandler[k] = v
@@ -77,6 +79,9 @@ func Run(ctx context.Context, cfg *config.Config) {
 		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
 	handlers = append(handlers,
 		&discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
+	handlers = append(handlers,
+		&discordHandler.FailDescriptors[0], &discordHandler.FailDescriptors[1],
+		&discordHandler.FailDescriptors[2], &discordHandler.FailDescriptors[3])
 
 	serve := discord.New(
 		discord.CommandHandlers(mapHandler),

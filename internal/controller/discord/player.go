@@ -11,7 +11,7 @@ import (
 
 var PlayerDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "coven-player-create",
+		Name:        "guildops-player-create",
 		Description: "Créer un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -23,7 +23,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-delete",
+		Name:        "guildops-player-delete",
 		Description: "Supprimer un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -35,7 +35,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-get",
+		Name:        "guildops-player-get",
 		Description: "Infos sur le joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -47,7 +47,7 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "coven-player-link",
+		Name:        "guildops-player-link",
 		Description: "link your discord account to your player name",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -63,10 +63,10 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 func (d Discord) InitPlayer() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"coven-player-create": d.PlayerHandler,
-		"coven-player-delete": d.PlayerHandler,
-		"coven-player-get":    d.GetPlayerHandler,
-		"coven-player-link":   d.LinkPlayerHandler,
+		"guildops-player-create": d.PlayerHandler,
+		"guildops-player-delete": d.PlayerHandler,
+		"guildops-player-get":    d.GetPlayerHandler,
+		"guildops-player-link":   d.LinkPlayerHandler,
 	}
 }
 
@@ -86,7 +86,7 @@ func (d Discord) PlayerHandler(
 	var msg string
 	var returnErr error
 	name := optionMap["name"].StringValue()
-	if interaction.ApplicationCommandData().Name == "coven-player-create" {
+	if interaction.ApplicationCommandData().Name == "guildops-player-create" {
 		id, err := d.CreatePlayer(ctx, name)
 		if err != nil {
 			msg = "Erreur lors de la création du joueur: " + HumanReadableError(err)
@@ -158,34 +158,43 @@ func (d Discord) GetPlayerHandler(
 	if len(lootCounter) > 0 {
 		msg += "**Loots Count:** \n"
 		for difficulty, count := range lootCounter {
-			msg += "  " + difficulty + " | " + strconv.Itoa(count) + " loots \n"
+			msg += "*  " + difficulty + " | " + strconv.Itoa(count) + " loots \n"
 		}
 	}
 
 	if len(player.Strikes) > 0 {
 		msg += "**Strikes (" + strconv.Itoa(len(player.Strikes)) + ") :** \n"
 		for _, strike := range player.Strikes {
-			msg += "  " + strike.Reason +
-				" | " + strike.Date.Format("02/01/2006") + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
+			msg += "*  " + strike.Date.Format("02/01/2006") +
+				" | " + strike.Reason + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
 		}
 	}
 	if len(player.MissedRaids) > 0 {
 		msg += "**Absences (" + strconv.Itoa(len(player.MissedRaids)) + ") :** \n"
 		for _, raid := range player.MissedRaids {
-			msg += "  " + raid.Name +
+			msg += "*  " + raid.Date.Format("02/01/06") +
 				" | " + raid.Difficulty +
-				" | " + raid.Date.Format("02/01/06") + "\n"
+				" | " + raid.Name + "\n"
 		}
 	}
 
 	if len(player.Loots) > 0 {
-		msg += "**Loots :** \n"
+		msg += "**Loots (" + strconv.Itoa(len(player.Loots)) + ") :** \n"
 		for _, loot := range player.Loots {
-			msg += "  " + loot.Raid.Difficulty +
+			msg += "*  " + loot.Raid.Difficulty +
 				" | " + loot.Raid.Date.Format("02/01/06") +
 				" | " + loot.Name + "\n"
 		}
 	}
+
+	if len(player.Fails) > 0 {
+		msg += "**Fails (" + strconv.Itoa(len(player.Fails)) + ") :** \n"
+		for _, fail := range player.Fails {
+			msg += "*  " + fail.Raid.Date.Format("02/01/2006") +
+				" | " + fail.Reason + "\n"
+		}
+	}
+
 	if !d.Fake {
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,

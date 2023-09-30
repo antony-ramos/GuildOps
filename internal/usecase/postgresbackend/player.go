@@ -14,6 +14,9 @@ import (
 )
 
 // SearchPlayer is a function which call backend to Search a Player Object.
+// TODO: refactor this function to avoid cyclomatic complexity
+//
+//nolint:gocyclo
 func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName string) ([]entity.Player, error) {
 	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "SearchPlayer")
 	span.SetAttributes(
@@ -142,6 +145,30 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 							return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
 						}
 						player.Strikes = append(player.Strikes, strike)
+					}
+
+					// populate player.Fails list
+					sql, _, err = pg.Builder.
+						Select("id", "player_id", "raid_id", "reason").
+						From("fails").
+						Where("player_id = $1").ToSql()
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Builder.Select: %w", err)
+					}
+					failsRows, err := pg.Pool.Query(ctx, sql, strconv.FormatInt(int64(player.ID), 10))
+					if err != nil {
+						return entity.Player{}, fmt.Errorf("database - SearchPlayer - playerRows.Pool.Query: %w", err)
+					}
+					defer failsRows.Close()
+					for failsRows.Next() {
+						fail := entity.Fail{}
+						fail.Player = &player
+						fail.Raid = &entity.Raid{}
+						err := failsRows.Scan(&fail.ID, &fail.Player.ID, &fail.Raid.ID, &fail.Reason)
+						if err != nil {
+							return entity.Player{}, fmt.Errorf("database - SearchPlayer - rows.Scan: %w", err)
+						}
+						player.Fails = append(player.Fails, fail)
 					}
 
 					return player, nil

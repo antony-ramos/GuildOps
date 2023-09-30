@@ -14,6 +14,7 @@ type Player struct {
 	Strikes     []Strike
 	Loots       []Loot
 	MissedRaids []Raid
+	Fails       []Fail
 }
 
 func (p *Player) Validate() error {

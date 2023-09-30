@@ -70,12 +70,12 @@ func (d *Discord) Run(ctx context.Context) error {
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(d.commands))
 
 	pool := pond.New(100, 1000)
-	group, ctx := pool.GroupContext(ctx)
+	group, _ := pool.GroupContext(ctx)
 
 	for i, v := range d.commands {
+		commandName := i
+		command := v
 		group.Submit(func() error {
-			commandName := i
-			command := v
 			logger.FromContext(ctx).Info("register command " + command.Name)
 			cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
 			if err != nil {
