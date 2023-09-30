@@ -162,6 +162,10 @@ postgres:
     url: <yourpostgresurl>
   ```
 
+## Use Discord Commands
+
+Please read [our usage guide](docs/USAGE.md)
+
 
 ## Support
 
