@@ -17,23 +17,23 @@ type RaidUseCase struct {
 	mock.Mock
 }
 
-// CreateRaid provides a mock function with given fields: ctx, raidName, raidDate
-func (_m *RaidUseCase) CreateRaid(ctx context.Context, raidName string, raidDate time.Time) (entity.Raid, error) {
-	ret := _m.Called(ctx, raidName, raidDate)
+// CreateRaid provides a mock function with given fields: ctx, raidName, difficulty, date
+func (_m *RaidUseCase) CreateRaid(ctx context.Context, raidName string, difficulty string, date time.Time) (entity.Raid, error) {
+	ret := _m.Called(ctx, raidName, difficulty, date)
 
 	var r0 entity.Raid
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) (entity.Raid, error)); ok {
-		return rf(ctx, raidName, raidDate)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, time.Time) (entity.Raid, error)); ok {
+		return rf(ctx, raidName, difficulty, date)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) entity.Raid); ok {
-		r0 = rf(ctx, raidName, raidDate)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, time.Time) entity.Raid); ok {
+		r0 = rf(ctx, raidName, difficulty, date)
 	} else {
 		r0 = ret.Get(0).(entity.Raid)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, time.Time) error); ok {
-		r1 = rf(ctx, raidName, raidDate)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, time.Time) error); ok {
+		r1 = rf(ctx, raidName, difficulty, date)
 	} else {
 		r1 = ret.Error(1)
 	}
