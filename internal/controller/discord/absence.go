@@ -147,41 +147,42 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 			return errorMsg + HumanReadableError(err), err
 		}
 
-		errorPattern1 := regexp.MustCompile(".*no raid found.*")
-		errorPattern2 := regexp.MustCompile(".*absence already exist.*")
+		RaidNotFound := regexp.MustCompile(".*no raid found.*")
+		AbsenceAlreadyExist := regexp.MustCompile(".*absence already exist.*")
+		AbsenceNotFound := regexp.MustCompile(".*absence not found.*")
 		for _, date := range dates {
 			date := date
 			if !created {
 				err = d.DeleteAbsence(ctx, user, date)
 				if err != nil {
-					errorRegex := fmt.Sprintf("(%s|%s)", errorPattern1, errorPattern2)
+					errorRegex := fmt.Sprintf("(%s|%s)", AbsenceNotFound, RaidNotFound)
 					matched, _ := regexp.MatchString(errorRegex, err.Error())
 					if len(dates) == 1 || !matched {
 						return errorMsg + HumanReadableError(err), err
 					} else {
-						matched = errorPattern1.MatchString(err.Error())
+						matched = RaidNotFound.MatchString(err.Error())
 						if !matched {
-							msg += "* " + date.Format("02/01/06") + "\n"
+							msg += "* " + date.Format("Mon 02/01/06") + "\n"
 						}
 					}
 				} else {
-					msg += "* " + date.Format("02/01/06") + "\n"
+					msg += "* " + date.Format("Mon 02/01/06") + "\n"
 				}
 			} else {
 				err = d.CreateAbsence(ctx, user, date)
 				if err != nil {
-					errorRegex := fmt.Sprintf("(%s|%s)", errorPattern1, errorPattern2)
+					errorRegex := fmt.Sprintf("(%s|%s)", RaidNotFound, AbsenceAlreadyExist)
 					matched, _ := regexp.MatchString(errorRegex, err.Error())
 					if len(dates) == 1 || !matched {
 						return errorMsg + HumanReadableError(err), err
 					} else {
-						matched = errorPattern1.MatchString(err.Error())
+						matched = RaidNotFound.MatchString(err.Error())
 						if !matched {
-							msg += "* " + date.Format("02/01/06") + "\n"
+							msg += "* " + date.Format("Mon 02/01/06") + "\n"
 						}
 					}
 				} else {
-					msg += "* " + date.Format("02/01/06") + "\n"
+					msg += "* " + date.Format("Mon 02/01/06") + "\n"
 				}
 			}
 		}

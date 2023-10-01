@@ -76,13 +76,21 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 			return fmt.Errorf("no player found")
 		}
 
+		raid, err := a.backend.SearchRaid(ctx, "", date, "")
+		if err != nil {
+			return fmt.Errorf("DeleteAbsence - backend.SearchRaid: %w", err)
+		}
+		if len(raid) == 0 {
+			return fmt.Errorf("no raid found")
+		}
+
 		// Get absence ID
 		absences, err := a.backend.SearchAbsence(ctx, "", player[0].ID, date)
 		if err != nil {
 			return fmt.Errorf("DeleteAbsence - backend.SearchAbsence: %w", err)
 		}
 		if len(absences) == 0 {
-			return fmt.Errorf("no absence found")
+			return fmt.Errorf("absence not found")
 		}
 
 		// Delete absences

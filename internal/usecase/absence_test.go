@@ -234,6 +234,14 @@ func TestDeleteAbsence(t *testing.T) {
 				Player: &player,
 			},
 		}
+		raids := []entity.Raid{
+			{
+				ID:         1,
+				Name:       "raid name",
+				Difficulty: "normal",
+			},
+		}
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
 		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(absences, nil)
 		mockBackend.On("DeleteAbsence", mock.Anything, mock.Anything).Return(nil)
 
@@ -276,6 +284,14 @@ func TestDeleteAbsence(t *testing.T) {
 		}
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{player}, nil)
+		raids := []entity.Raid{
+			{
+				ID:         1,
+				Name:       "raid name",
+				Difficulty: "normal",
+			},
+		}
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
 		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error while searching absence"))
 
@@ -321,11 +337,19 @@ func TestDeleteAbsence(t *testing.T) {
 		}
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{player}, nil)
+		raids := []entity.Raid{
+			{
+				ID:         1,
+				Name:       "raid name",
+				Difficulty: "normal",
+			},
+		}
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
 		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		err := absenceUseCase.DeleteAbsence(context.Background(), "PlayerName", time.Now())
 
-		assert.Error(t, err, "no absence found")
+		assert.Error(t, err, "absence not found")
 		mockBackend.AssertExpectations(t)
 	})
 
@@ -344,6 +368,14 @@ func TestDeleteAbsence(t *testing.T) {
 		}
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{player}, nil)
+		raids := []entity.Raid{
+			{
+				ID:         1,
+				Name:       "raid name",
+				Difficulty: "normal",
+			},
+		}
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
 		absences := []entity.Absence{
 			{
 				ID:     1,
