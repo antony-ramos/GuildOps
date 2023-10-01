@@ -73,15 +73,17 @@ func (d Discord) CreateRaidHandler(
 	}
 
 	name := optionMap["name"].StringValue()
-	date, err := parseDate(optionMap["date"].StringValue())
+	date, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
 		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
 		return fmt.Errorf("discord - CreateRaidHandler - parseDate: %w", err)
 	}
 	difficulty := optionMap["difficulté"].StringValue()
@@ -93,13 +95,14 @@ func (d Discord) CreateRaidHandler(
 	} else {
 		msg = "Raid " + strconv.Itoa(raid.ID) + " créé avec succès"
 	}
-
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return returnErr
 }
 
@@ -129,11 +132,13 @@ func (d Discord) DeleteRaidHandler(
 		msg = "Joueur " + strconv.Itoa(int(raidID)) + " supprimé avec succès"
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
+	if !d.Fake {
+		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: msg,
+			},
+		})
+	}
 	return returnErr
 }

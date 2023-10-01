@@ -226,7 +226,7 @@ func (d Discord) GenerateLinkPlayerMsg(ctx context.Context, discordName, playerN
 			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
 		}
 
-		msg += "Vous êtes maintenant lié à ce joueur : \n"
+		msg += "You are now linked to this player : \n"
 		msg += "Name : **" + player.Name + "**\n"
 		msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
 		if player.DiscordName != "" {

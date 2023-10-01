@@ -86,7 +86,7 @@ func TestDiscord_GenerateLinkPlayerMsg(t *testing.T) {
 		msg, err := discord.GenerateLinkPlayerMsg(context.Background(), "playerone", "playerone")
 
 		assert.NoError(t, err)
-		assert.Equal(t, "Vous êtes maintenant lié à ce joueur : \nName : **playerone**\nID : **0**\n", msg)
+		assert.Equal(t, "You are now linked to this player : \nName : **playerone**\nID : **0**\n", msg)
 		mockPlayerUseCase.AssertExpectations(t)
 	})
 

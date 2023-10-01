@@ -100,7 +100,7 @@ func (d Discord) FailOnPlayerHandler(
 	var msg string
 	name := optionMap["name"].StringValue()
 	reason := optionMap["reason"].StringValue()
-	raidDate, err := parseDate(optionMap["date"].StringValue())
+	raidDate, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
 		if !d.Fake {
 			msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
@@ -193,7 +193,7 @@ func (d Discord) ListFailsOnRaidHandler(
 	}
 
 	var msg string
-	raidDate, err := parseDate(optionMap["date"].StringValue())
+	raidDate, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
 		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
 		if !d.Fake {

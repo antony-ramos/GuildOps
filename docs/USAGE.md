@@ -47,7 +47,7 @@ It is required to perform some actions, as create absence or get info about myse
 ```shell
 /guildops-player-link name: milowenn
 
-Vous êtes maintenant lié à ce joueur : 
+You are now linked to this player : 
 Name : milowenn
 ID : 902837533056499713
 Discord ID : milowenn
@@ -62,13 +62,14 @@ It will create an absence for the player linked to the discord user. It outputs 
 
 
 ```shell
-/guildops-absence-create date: 30/09/23
+/guildops-absence-create from: 30/09/23 to:31/09/23
 
-Absence(s) créée(s) pour le(s) :
-30-09-2023
+Absence(s) created for :
+* 30-09-2023
 ```
-* Date must be in format : dd/mm/yy or `dd/mm/yy au dd/mm/yy` for a range of date.
-* Date must be in the future.
+* Date must be in format : dd/mm/yy
+* to is optional. If not specified, it will generate an absence for the date specified in from.
+* Date must be in the future or today.
 
 ### Delete an absence
 
@@ -77,10 +78,10 @@ It will delete the absence specified on a date or a range of date. It outputs th
 If you need to get info about your absences, you can use `/guildops-player-info`.
 
 ```shell
-/guildops-absence-delete date: 30/09/23
+/guildops-absence-delete from: 30/09/23 to:31/09/23
 
-Absence(s) supprimée(s) pour le(s) :
-30-09-2023
+Absence(s) deleted for :
+* 30-09-2023
 ```
 * Date must be in format : dd/mm/yy or `dd/mm/yy au dd/mm/yy` for a range of date.
 * Absences must have been created by `/guildops-absence-create` or it will fail.
