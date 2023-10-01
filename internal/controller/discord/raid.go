@@ -73,7 +73,7 @@ func (d Discord) CreateRaidHandler(
 	}
 
 	name := optionMap["name"].StringValue()
-	date, err := parseDate(optionMap["date"].StringValue())
+	date, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
 		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{

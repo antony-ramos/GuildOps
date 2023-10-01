@@ -83,6 +83,23 @@ func (pg *PG) CreateAbsence(ctx context.Context, absence entity.Absence) (entity
 	case <-ctx.Done():
 		return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  ctx.Done: request took too much time to be proceed")
 	default:
+		// Search if the absence already exists
+		sql, _, err := pg.Builder.
+			Select("id", "player_id", "raid_id").
+			From("absences").
+			Where("player_id = $1 AND raid_id = $2").ToSql()
+		if err != nil {
+			return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  r.Builder: %w", err)
+		}
+		rows, err := pg.Pool.Query(ctx, sql, absence.Player.ID, absence.Raid.ID)
+		if err != nil {
+			return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  r.Pool.Query: %w", err)
+		}
+		defer rows.Close()
+		if rows.Next() {
+			return absence, fmt.Errorf("absence already exists")
+		}
+
 		sql, args, errInsert := pg.Builder.
 			Insert("absences").
 			Columns("player_id", "raid_id").
@@ -90,7 +107,7 @@ func (pg *PG) CreateAbsence(ctx context.Context, absence entity.Absence) (entity
 		if errInsert != nil {
 			return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  r.Builder: %w", errInsert)
 		}
-		_, err := pg.Pool.Exec(ctx, sql, args...)
+		_, err = pg.Pool.Exec(ctx, sql, args...)
 		if err != nil {
 			return entity.Absence{}, fmt.Errorf("database - CreateAbsence:  r.Pool.Exec: %w", err)
 		}

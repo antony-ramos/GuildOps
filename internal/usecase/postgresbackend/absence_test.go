@@ -75,6 +75,13 @@ func TestPG_CreateAbsence(t *testing.T) {
 				Date: time.Now(),
 			},
 		}
+
+		columns := []string{"id", "player_id", "raid_id"}
+		pgxRows := pgxpoolmock.NewRows(columns).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, player_id, raid_id FROM absences WHERE player_id = $1 AND raid_id = $2", abs.Player.ID, abs.Raid.ID).
+			Return(pgxRows, nil)
+
 		mockPool.EXPECT().Exec(gomock.Any(),
 			"INSERT INTO absences (player_id,raid_id) VALUES ($1,$2)", abs.Player.ID, abs.Raid.ID).
 			Return(nil, nil)
@@ -138,6 +145,13 @@ func TestPG_CreateAbsence(t *testing.T) {
 				Date: time.Now(),
 			},
 		}
+
+		columns := []string{"id", "player_id", "raid_id"}
+		pgxRows := pgxpoolmock.NewRows(columns).ToPgxRows()
+		mockPool.EXPECT().Query(gomock.Any(),
+			"SELECT id, player_id, raid_id FROM absences WHERE player_id = $1 AND raid_id = $2", abs.Player.ID, abs.Raid.ID).
+			Return(pgxRows, nil)
+
 		mockPool.EXPECT().Exec(gomock.Any(),
 			"INSERT INTO absences (player_id,raid_id) VALUES ($1,$2)", abs.Player.ID, abs.Raid.ID).
 			Return(nil, errors.New("error"))

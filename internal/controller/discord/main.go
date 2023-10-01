@@ -2,9 +2,10 @@ package discordhandler
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
@@ -78,19 +79,25 @@ func HumanReadableError(err error) string {
 	return err.Error()
 }
 
-func parseDate(dateStr string) ([]time.Time, error) {
-	dateStr = strings.TrimSpace(dateStr)
-	dateParts := strings.Split(dateStr, " au ")
-
-	var dates []time.Time
-
-	for _, datePart := range dateParts {
-		date, err := time.Parse("02/01/06", datePart)
-		if err != nil {
-			return nil, fmt.Errorf("date should be in format dd/mm/yy or \"dd/mm/yy au dd/mm/yy\"")
-		}
-		dates = append(dates, date)
+func ParseDate(fromDate, toDate string) ([]time.Time, error) {
+	layout := "02/01/06"
+	startDate, err := time.Parse(layout, fromDate)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse date")
 	}
 
+	if toDate == "" {
+		toDate = fromDate
+	}
+
+	endDate, err := time.Parse(layout, toDate)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse date")
+	}
+
+	var dates []time.Time
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		dates = append(dates, currentDate)
+	}
 	return dates, nil
 }

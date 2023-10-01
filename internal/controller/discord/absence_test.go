@@ -33,7 +33,7 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		_, err := discord.GenerateAbsenceHandlerMsg(ctx, "playerone", "01/01/21", true)
+		_, err := discord.GenerateAbsenceHandlerMsg(ctx, "playerone", "01/01/21", "", true)
 
 		assert.Error(t, err)
 		mockAbsenceUseCase.AssertExpectations(t)
@@ -52,7 +52,8 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 			RaidUseCase:    nil,
 		}
 
-		_, err := discord.GenerateAbsenceHandlerMsg(context.Background(), "playerone", "01-01-2021", true)
+		_, err := discord.GenerateAbsenceHandlerMsg(
+			context.Background(), "playerone", time.Now().AddDate(0, 0, -2).Format("02/01/06"), "", true)
 
 		assert.Error(t, err)
 		mockAbsenceUseCase.AssertExpectations(t)
@@ -73,10 +74,11 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 
 		mockAbsenceUseCase.On("CreateAbsence", mock.Anything, "playerone", mock.Anything).Return(nil)
 
-		msg, err := discord.GenerateAbsenceHandlerMsg(context.Background(), "playerone", "01/01/21", true)
+		msg, err := discord.GenerateAbsenceHandlerMsg(
+			context.Background(), "playerone", time.Now().AddDate(0, 0, 1).Format("02/01/06"), "", true)
 
 		assert.NoError(t, err)
-		assert.Equal(t, "Absence(s) créée(s) pour le(s) :\n* 01-01-2021\n", msg)
+		assert.Equal(t, "Absence(s) created for :\n* "+time.Now().AddDate(0, 0, 1).Format("02/01/06")+"\n", msg)
 		mockAbsenceUseCase.AssertExpectations(t)
 	})
 
@@ -95,10 +97,11 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 
 		mockAbsenceUseCase.On("DeleteAbsence", mock.Anything, "playerone", mock.Anything).Return(nil)
 
-		msg, err := discord.GenerateAbsenceHandlerMsg(context.Background(), "playerone", "01/01/21", false)
+		msg, err := discord.GenerateAbsenceHandlerMsg(
+			context.Background(), "playerone", time.Now().AddDate(0, 0, 1).Format("02/01/06"), "", false)
 
 		assert.NoError(t, err)
-		assert.Equal(t, "Absence(s) supprimée(s) pour le(s) :\n* 01-01-2021\n", msg)
+		assert.Equal(t, "Absence(s) deleted for :\n* "+time.Now().AddDate(0, 0, 1).Format("02/01/06")+"\n", msg)
 		mockAbsenceUseCase.AssertExpectations(t)
 	})
 
@@ -117,7 +120,8 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 
 		mockAbsenceUseCase.On("CreateAbsence", mock.Anything, "playerone", mock.Anything).Return(errors.New("Backend Error"))
 
-		msg, err := discord.GenerateAbsenceHandlerMsg(context.Background(), "playerone", "01/01/21", true)
+		msg, err := discord.GenerateAbsenceHandlerMsg(
+			context.Background(), "playerone", time.Now().AddDate(0, 0, 1).Format("02/01/06"), "", true)
 
 		assert.Error(t, err)
 		assert.Equal(t, "Error while creating absence: Backend Error", msg)
@@ -139,7 +143,8 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 
 		mockAbsenceUseCase.On("DeleteAbsence", mock.Anything, "playerone", mock.Anything).Return(errors.New("Backend Error"))
 
-		msg, err := discord.GenerateAbsenceHandlerMsg(context.Background(), "playerone", "01/01/21", false)
+		msg, err := discord.GenerateAbsenceHandlerMsg(
+			context.Background(), "playerone", time.Now().AddDate(0, 0, 1).Format("02/01/06"), "", false)
 
 		assert.Error(t, err)
 		assert.Equal(t, "Error while deleting absence: Backend Error", msg)
