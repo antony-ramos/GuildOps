@@ -82,6 +82,39 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 		mockAbsenceUseCase.AssertExpectations(t)
 	})
 
+	t.Run("Create Absence Over Range with already exist", func(t *testing.T) {
+		t.Parallel()
+
+		mockAbsenceUseCase := mocks.NewAbsenceUseCase(t)
+
+		discord := discordHandler.Discord{
+			AbsenceUseCase: mockAbsenceUseCase,
+			PlayerUseCase:  nil,
+			StrikeUseCase:  nil,
+			LootUseCase:    nil,
+			RaidUseCase:    nil,
+		}
+
+		mockAbsenceUseCase.On("CreateAbsence", mock.Anything, "playerone", mock.Anything).Return(nil).Once()
+		mockAbsenceUseCase.
+			On("CreateAbsence", mock.Anything, "playerone", mock.Anything).
+			Return(errors.New(" absence already exist ")).Once()
+		mockAbsenceUseCase.
+			On("CreateAbsence", mock.Anything, "playerone", mock.Anything).
+			Return(errors.New("no raid found")).Once()
+
+		msg, err := discord.GenerateAbsenceHandlerMsg(
+			context.Background(), "playerone",
+			time.Now().AddDate(0, 0, 1).Format("02/01/06"),
+			time.Now().AddDate(0, 0, 3).Format("02/01/06"), true)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Absence(s) created for :\n"+
+			"* "+time.Now().AddDate(0, 0, 1).Format("02/01/06")+"\n"+
+			"* "+time.Now().AddDate(0, 0, 2).Format("02/01/06")+"\n", msg)
+		mockAbsenceUseCase.AssertExpectations(t)
+	})
+
 	t.Run("Delete Absence", func(t *testing.T) {
 		t.Parallel()
 
