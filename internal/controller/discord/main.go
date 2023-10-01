@@ -32,7 +32,7 @@ type AbsenceUseCase interface {
 type PlayerUseCase interface {
 	CreatePlayer(ctx context.Context, playerName string) (int, error)
 	DeletePlayer(ctx context.Context, playerName string) error
-	ReadPlayer(ctx context.Context, playerName string) (entity.Player, error)
+	ReadPlayer(ctx context.Context, playerName, playerLinkName string) (entity.Player, error)
 	LinkPlayer(ctx context.Context, playerName string, discordID string) error
 }
 

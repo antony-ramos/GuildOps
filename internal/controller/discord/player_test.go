@@ -54,7 +54,7 @@ func TestDiscord_GenerateLinkPlayerMsg(t *testing.T) {
 			RaidUseCase:    nil,
 		}
 
-		mockPlayerUseCase.On("ReadPlayer", mock.Anything, "playerone").
+		mockPlayerUseCase.On("ReadPlayer", mock.Anything, "playerone", "").
 			Return(entity.Player{}, errors.New("Player doesnt exist"))
 
 		msg, err := discord.GenerateLinkPlayerMsg(context.Background(), "playerone", "playerone")
@@ -77,7 +77,7 @@ func TestDiscord_GenerateLinkPlayerMsg(t *testing.T) {
 			RaidUseCase:    nil,
 		}
 
-		mockPlayerUseCase.On("ReadPlayer", mock.Anything, "playerone").Return(entity.Player{
+		mockPlayerUseCase.On("ReadPlayer", mock.Anything, "playerone", "").Return(entity.Player{
 			Name: "playerone",
 		}, nil)
 
@@ -103,7 +103,7 @@ func TestDiscord_GenerateLinkPlayerMsg(t *testing.T) {
 			RaidUseCase:    nil,
 		}
 
-		mockPlayerUseCase.On("ReadPlayer", mock.Anything, "playerone").Return(entity.Player{
+		mockPlayerUseCase.On("ReadPlayer", mock.Anything, "playerone", "").Return(entity.Player{
 			Name: "playerone",
 		}, nil)
 
@@ -272,7 +272,7 @@ func TestDiscord_GetPlayerHandler(t *testing.T) {
 
 		player.MissedRaids = missedRaids
 
-		mockPlayerUseCase.On("ReadPlayer", mock.Anything, mock.Anything).
+		mockPlayerUseCase.On("ReadPlayer", mock.Anything, mock.Anything, "").
 			Return(player, nil)
 
 		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}

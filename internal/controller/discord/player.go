@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/antony-ramos/guildops/internal/entity"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -58,6 +60,10 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 			},
 		},
 	},
+	{
+		Name:        "guildops-player-info",
+		Description: "Show info about yourself",
+	},
 }
 
 func (d Discord) InitPlayer() map[string]func(
@@ -67,6 +73,7 @@ func (d Discord) InitPlayer() map[string]func(
 		"guildops-player-delete": d.PlayerHandler,
 		"guildops-player-get":    d.GetPlayerHandler,
 		"guildops-player-link":   d.LinkPlayerHandler,
+		"guildops-player-info":   d.GetPlayerHandler,
 	}
 }
 
@@ -129,17 +136,36 @@ func (d Discord) GetPlayerHandler(
 	}
 
 	var msg string
-	name := optionMap["name"].StringValue()
-	player, err := d.ReadPlayer(ctx, name)
+	var name string
+	var player entity.Player
+	var err error
+
+	commandInfo := "guildops-player-info"
+
+	if interaction.ApplicationCommandData().Name == commandInfo {
+		player, err = d.ReadPlayer(ctx, "", interaction.Member.User.Username)
+	} else {
+		name = optionMap["name"].StringValue()
+		player, err = d.ReadPlayer(ctx, name, "")
+	}
+
 	// Show on string all info about player
 	if err != nil {
 		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
 		if !d.Fake {
+			data := discordgo.InteractionResponseData{
+				Content: msg,
+			}
+			if interaction.ApplicationCommandData().Name == commandInfo {
+				data = discordgo.InteractionResponseData{
+					Content: msg,
+					Flags:   discordgo.MessageFlagsEphemeral,
+				}
+			}
+
 			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
+				Data: &data,
 			})
 		}
 		return fmt.Errorf("database - GetPlayerHandler - r.ReadPlayer: %w", err)
@@ -196,11 +222,18 @@ func (d Discord) GetPlayerHandler(
 	}
 
 	if !d.Fake {
+		data := discordgo.InteractionResponseData{
+			Content: msg,
+		}
+		if interaction.ApplicationCommandData().Name == commandInfo {
+			data = discordgo.InteractionResponseData{
+				Content: msg,
+				Flags:   discordgo.MessageFlagsEphemeral,
+			}
+		}
 		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
+			Data: &data,
 		})
 	}
 	return nil
@@ -214,7 +247,7 @@ func (d Discord) GenerateLinkPlayerMsg(ctx context.Context, discordName, playerN
 	default:
 		var msg string
 
-		player, err := d.ReadPlayer(ctx, playerName)
+		player, err := d.ReadPlayer(ctx, playerName, "")
 		if err != nil {
 			msg = "Error while reading player: " + HumanReadableError(err)
 			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)

@@ -67,23 +67,23 @@ func (_m *PlayerUseCase) LinkPlayer(ctx context.Context, playerName string, disc
 	return r0
 }
 
-// ReadPlayer provides a mock function with given fields: ctx, playerName
-func (_m *PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (entity.Player, error) {
-	ret := _m.Called(ctx, playerName)
+// ReadPlayer provides a mock function with given fields: ctx, playerName, playerLinkName
+func (_m *PlayerUseCase) ReadPlayer(ctx context.Context, playerName string, playerLinkName string) (entity.Player, error) {
+	ret := _m.Called(ctx, playerName, playerLinkName)
 
 	var r0 entity.Player
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (entity.Player, error)); ok {
-		return rf(ctx, playerName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (entity.Player, error)); ok {
+		return rf(ctx, playerName, playerLinkName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) entity.Player); ok {
-		r0 = rf(ctx, playerName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) entity.Player); ok {
+		r0 = rf(ctx, playerName, playerLinkName)
 	} else {
 		r0 = ret.Get(0).(entity.Player)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, playerName)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, playerName, playerLinkName)
 	} else {
 		r1 = ret.Error(1)
 	}

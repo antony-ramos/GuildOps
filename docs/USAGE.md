@@ -90,6 +90,7 @@ Absence(s) deleted for :
 
 It will get info about the player linked to the discord user. It outputs the player info.
 It outputs only the info of the current season.
+**Info is only show to you and no one else.**
 
 ```shell
 /guildops-player-info
