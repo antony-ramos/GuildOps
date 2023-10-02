@@ -157,6 +157,32 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 	}
 }
 
+// ReadRaidOnDate returns a raid from the database.
+func (pg *PG) ReadRaidOnDate(ctx context.Context, date time.Time) (entity.Raid, error) {
+	select {
+	case <-ctx.Done():
+		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: request took too much time to be proceed")
+	default:
+		sql, _, err := pg.Builder.Select("id", "name", "date", "difficulty").From("raids").Where("date = $1").ToSql()
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Builder: %w", err)
+		}
+		rows, err := pg.Pool.Query(ctx, sql, date)
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Pool.Query: %w", err)
+		}
+		defer rows.Close()
+		var raid entity.Raid
+		for rows.Next() {
+			err := rows.Scan(&raid.ID, &raid.Name, &raid.Date, &raid.Difficulty)
+			if err != nil {
+				return entity.Raid{}, fmt.Errorf("database - ReadRaid - rows.Scan: %w", err)
+			}
+		}
+		return raid, nil
+	}
+}
+
 // UpdateRaid updates a raid in the database.
 func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 	select {

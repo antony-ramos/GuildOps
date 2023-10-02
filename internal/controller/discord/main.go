@@ -39,6 +39,7 @@ type PlayerUseCase interface {
 type RaidUseCase interface {
 	CreateRaid(ctx context.Context, raidName, difficulty string, date time.Time) (entity.Raid, error)
 	DeleteRaid(ctx context.Context, raidID int) error
+	ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error)
 }
 
 type StrikeUseCase interface {
