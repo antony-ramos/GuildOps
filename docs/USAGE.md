@@ -350,3 +350,13 @@ Player sucessfully deleted
 ```
 * Player must exist
 * It removes all the loots, fails and absences of the player.
+
+### Delete or Create Absence 
+```shell
+/guildops-admin-absence-delete name:milowenn date: 28/09/23
+```
+```shell
+/guildops-admin-absence-create name:milowenn date: 28/09/23
+```
+
+* Player must exist and have been created by `/guildops-player-create`

@@ -59,7 +59,9 @@ func Run(ctx context.Context, cfg *config.Config) {
 
 	var inits []func() map[string]func(
 		ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error
-	inits = append(inits, disc.InitAbsence, disc.InitLoot, disc.InitPlayer, disc.InitRaid, disc.InitStrike, disc.InitFail)
+	inits = append(inits,
+		disc.InitAbsence, disc.InitAdmin, disc.InitLoot,
+		disc.InitPlayer, disc.InitRaid, disc.InitStrike, disc.InitFail)
 	for _, v := range inits {
 		for k, v := range v() {
 			mapHandler[k] = v
@@ -82,6 +84,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 	handlers = append(handlers,
 		&discordHandler.FailDescriptors[0], &discordHandler.FailDescriptors[1],
 		&discordHandler.FailDescriptors[2], &discordHandler.FailDescriptors[3])
+	handlers = append(handlers,
+		&discordHandler.AdminDescriptor[0], &discordHandler.AdminDescriptor[1])
 
 	serve := discord.New(
 		discord.CommandHandlers(mapHandler),

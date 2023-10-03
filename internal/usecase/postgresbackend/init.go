@@ -129,9 +129,8 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 			player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
 			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
 			reason VARCHAR(100),
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
-
 	`
 	_, err = database.Exec(createTableSQL)
 	if err != nil {
