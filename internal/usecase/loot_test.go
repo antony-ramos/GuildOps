@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 	"github.com/antony-ramos/guildops/internal/usecase"
@@ -177,7 +178,7 @@ func TestLootUseCase_CreateLoot(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		err := LootUseCase.CreateLoot(ctx, "lootone", 1, "gilbert")
+		err := LootUseCase.CreateLoot(ctx, "lootone", time.Now(), "gilbert")
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
 	})
@@ -189,13 +190,15 @@ func TestLootUseCase_CreateLoot(t *testing.T) {
 
 		LootUseCase := usecase.NewLootUseCase(mockBackend)
 
-		mockBackend.On("ReadRaid", mock.Anything, mock.Anything).Return(entity.Raid{ID: 1}, nil)
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{{ID: 1}}, nil)
+
 		mockBackend.On("CreateLoot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(entity.Loot{}, nil)
 
-		err := LootUseCase.CreateLoot(context.Background(), "lootone", 1, "gilbert")
+		err := LootUseCase.CreateLoot(context.Background(), "lootone", time.Now(), "gilbert")
 		assert.NoError(t, err)
 		mockBackend.AssertExpectations(t)
 	})
@@ -207,13 +210,14 @@ func TestLootUseCase_CreateLoot(t *testing.T) {
 
 		LootUseCase := usecase.NewLootUseCase(mockBackend)
 
-		mockBackend.On("ReadRaid", mock.Anything, mock.Anything).Return(entity.Raid{ID: 1}, nil)
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{{ID: 1}}, nil)
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{{ID: 1}}, nil)
 		mockBackend.On("CreateLoot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(entity.Loot{}, errors.New("Backend Error"))
 
-		err := LootUseCase.CreateLoot(context.Background(), "lootone", 1, "gilbert")
+		err := LootUseCase.CreateLoot(context.Background(), "lootone", time.Now(), "gilbert")
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
 	})

@@ -22,9 +22,9 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 				Required:    true,
 			},
 			{
-				Type:        discordgo.ApplicationCommandOptionInteger,
-				Name:        "raid-id",
-				Description: "(ex: 123456789)",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "raid-date",
+				Description: "(ex: 02/10/23)",
 				Required:    true,
 			},
 			{
@@ -100,10 +100,23 @@ func (d Discord) AttributeLootHandler(
 	}
 
 	lootName := optionMap["loot-name"].StringValue()
-	raidID := optionMap["raid-id"].IntValue()
+	raidDate := optionMap["raid-date"].StringValue()
 	playerName := optionMap["player-name"].StringValue()
 
-	err := d.LootUseCase.CreateLoot(ctx, lootName, int(raidID), playerName)
+	raidDates, err := ParseDate(raidDate, "")
+	if err != nil {
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "date invalid",
+				},
+			})
+		}
+		return fmt.Errorf("discord - AttributeLootHandler - ParseDate: %w", err)
+	}
+
+	err = d.LootUseCase.CreateLoot(ctx, lootName, raidDates[0], playerName)
 	if err != nil {
 		msg := "Erreur lors de l'attribution du loot: " + HumanReadableError(err)
 		if !d.Fake {

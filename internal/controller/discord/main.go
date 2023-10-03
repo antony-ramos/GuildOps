@@ -49,7 +49,7 @@ type StrikeUseCase interface {
 }
 
 type LootUseCase interface {
-	CreateLoot(ctx context.Context, lootName string, raidID int, playerName string) error
+	CreateLoot(ctx context.Context, lootName string, raidDate time.Time, playerName string) error
 	ListLootOnPLayer(ctx context.Context, playerName string) ([]entity.Loot, error)
 	SelectPlayerToAssign(
 		ctx context.Context, playerNames []string, difficulty string,
