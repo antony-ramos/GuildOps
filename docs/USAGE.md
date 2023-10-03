@@ -327,6 +327,7 @@ It will delete the raid specified. To get the raid id, you can use `/guildops-ra
 Raid supprimé avec succès
 ```
 * Id should be the id of a raid created by `/guildops-raid-create`
+* It remove all the loots, fails and absences of the raid.
 
 ### Delete a loot 
 
@@ -338,3 +339,14 @@ It will delete the loot specified. To get the loot id, you can use `/guildops-lo
 Loot supprimé avec succès
 ```
 
+### Delete a player
+
+It will delete the player specified with a name.
+
+```shell
+/guildops-player-delete name:milowenn
+
+Player sucessfully deleted
+```
+* Player must exist
+* It removes all the loots, fails and absences of the player.
