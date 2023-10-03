@@ -125,12 +125,12 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 	// Create a table for fails
 	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS fails (
-		    			id serial PRIMARY KEY,
-		    			player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
-		    			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
-		    			reason VARCHAR(100),
-		    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		    		);
+			id serial PRIMARY KEY,
+			player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
+			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
+			reason VARCHAR(100),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		);
 
 	`
 	_, err = database.Exec(createTableSQL)
