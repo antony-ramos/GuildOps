@@ -2,12 +2,13 @@ package discordhandler_test
 
 import (
 	"context"
+	"testing"
+
 	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
 	"github.com/antony-ramos/guildops/internal/controller/discord/mocks"
 	"github.com/bwmarrin/discordgo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
 )
 
 func TestDiscord_AttributeLootHandler(t *testing.T) {

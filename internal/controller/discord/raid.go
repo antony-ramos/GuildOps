@@ -222,7 +222,10 @@ func (d Discord) ListRaidHandler(
 
 	msg = "Raid List:\n"
 	for _, raid := range raids {
-		msg += "* " + raid.Name + " " + raid.Date.Format("Mon 02/01/06") + " " + raid.Difficulty + "\n"
+		msg += "* " + raid.Name + " " +
+			raid.Date.Format("Mon 02/01/06") + " " +
+			raid.Difficulty + " " +
+			strconv.Itoa(raid.ID) + "\n"
 	}
 
 	if len(raids) == 0 {
