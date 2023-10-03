@@ -11,8 +11,8 @@ import (
 
 var StrikeDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "guildops-strike-create", // Tested
-		Description: "Générer un Strike sur un joueur",
+		Name:        "guildops-strike-create",
+		Description: "Generate a strike for a player",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
@@ -30,7 +30,7 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 	},
 	{
 		Name:        "guildops-strike-list",
-		Description: "Lister les strikes sur un joueur",
+		Description: "list off strikes on a player",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
@@ -41,13 +41,13 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "guildops-strike-del",
-		Description: "Supprimer un strike via son ID (ListStrikes pour l'avoir)",
+		Name:        "guildops-strike-delete",
+		Description: "Delete a strike",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "id",
-				Description: "ex: qzdq-qzdqz-qddq",
+				Description: "ex: 123456789",
 				Required:    true,
 			},
 		},
@@ -58,7 +58,7 @@ func (d Discord) InitStrike() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"guildops-strike-create": d.StrikeOnPlayerHandler,
-		"guildops-strike-del":    d.DeleteStrikeHandler,
+		"guildops-strike-delete": d.DeleteStrikeHandler,
 		"guildops-strike-list":   d.ListStrikesOnPlayerHandler,
 	}
 }
@@ -127,7 +127,7 @@ func (d Discord) ListStrikesOnPlayerHandler(
 
 	msg = "Strikes de " + playerName + " (" + strconv.Itoa(len(strikes)) + ") :\n"
 	for _, strike := range strikes {
-		msg += "* " + strike.Date.Format("02/01/2006") + " | " + strike.Reason + "\n"
+		msg += "* " + strike.Date.Format("02/01/2006") + " | " + strike.Reason + " | " + strconv.Itoa(strike.ID) + "\n"
 	}
 
 	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{

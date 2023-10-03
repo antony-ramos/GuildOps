@@ -65,6 +65,7 @@ func TestDiscord_CreateRaidHandler(t *testing.T) {
 	})
 }
 
+//nolint:dupl
 func TestDiscord_DeleteRaidHandler(t *testing.T) {
 	t.Parallel()
 

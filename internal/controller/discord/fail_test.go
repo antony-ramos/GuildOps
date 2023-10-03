@@ -151,6 +151,7 @@ func TestDiscord_ListFailsOnRaidHandler(t *testing.T) {
 	})
 }
 
+//nolint:dupl
 func TestDiscord_DeleteFailOnPlayerHandler(t *testing.T) {
 	t.Parallel()
 
