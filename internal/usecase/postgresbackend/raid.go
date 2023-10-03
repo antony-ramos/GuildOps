@@ -87,11 +87,11 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		sql, _, err := pg.Builder.
 			Select("name", "date", "difficulty").
 			From("raids").
-			Where("name = $1 AND date = $2 AND difficulty = $3").ToSql()
+			Where("date = $1 AND difficulty = $2").ToSql()
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(ctx, sql, raid.Name, raid.Date, raid.Difficulty)
+		rows, err := pg.Pool.Query(ctx, sql, raid.Date, raid.Difficulty)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Pool.Query: %w", err)
 		}

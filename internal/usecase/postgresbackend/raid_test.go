@@ -171,11 +171,11 @@ func TestPG_CreateRaid(t *testing.T) {
 			Date: time.Now(),
 		}
 
-		columns := []string{"name", "date", "difficulty"}
+		columns := []string{"date", "difficulty"}
 		pgxRows := pgxpoolmock.NewRows(columns).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT name, date, difficulty FROM raids WHERE name = $1 AND date = $2 AND difficulty = $3",
-			raid.Name, raid.Date, raid.Difficulty).
+			"SELECT name, date, difficulty FROM raids WHERE date = $1 AND difficulty = $2",
+			raid.Date, raid.Difficulty).
 			Return(pgxRows, nil)
 
 		mockPool.EXPECT().Exec(gomock.Any(),

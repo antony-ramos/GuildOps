@@ -63,7 +63,7 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 			name VARCHAR(255),
 			date TIMESTAMP,
 			difficulty VARCHAR(50),
-		    CONSTRAINT unique_raid_entry UNIQUE (name, date, difficulty)
+		    CONSTRAINT unique_raid_entry UNIQUE (date, difficulty)
 		);
 	`
 
