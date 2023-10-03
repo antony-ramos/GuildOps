@@ -15,7 +15,7 @@ func (d Discord) InitRaid() map[string]func(
 	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
 		"guildops-raid-create": d.CreateRaidHandler,
-		"guildops-raid-del":    d.DeleteRaidHandler,
+		"guildops-raid-delete": d.DeleteRaidHandler,
 		"guildops-raid-list":   d.ListRaidHandler,
 	}
 }
@@ -46,13 +46,13 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "guildops-raid-del",
+		Name:        "guildops-raid-delete",
 		Description: "Remove a raid",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Type:        discordgo.ApplicationCommandOptionInteger,
+				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "id",
-				Description: "ex: 4546646",
+				Description: "ex: 902837021961355265",
 				Required:    true,
 			},
 		},
@@ -143,14 +143,26 @@ func (d Discord) DeleteRaidHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	raidID := optionMap["raidID"].IntValue()
-
-	err := d.DeleteRaid(ctx, int(raidID))
+	raidID := optionMap["id"].StringValue()
+	raid, err := strconv.Atoi(raidID)
 	if err != nil {
 		msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
+		if !d.Fake {
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+				},
+			})
+		}
+		return fmt.Errorf("discord - CreateRaidHandler - parseDate: %w", err)
+	}
+	err = d.DeleteRaid(ctx, raid)
+	if err != nil {
+		msg = "Error while deleting raid: " + HumanReadableError(err)
 		returnErr = err
 	} else {
-		msg = "Joueur " + strconv.Itoa(int(raidID)) + " supprimé avec succès"
+		msg = "Raid with ID " + raidID + " successfully deleted"
 	}
 
 	if !d.Fake {

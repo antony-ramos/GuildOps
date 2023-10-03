@@ -91,9 +91,9 @@ func TestDiscord_DeleteRaidHandler(t *testing.T) {
 					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
 					Options: []*discordgo.ApplicationCommandInteractionDataOption{
 						{
-							Name:  "raidID",
-							Type:  discordgo.ApplicationCommandOptionInteger,
-							Value: float64(1),
+							Name:  "id",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "1",
 						},
 					},
 				},

@@ -76,7 +76,7 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS strikes (
 			id serial PRIMARY KEY,
-			player_id INTEGER REFERENCES players(id),
+			player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
 			season VARCHAR(50),
 			reason VARCHAR(100), 
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -93,8 +93,9 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS loots (
 			id serial PRIMARY KEY,
 			name VARCHAR(255),
-			raid_id INTEGER REFERENCES raids(id),
-			player_id INTEGER REFERENCES players(id),
+			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
+			player_id INTEGER 
+				REFERENCES players(id) ON DELETE CASCADE,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			CONSTRAINT unique_loot_entry UNIQUE (name, raid_id, player_id)
 		);
@@ -109,8 +110,8 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS absences (
 			id serial PRIMARY KEY,
-			player_id INTEGER REFERENCES players(id),
-			raid_id INTEGER REFERENCES raids(id),
+			player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
+			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			CONSTRAINT unique_absence_entry UNIQUE (player_id, raid_id)
 		);
@@ -125,8 +126,8 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 	createTableSQL = `
 		CREATE TABLE IF NOT EXISTS fails (
 		    			id serial PRIMARY KEY,
-		    			player_id INTEGER REFERENCES players(id),
-		    			raid_id INTEGER REFERENCES raids(id),
+		    			player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
+		    			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
 		    			reason VARCHAR(100),
 		    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		    			CONSTRAINT unique_fail_entry UNIQUE (player_id, raid_id)
