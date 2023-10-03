@@ -130,7 +130,6 @@ func (pg *PG) Init(ctx context.Context, connStr string, db *sql.DB) error {
 		    			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
 		    			reason VARCHAR(100),
 		    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		    			CONSTRAINT unique_fail_entry UNIQUE (player_id, raid_id)
 		    		);
 
 	`
