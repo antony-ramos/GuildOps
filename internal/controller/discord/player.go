@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -67,8 +69,8 @@ var PlayerDescriptors = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitPlayer() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
 		"guildops-player-create": d.PlayerHandler,
 		"guildops-player-delete": d.PlayerHandler,
 		"guildops-player-get":    d.GetPlayerHandler,
@@ -77,126 +79,118 @@ func (d Discord) InitPlayer() map[string]func(
 	}
 }
 
+// PlayerHandler call an usecase to create or delete a player
+// and return a message to the user.
+// It requires a player name field to be passed in the interaction.
 func (d Discord) PlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Player/PlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
-
-	var msg string
-	var returnErr error
 	name := optionMap["name"].StringValue()
+	span.SetAttributes(
+		attribute.String("player", name),
+	)
+
 	if interaction.ApplicationCommandData().Name == "guildops-player-create" {
 		id, err := d.CreatePlayer(ctx, name)
 		if err != nil {
-			msg = "Erreur lors de la création du joueur: " + HumanReadableError(err)
-			returnErr = err
-		} else {
-			msg = "Joueur " + name + " créé avec succès : ID " + strconv.Itoa(id)
+			msg := "Error while creating player: " + HumanReadableError(err)
+			return msg, fmt.Errorf("call create player usecase : %w", err)
 		}
-	} else {
+		return "Player " + name + " created successfully: ID " + strconv.Itoa(id), nil
+	}
+
+	if interaction.ApplicationCommandData().Name == "guildops-player-delete" {
 		err := d.DeletePlayer(ctx, name)
 		if err != nil {
-			msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
-			returnErr = err
+			msg := "Error while deleting player: " + HumanReadableError(err)
+			return msg, fmt.Errorf("call delete player usecase: %w", err)
 		} else {
-			msg = "Joueur " + name + " supprimé avec succès"
+			return "Player " + name + " deleted successfully", nil
 		}
 	}
 
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return returnErr
+	return "error while handling player command", nil
 }
 
+// GetPlayerHandler call an usecase to get player infos
+// and return a message to the user.
+// It requires a player name field to be passed in the interaction for admin
+// Or it will catch infos about the user who called the command.
 func (d Discord) GetPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Player/GetPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
 
-	var msg string
-	var name string
-	var player entity.Player
-	var err error
-
-	commandInfo := "guildops-player-info"
-
-	if interaction.ApplicationCommandData().Name == commandInfo {
-		player, err = d.ReadPlayer(ctx, "", interaction.Member.User.Username)
-	} else {
-		name = optionMap["name"].StringValue()
-		player, err = d.ReadPlayer(ctx, name, "")
-	}
-
-	// Show on string all info about player
-	if err != nil {
-		msg = "Erreur lors de la récupération du joueur: " + HumanReadableError(err)
-		if !d.Fake {
-			data := discordgo.InteractionResponseData{
-				Content: msg,
-			}
-			if interaction.ApplicationCommandData().Name == commandInfo {
-				data = discordgo.InteractionResponseData{
-					Content: msg,
-					Flags:   discordgo.MessageFlagsEphemeral,
-				}
-			}
-
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &data,
-			})
+	player, err := func() (entity.Player, error) {
+		switch interaction.ApplicationCommandData().Name {
+		case "guildops-player-info":
+			return d.ReadPlayer(ctx, "", interaction.Member.User.Username)
+		default:
+			name := optionMap["name"].StringValue()
+			span.SetAttributes(
+				attribute.String("player", name))
+			return d.ReadPlayer(ctx, name, "")
 		}
-		return fmt.Errorf("database - GetPlayerHandler - r.ReadPlayer: %w", err)
+	}()
+	if err != nil {
+		msg := "Error while getting player infos: " + HumanReadableError(err)
+		return msg, fmt.Errorf("call read player usecase : %w", err)
 	}
-	msg += "Name : **" + player.Name + "**\n"
+
+	msg := "Name : **" + player.Name + "**\n"
 	msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
 	if player.DiscordName != "" {
-		msg += "Discord ID : **" + interaction.Member.User.ID + "**\n"
+		msg += "Discord ID : **" + player.DiscordName + "**\n"
 	}
 
-	// For each difficulty, show the number of loots
 	lootCounter := make(map[string]int)
 	for _, loot := range player.Loots {
 		lootCounter[loot.Raid.Difficulty]++
 	}
 	if len(lootCounter) > 0 {
-		msg += "**Loots Count:** \n"
+		msg += "**Loots Count:**\n"
 		for difficulty, count := range lootCounter {
 			msg += "*  " + difficulty + " | " + strconv.Itoa(count) + " loots \n"
 		}
 	}
 
 	if len(player.Strikes) > 0 {
-		msg += "**Strikes (" + strconv.Itoa(len(player.Strikes)) + ") :** \n"
+		msg += "**Strikes (" + strconv.Itoa(len(player.Strikes)) + ") :**\n"
 		for _, strike := range player.Strikes {
-			msg += "*  " + strike.Date.Format("02/01/2006") +
+			msg += "*  " + strike.Date.Format("02/01/06") +
 				" | " + strike.Reason + " | " + strike.Season + " | " + strconv.Itoa(strike.ID) + "\n"
 		}
 	}
+
 	if len(player.MissedRaids) > 0 {
-		msg += "**Absences (" + strconv.Itoa(len(player.MissedRaids)) + ") :** \n"
+		msg += "**Absences (" + strconv.Itoa(len(player.MissedRaids)) + ") :**\n"
 		for _, raid := range player.MissedRaids {
 			msg += "*  " + raid.Date.Format("02/01/06") +
 				" | " + raid.Difficulty +
@@ -205,94 +199,61 @@ func (d Discord) GetPlayerHandler(
 	}
 
 	if len(player.Loots) > 0 {
-		msg += "**Loots (" + strconv.Itoa(len(player.Loots)) + ") :** \n"
+		msg += "**Loots (" + strconv.Itoa(len(player.Loots)) + ") :**\n"
 		for _, loot := range player.Loots {
-			msg += "*  " + loot.Raid.Difficulty +
-				" | " + loot.Raid.Date.Format("02/01/06") +
+			msg += "*  " + loot.Raid.Date.Format("02/01/06") +
+				" | " + loot.Raid.Difficulty +
 				" | " + loot.Name + "\n"
 		}
 	}
 
 	if len(player.Fails) > 0 {
-		msg += "**Fails (" + strconv.Itoa(len(player.Fails)) + ") :** \n"
+		msg += "**Fails (" + strconv.Itoa(len(player.Fails)) + ") :**\n"
 		for _, fail := range player.Fails {
-			msg += "*  " + fail.Raid.Date.Format("02/01/2006") +
+			msg += "*  " + fail.Raid.Date.Format("02/01/06") +
 				" | " + fail.Reason + "\n"
 		}
 	}
 
-	if !d.Fake {
-		data := discordgo.InteractionResponseData{
-			Content: msg,
-		}
-		if interaction.ApplicationCommandData().Name == commandInfo {
-			data = discordgo.InteractionResponseData{
-				Content: msg,
-				Flags:   discordgo.MessageFlagsEphemeral,
-			}
-		}
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &data,
-		})
-	}
-	return nil
+	return msg, nil
 }
 
-func (d Discord) GenerateLinkPlayerMsg(ctx context.Context, discordName, playerName string) (string, error) {
-	select {
-	case <-ctx.Done():
-		return ctxError,
-			fmt.Errorf("discord - GenerateLinkPlayerMsg - ctx.Done: request took too much time to be proceed")
-	default:
-		var msg string
-
-		player, err := d.ReadPlayer(ctx, playerName, "")
-		if err != nil {
-			msg = "Error while reading player: " + HumanReadableError(err)
-			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.ReadPlayer: %w", err)
-		}
-
-		err = d.LinkPlayer(ctx, player.Name, discordName)
-		if err != nil {
-			msg = "Error while linking player: " + HumanReadableError(err)
-			return msg, fmt.Errorf("discord - LinkPlayerHandler - r.LinkPlayer: %w", err)
-		}
-
-		msg += "You are now linked to this player : \n"
-		msg += "Name : **" + player.Name + "**\n"
-		msg += "ID : **" + strconv.Itoa(player.ID) + "**\n"
-		if player.DiscordName != "" {
-			msg += "Discord ID : **" + discordName + "**\n"
-		}
-		return msg, nil
-	}
-}
-
+// LinkPlayerHandler call an usecase to link a discord account to a player name
+// and return a message to the user.
+// It requires a player name field to be passed in the interaction.
 func (d Discord) LinkPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Player/LinkPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
-
-	var msg string
 	playerName := optionMap["name"].StringValue()
 	discordName := interaction.Member.User.Username
+	span.SetAttributes(
+		attribute.String("player", playerName),
+		attribute.String("discord_name", discordName),
+	)
 
-	msg, err := d.GenerateLinkPlayerMsg(ctx, discordName, playerName)
+	err := d.LinkPlayer(ctx, playerName, discordName)
+	if err != nil {
+		msg := "Error while linking player: " + HumanReadableError(err)
+		return msg, fmt.Errorf("call link player usecase : %w", err)
+	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return err
+	msg := "You are now linked to this player : \n"
+	msg += "Name : **" + playerName + "**\n"
+	msg += "Discord Name : **" + discordName + "**\n"
+
+	return msg, nil
 }

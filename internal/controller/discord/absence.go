@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -62,152 +65,149 @@ var AbsenceDescriptor = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitAbsence() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
 		"guildops-absence-create": d.AbsenceHandler,
 		"guildops-absence-delete": d.AbsenceHandler,
 		"guildops-absence-list":   d.ListAbsenceHandler,
 	}
 }
 
-func (d Discord) GenerateListAbsenceHandlerMsg(ctx context.Context, date string) (string, error) {
-	errorMsg := "Error while listing absences" +
-		": "
-
-	select {
-	case <-ctx.Done():
-		return ctxError,
-			fmt.Errorf("discord - GenerateListAbsenceHandlerMsg - ctx.Done: request took too much time to be proceed")
-	default:
-		var msg string
-		dates, err := ParseDate(date, "")
-		if err != nil {
-			msg = errorMsg + HumanReadableError(err)
-		} else {
-			absences, err := d.ListAbsence(ctx, dates[0])
-			if len(absences) == 0 {
-				msg = "Aucune absence pour le " + date + "\n"
-				return msg, err
-			}
-			msg = "Absence(s) pour le " + dates[0].Format("02-01-2006") + " :\n"
-			if err != nil {
-				msg = errorMsg + HumanReadableError(err)
-				return msg, err
-			} else {
-				for _, absence := range absences {
-					msg += "* " + absence.Player.Name + "\n"
-				}
-			}
-		}
-		return msg, err
-	}
-}
-
 func (d Discord) ListAbsenceHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Absence/ListAbsenceHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
-	msg, err := d.GenerateListAbsenceHandlerMsg(ctx, optionMap["date"].StringValue())
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return err
+
+	date := optionMap["date"].StringValue()
+	span.SetAttributes(
+		attribute.String("date", date),
+	)
+
+	dates, err := ParseDate(date, "")
+	if err != nil {
+		msg := "Error while parsing date:" + HumanReadableError(err)
+		return msg, fmt.Errorf("list absences parse date: %w", err)
+	}
+
+	absences, err := d.ListAbsence(ctx, dates[0])
+	if err != nil {
+		msg := "Error while getting absences:" + HumanReadableError(err)
+		return msg, fmt.Errorf("list absences usecase: %w", err)
+	}
+
+	if len(absences) == 0 {
+		msg := "No absence for " + date + "\n"
+		return msg, nil
+	}
+
+	msg := "Absence(s) pour le " + dates[0].Format("02/01/06") + " :\n"
+	for _, absence := range absences {
+		msg += "* " + absence.Player.Name + "\n"
+	}
+	return msg, nil
 }
 
 func (d Discord) GenerateAbsenceHandlerMsg(
 	ctx context.Context, user string, fromDate string, toDate string, created bool,
 ) (string, error) {
+	// TODO: ugly function should be split in multiple functions and refactored
+
 	errorMsg := "Error while creating absence: "
 	msg := "Absence(s) created for :\n"
+
 	if !created {
 		errorMsg = "Error while deleting absence: "
 		msg = "Absence(s) deleted for :\n"
 	}
-	select {
-	case <-ctx.Done():
-		return ctxError,
-			fmt.Errorf("discord - GenerateAbsenceHandlerMsg - ctx.Done: request took too much time to be proceed")
-	default:
-		dates, err := ParseDate(fromDate, toDate)
 
-		if dates[0].Before(
-			time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())) {
-			return "You can't create a absence in the past",
-				errors.New("discord - GenerateAbsenceHandlerMsg: can't create a absence in the past")
-		}
+	dates, err := ParseDate(fromDate, toDate)
 
-		if err != nil {
-			return errorMsg + HumanReadableError(err), err
-		}
+	if dates[0].Before(
+		time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())) {
+		return "You can't create a absence in the past",
+			errors.New("discord - GenerateAbsenceHandlerMsg: can't create a absence in the past")
+	}
 
-		RaidNotFound := regexp.MustCompile(".*no raid found.*")
-		AbsenceAlreadyExist := regexp.MustCompile(".*absence already exist.*")
-		AbsenceNotFound := regexp.MustCompile(".*absence not found.*")
-		for _, date := range dates {
-			date := date
-			if !created {
-				err = d.DeleteAbsence(ctx, user, date)
-				if err != nil {
-					errorRegex := fmt.Sprintf("(%s|%s)", AbsenceNotFound, RaidNotFound)
-					matched, _ := regexp.MatchString(errorRegex, err.Error())
-					if len(dates) == 1 || !matched {
-						return errorMsg + HumanReadableError(err), err
-					} else {
-						matched = RaidNotFound.MatchString(err.Error())
-						if !matched {
-							msg += "* " + date.Format("Mon 02/01/06") + "\n"
-						}
-					}
+	if err != nil {
+		return errorMsg + HumanReadableError(err), err
+	}
+
+	RaidNotFound := regexp.MustCompile(".*no raid found.*")
+	AbsenceAlreadyExist := regexp.MustCompile(".*absence already exist.*")
+	AbsenceNotFound := regexp.MustCompile(".*absence not found.*")
+
+	for _, date := range dates {
+		date := date
+		if !created {
+			err = d.DeleteAbsence(ctx, user, date)
+			if err != nil {
+				errorRegex := fmt.Sprintf("(%s|%s)", AbsenceNotFound, RaidNotFound)
+				matched, _ := regexp.MatchString(errorRegex, err.Error())
+				if len(dates) == 1 || !matched {
+					return errorMsg + HumanReadableError(err), err
 				} else {
-					msg += "* " + date.Format("Mon 02/01/06") + "\n"
+					matched = RaidNotFound.MatchString(err.Error())
+					if !matched {
+						msg += "* " + date.Format("Mon 02/01/06") + "\n"
+					}
 				}
 			} else {
-				err = d.CreateAbsence(ctx, user, date)
-				if err != nil {
-					errorRegex := fmt.Sprintf("(%s|%s)", RaidNotFound, AbsenceAlreadyExist)
-					matched, _ := regexp.MatchString(errorRegex, err.Error())
-					if len(dates) == 1 || !matched {
-						return errorMsg + HumanReadableError(err), err
-					} else {
-						matched = RaidNotFound.MatchString(err.Error())
-						if !matched {
-							msg += "* " + date.Format("Mon 02/01/06") + "\n"
-						}
-					}
+				msg += "* " + date.Format("Mon 02/01/06") + "\n"
+			}
+		} else {
+			err = d.CreateAbsence(ctx, user, date)
+			if err != nil {
+				errorRegex := fmt.Sprintf("(%s|%s)", RaidNotFound, AbsenceAlreadyExist)
+				matched, _ := regexp.MatchString(errorRegex, err.Error())
+				if len(dates) == 1 || !matched {
+					return errorMsg + HumanReadableError(err), err
 				} else {
-					msg += "* " + date.Format("Mon 02/01/06") + "\n"
+					matched = RaidNotFound.MatchString(err.Error())
+					if !matched {
+						msg += "* " + date.Format("Mon 02/01/06") + "\n"
+					}
 				}
+			} else {
+				msg += "* " + date.Format("Mon 02/01/06") + "\n"
 			}
 		}
 	}
+
 	return msg, nil
 }
 
 func (d Discord) AbsenceHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Absence/AbsenceHandler")
+	defer span.End()
+
+	user := interaction.Member.User.Username
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
-	}
-
-	var user string
-	if interaction.Member != nil {
-		user = interaction.Member.User.Username
-	} else {
-		user = interaction.User.Username
 	}
 
 	from := optionMap["from"].StringValue()
@@ -216,13 +216,6 @@ func (d Discord) AbsenceHandler(
 		toDate = optionMap["to"].StringValue()
 	}
 
-	msg, err := d.GenerateAbsenceHandlerMsg(
-		ctx, user, from, toDate, interaction.ApplicationCommandData().Name == "guildops-absence-create")
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return err
+	return d.GenerateAbsenceHandlerMsg(ctx, user, from, toDate,
+		interaction.ApplicationCommandData().Name == "guildops-absence-create")
 }

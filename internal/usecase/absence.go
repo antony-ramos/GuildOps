@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,6 +25,11 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 	case <-ctx.Done():
 		return fmt.Errorf("AbsenceUseCase - CreateAbsence:  ctx.Done: request took too much time to be proceed")
 	default:
+		if date.Before(
+			time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())) {
+			return errors.New("can't create a absence in the past")
+		}
+
 		// Get player ID
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {

@@ -77,6 +77,26 @@ func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 	}
 }
 
+func (puc LootUseCase) ListLootOnRaid(ctx context.Context, date time.Time) ([]entity.Loot, error) {
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: request took too much time to be proceed")
+	default:
+		raids, err := puc.backend.SearchRaid(ctx, "", date, "")
+		if err != nil {
+			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
+		}
+
+		loots, err := puc.backend.SearchLoot(ctx, "", raids[0].Date, raids[0].Difficulty)
+		if err != nil {
+			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchLoot: %w", err)
+		}
+		raids[0].Loots = loots
+
+		return raids[0].Loots, nil
+	}
+}
+
 func (puc LootUseCase) SelectPlayerToAssign(
 	ctx context.Context, playerNames []string, difficulty string,
 ) (entity.Player, error) {

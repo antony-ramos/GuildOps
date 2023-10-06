@@ -71,6 +71,32 @@ func (_m *LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 	return r0, r1
 }
 
+// ListLootOnRaid provides a mock function with given fields: ctx, raidDate
+func (_m *LootUseCase) ListLootOnRaid(ctx context.Context, raidDate time.Time) ([]entity.Loot, error) {
+	ret := _m.Called(ctx, raidDate)
+
+	var r0 []entity.Loot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time) ([]entity.Loot, error)); ok {
+		return rf(ctx, raidDate)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time) []entity.Loot); ok {
+		r0 = rf(ctx, raidDate)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Loot)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time) error); ok {
+		r1 = rf(ctx, raidDate)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SelectPlayerToAssign provides a mock function with given fields: ctx, playerNames, difficulty
 func (_m *LootUseCase) SelectPlayerToAssign(ctx context.Context, playerNames []string, difficulty string) (entity.Player, error) {
 	ret := _m.Called(ctx, playerNames, difficulty)

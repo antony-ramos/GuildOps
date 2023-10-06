@@ -59,16 +59,16 @@ var AdminDescriptor = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitAdmin() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
 		"guildops-admin-absence-create": d.AdminHandler,
 		"guildops-admin-absence-delete": d.AdminHandler,
 	}
 }
 
 func (d Discord) AdminHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
@@ -86,13 +86,6 @@ func (d Discord) AdminHandler(
 		toDate = optionMap["to"].StringValue()
 	}
 
-	msg, err := d.GenerateAbsenceHandlerMsg(
+	return d.GenerateAbsenceHandlerMsg(
 		ctx, user, from, toDate, interaction.ApplicationCommandData().Name == "guildops-admin-absence-create")
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return err
 }

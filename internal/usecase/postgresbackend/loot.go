@@ -20,12 +20,12 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 				"loots.player_id", "players.name").
 			From("loots").
 			Join("raids ON raids.id = loots.raid_id").Join("players ON players.id = loots.player_id").
-			Where("loots.name = $1").Where("raids.date = $2").
-			Where("raids.difficulty = $3").ToSql()
+			Where("raids.date = $1").
+			Where("raids.difficulty = $2").ToSql()
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchLoot - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(ctx, sql, name, date, difficulty)
+		rows, err := pg.Pool.Query(ctx, sql, date, difficulty)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchLoot - r.Pool.Query: %w", err)
 		}

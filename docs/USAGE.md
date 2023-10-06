@@ -128,7 +128,7 @@ Strikes, Fails and Loots should only be used by guild officers.
 It will create a raid with the name, date and difficulty specified. It outputs the raid id.
 
 ```shell
-/guildops-raid-create name: example date: 30/09/23 difficulté: Mythic
+/guildops-raid-create name: example date: 30/09/23 difficulty: Mythic
 
 Raid 904508030127702017 créé avec succès
 ```
@@ -219,7 +219,7 @@ It will create a fail for the player specified. It outputs the fail id.
 ```shell
 /guildops-fail-create name: milowenn reason: Erreur P3 Sarkareth date: 30/09/23
 
-Fail créé avec succès
+Fail created successfully
 ```
 * Date must be in format : dd/mm/yy
 * Date should be a date of a raid created by `/guildops-raid-create`
@@ -257,7 +257,7 @@ It will delete the fail specified. To get the fail id, you can use `/guildops-fa
 ```shell
 /guildops-fail-del id: 904435308715671553
 
-Fail supprimé avec succès
+Fail successfully deleted
 ```
 
 * Id should be the id of a fail created by `/guildops-fail-create`
@@ -267,12 +267,12 @@ Fail supprimé avec succès
 It attribute a loot to a player. 
 
 ```shell
-/guildops-loot-attribute loot-name: example object raid-id: 64546465464 player-name: milowenn
+/guildops-loot-attribute loot-name: example object raid-date: 03/10/23 player-name: milowenn
 
 Loot attribué avec succès
 ```
 * Loot-name should be a string.
-* Raid-id should be the id of a raid created by `/guildops-raid-create`
+* Date should be the date of a raid created by `/guildops-raid-create`
 * Player-name should be the name of a player already created by `/guildops-player-create`.
 
 ### Select a player to attribute a loot
@@ -300,7 +300,18 @@ Tous les loots de milowenn:
   loot1 2023-09-27 00:00:00 +0000 UTC mythic
 ```
 
-* Player-name should be the name of a player already created by `/guildops-player-create`.
+### List loots on a raid
+
+It will list the loots on the raid specified. It outputs the loots.
+
+```shell
+/guildops-loot-list date: 03/10/23
+
+Tous les loots de milowenn:
+  loot1 2023-09-27 00:00:00 +0000 UTC mythic
+```
+
+* Date must be in format : dd/mm/yy and should be a date of a raid created by `/guildops-raid-create`
 
 ### List Absences on a date
 

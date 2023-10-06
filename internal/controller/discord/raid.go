@@ -6,14 +6,17 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 func (d Discord) InitRaid() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
 		"guildops-raid-create": d.CreateRaidHandler,
 		"guildops-raid-delete": d.DeleteRaidHandler,
 		"guildops-raid-list":   d.ListRaidHandler,
@@ -39,8 +42,8 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "difficulté",
-				Description: "ex: HM",
+				Name:        "difficulty",
+				Description: "Must be one of: Normal, Heroic, Mythic",
 				Required:    true,
 			},
 		},
@@ -77,64 +80,61 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
+// CreateRaidHandler call an usecase to create a raid
+// and return a message to the user.
+// It requires a raid name, a date and a difficulty field to be passed in the interaction.
 func (d Discord) CreateRaidHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
-	returnErr := error(nil)
-	var msg string
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Strike/StrikeOnPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
-
 	name := optionMap["name"].StringValue()
 	date, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
-		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - CreateRaidHandler - parseDate: %w", err)
+		msg := "Error while creating raid: " + HumanReadableError(err)
+		return msg, fmt.Errorf("create raid parse date: %w", err)
 	}
-	difficulty := optionMap["difficulté"].StringValue()
+	difficulty := optionMap["difficulty"].StringValue()
+	span.SetAttributes(
+		attribute.String("name", name),
+		attribute.String("date", date[0].String()),
+		attribute.String("difficulty", difficulty),
+	)
 
 	raid, err := d.CreateRaid(ctx, name, difficulty, date[0])
 	if err != nil {
-		msg = "Erreur lors de la création du raid: " + HumanReadableError(err)
-		returnErr = err
-	} else {
-		msg = "Raid " + strconv.Itoa(raid.ID) + " créé avec succès"
+		msg := "Error while creating raid: " + HumanReadableError(err)
+		return msg, fmt.Errorf("call create raid usecase: %w", err)
 	}
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return returnErr
+	return "Raid successfully created with ID " + strconv.Itoa(raid.ID), nil
 }
 
+// DeleteRaidHandler call an usecase to delete a raid
+// and return a message to the user.
+// It requires a raid ID field to be passed in the interaction.
 func (d Discord) DeleteRaidHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
-	var returnErr error
-	var msg string
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Raid/DeleteRaidHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -144,46 +144,39 @@ func (d Discord) DeleteRaidHandler(
 	}
 
 	raidID := optionMap["id"].StringValue()
+	span.SetAttributes(
+		attribute.String("raid_id", raidID),
+	)
 	raid, err := strconv.Atoi(raidID)
 	if err != nil {
-		msg = "Erreur lors de la suppression du joueur: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - CreateRaidHandler - parseDate: %w", err)
+		msg := "Error while deleting raid: " + HumanReadableError(err)
+		return msg, fmt.Errorf("delete raid convert user output id to int: %w", err)
 	}
+
 	err = d.DeleteRaid(ctx, raid)
 	if err != nil {
-		msg = "Error while deleting raid: " + HumanReadableError(err)
-		returnErr = err
-	} else {
-		msg = "Raid with ID " + raidID + " successfully deleted"
+		msg := "Error while deleting raid: " + HumanReadableError(err)
+		return msg, fmt.Errorf("call delete raid usecase : %w", err)
 	}
 
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return returnErr
+	return "Raid with ID " + raidID + " successfully deleted", nil
 }
 
+// ListRaidHandler call an usecase to get raids on a date range
+// and return a message to the user.
+// It requires a 'from' date field to be passed in the interaction.
+// Optional a 'to' date field can be passed.
 func (d Discord) ListRaidHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
-	var returnErr error
-	var msg string
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Raid/ListRaidHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -197,31 +190,15 @@ func (d Discord) ListRaidHandler(
 	if len(optionMap) > 1 {
 		toDate = optionMap["to"].StringValue()
 	}
+	span.SetAttributes(
+		attribute.String("from", from),
+		attribute.String("to", toDate),
+	)
 
 	dates, err := ParseDate(from, toDate)
 	if err != nil {
-		msg = "error while list raids: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - CreateRaidHandler - parseDate: %w", err)
-	}
-	if len(dates) == 0 {
-		msg = "no date found"
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return nil
+		msg := "error while list raids: " + HumanReadableError(err)
+		return msg, fmt.Errorf("list raids parse date: %w", err)
 	}
 
 	var raids []entity.Raid
@@ -232,25 +209,17 @@ func (d Discord) ListRaidHandler(
 		}
 	}
 
-	msg = "Raid List:\n"
+	if len(raids) == 0 {
+		msg := "no raid found"
+		return msg, nil
+	}
+
+	msg := "Raid List:\n"
 	for _, raid := range raids {
 		msg += "* " + raid.Name + " " +
 			raid.Date.Format("Mon 02/01/06") + " " +
 			raid.Difficulty + " " +
 			strconv.Itoa(raid.ID) + "\n"
 	}
-
-	if len(raids) == 0 {
-		msg = "no raid found"
-	}
-
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return returnErr
+	return msg, nil
 }

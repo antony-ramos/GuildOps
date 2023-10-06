@@ -17,7 +17,7 @@ func TestRaid_Validate(t *testing.T) {
 		Absences   []*entity.Player
 		Players    []*entity.Player
 		Bench      []*entity.Player
-		Loots      []*entity.Loot
+		Loots      []entity.Loot
 	}
 	tests := []struct {
 		name    string
@@ -34,7 +34,7 @@ func TestRaid_Validate(t *testing.T) {
 				Absences:   []*entity.Player{},
 				Players:    []*entity.Player{},
 				Bench:      []*entity.Player{},
-				Loots:      []*entity.Loot{},
+				Loots:      []entity.Loot{},
 			},
 			wantErr: false,
 		},
@@ -48,7 +48,7 @@ func TestRaid_Validate(t *testing.T) {
 				Absences:   []*entity.Player{},
 				Players:    []*entity.Player{},
 				Bench:      []*entity.Player{},
-				Loots:      []*entity.Loot{},
+				Loots:      []entity.Loot{},
 			},
 			wantErr: true,
 		},
@@ -62,7 +62,7 @@ func TestRaid_Validate(t *testing.T) {
 				Absences:   []*entity.Player{},
 				Players:    []*entity.Player{},
 				Bench:      []*entity.Player{},
-				Loots:      []*entity.Loot{},
+				Loots:      []entity.Loot{},
 			},
 			wantErr: true,
 		},
@@ -76,7 +76,7 @@ func TestRaid_Validate(t *testing.T) {
 				Absences:   []*entity.Player{},
 				Players:    []*entity.Player{},
 				Bench:      []*entity.Player{},
-				Loots:      []*entity.Loot{},
+				Loots:      []entity.Loot{},
 			},
 			wantErr: true,
 		},
@@ -90,7 +90,7 @@ func TestRaid_Validate(t *testing.T) {
 				Absences:   []*entity.Player{},
 				Players:    []*entity.Player{},
 				Bench:      []*entity.Player{},
-				Loots:      []*entity.Loot{},
+				Loots:      []entity.Loot{},
 			},
 			wantErr: true,
 		},

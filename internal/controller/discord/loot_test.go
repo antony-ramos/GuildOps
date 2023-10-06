@@ -3,6 +3,9 @@ package discordhandler_test
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/antony-ramos/guildops/internal/entity"
 
 	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
 	"github.com/antony-ramos/guildops/internal/controller/discord/mocks"
@@ -24,16 +27,19 @@ func TestDiscord_AttributeLootHandler(t *testing.T) {
 			StrikeUseCase:  nil,
 			LootUseCase:    mockLootUseCase,
 			RaidUseCase:    nil,
-			Fake:           true,
 		}
 
 		mockLootUseCase.On("CreateLoot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil)
 
-		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}
 		interaction := &discordgo.InteractionCreate{
 			Interaction: &discordgo.Interaction{
 				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
 				Data: discordgo.ApplicationCommandInteractionData{
 					ID:       "mock",
 					Name:     "mock",
@@ -60,10 +66,9 @@ func TestDiscord_AttributeLootHandler(t *testing.T) {
 			},
 		}
 
-		err := discord.AttributeLootHandler(context.Background(), session, interaction)
-		if err != nil {
-			return
-		}
+		msg, err := discord.AttributeLootHandler(context.Background(), interaction)
+		assert.NoError(t, err)
+		assert.Equal(t, msg, "Loot successfully attributed")
 		mockLootUseCase.AssertExpectations(t)
 	})
 }
@@ -81,16 +86,36 @@ func TestDiscord_ListLootsOnPlayerHandler(t *testing.T) {
 			StrikeUseCase:  nil,
 			LootUseCase:    mockLootUseCase,
 			RaidUseCase:    nil,
-			Fake:           true,
 		}
 
 		mockLootUseCase.On("ListLootOnPLayer", mock.Anything, mock.Anything).
-			Return(nil, nil)
+			Return([]entity.Loot{
+				{
+					ID:   1,
+					Name: "TestLoot",
+					Raid: &entity.Raid{
+						Date:       time.Now(),
+						Difficulty: "Heroic",
+					},
+				},
+				{
+					ID:   2,
+					Name: "TestLoot2",
+					Raid: &entity.Raid{
+						Date:       time.Now(),
+						Difficulty: "Heroic",
+					},
+				},
+			}, nil)
 
-		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}
 		interaction := &discordgo.InteractionCreate{
 			Interaction: &discordgo.Interaction{
 				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
 				Data: discordgo.ApplicationCommandInteractionData{
 					ID:       "mock",
 					Name:     "mock",
@@ -107,10 +132,11 @@ func TestDiscord_ListLootsOnPlayerHandler(t *testing.T) {
 			},
 		}
 
-		err := discord.ListLootsOnPlayerHandler(context.Background(), session, interaction)
-		if err != nil {
-			return
-		}
+		msg, err := discord.ListLootsOnPlayerHandler(context.Background(), interaction)
+		assert.NoError(t, err)
+		assert.Equal(t, msg, "All loots of TestPlayer:\n"+
+			"TestLoot "+time.Now().Format("02/01/06")+" Heroic\n"+
+			"TestLoot2 "+time.Now().Format("02/01/06")+" Heroic\n")
 		mockLootUseCase.AssertExpectations(t)
 	})
 }
@@ -129,16 +155,19 @@ func TestDiscord_DeleteLootHandler(t *testing.T) {
 			StrikeUseCase:  nil,
 			LootUseCase:    mockLootUseCase,
 			RaidUseCase:    nil,
-			Fake:           true,
 		}
 
 		mockLootUseCase.On("DeleteLoot", mock.Anything, mock.Anything).
 			Return(nil)
 
-		session := &discordgo.Session{StateEnabled: true, State: discordgo.NewState()}
 		interaction := &discordgo.InteractionCreate{
 			Interaction: &discordgo.Interaction{
 				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
 				Data: discordgo.ApplicationCommandInteractionData{
 					ID:       "mock",
 					Name:     "mock",
@@ -155,8 +184,9 @@ func TestDiscord_DeleteLootHandler(t *testing.T) {
 			},
 		}
 
-		err := discord.DeleteLootHandler(context.Background(), session, interaction)
+		msg, err := discord.DeleteLootHandler(context.Background(), interaction)
 		assert.NoError(t, err)
+		assert.Equal(t, msg, "Loot successfully deleted")
 		mockLootUseCase.AssertExpectations(t)
 	})
 }

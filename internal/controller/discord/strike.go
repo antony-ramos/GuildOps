@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -54,96 +57,107 @@ var StrikeDescriptors = []discordgo.ApplicationCommand{
 	},
 }
 
+// InitStrike return lists of func which can be processed by discord bot.
+// They are all strike related.
 func (d Discord) InitStrike() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
 		"guildops-strike-create": d.StrikeOnPlayerHandler,
 		"guildops-strike-delete": d.DeleteStrikeHandler,
 		"guildops-strike-list":   d.ListStrikesOnPlayerHandler,
 	}
 }
 
+// StrikeOnPlayerHandler call an usecase to create a strike
+// and return a message to the user.
+// It requires a player name and a reason field to be passed in the interaction.
 func (d Discord) StrikeOnPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Strike/StrikeOnPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	defer cancel()
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
-
-	var msg string
 	name := optionMap["name"].StringValue()
 	reason := optionMap["reason"].StringValue()
-	err := d.CreateStrike(ctx, reason, name)
-	returnErr := error(nil)
-	if err != nil {
-		msg = "Erreurs lors de la création du strike: " + HumanReadableError(err)
-		returnErr = err
-	} else {
-		msg = "Strike créé avec succès"
-	}
+	span.SetAttributes(
+		attribute.String("player", name),
+		attribute.String("reason", reason),
+	)
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return returnErr
+	err := d.CreateStrike(ctx, reason, name)
+	if err != nil {
+		msg := "Error while creating strike: " + HumanReadableError(err)
+		return msg, fmt.Errorf("create strike call usecase: %w", err)
+	}
+	return "Strike created successfully", nil
 }
 
+// ListStrikesOnPlayerHandler call an usecase to get strikes on a player
+// and return a message to the user.
+// It requires a player name field to be passed in the interaction.
 func (d Discord) ListStrikesOnPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Strike/ListStrikesOnPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
-
-	var msg string
 	playerName := optionMap["name"].StringValue()
+	span.SetAttributes(
+		attribute.String("player", playerName),
+	)
 
 	strikes, err := d.ReadStrikes(ctx, playerName)
 	if err != nil {
-		msg = "Erreurs lors de la récupération des strikes: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("database - ListStrikesOnPlayerHandler - r.ReadStrikes: %w", err)
+		msg := "Error while getting strikes on player: " + HumanReadableError(err)
+		return msg, fmt.Errorf("database - ListStrikesOnPlayerHandler - r.ReadStrikes: %w", err)
 	}
 
-	msg = "Strikes de " + playerName + " (" + strconv.Itoa(len(strikes)) + ") :\n"
+	msg := "Strikes of " + playerName + " (" + strconv.Itoa(len(strikes)) + ") :\n"
 	for _, strike := range strikes {
-		msg += "* " + strike.Date.Format("02/01/2006") + " | " + strike.Reason + " | " + strconv.Itoa(strike.ID) + "\n"
+		msg += "* " + strike.Date.Format("02/01/06") + " | " + strike.Reason + " | " + strconv.Itoa(strike.ID) + "\n"
 	}
-
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return nil
+	return msg, nil
 }
 
+// DeleteStrikeHandler call an usecase to delete a strike
+// and return a message to the user.
+// It requires an id field to be passed in the interaction.
+//
+//nolint:dupl
 func (d Discord) DeleteStrikeHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Strike/DeleteStrikeHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -152,28 +166,21 @@ func (d Discord) DeleteStrikeHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	var msg string
 	idString := optionMap["id"].StringValue()
+	span.SetAttributes(
+		attribute.String("id", idString),
+	)
 	strikeID, err := strconv.ParseInt(idString, 10, 64)
-	returnErr := error(nil)
 	if err != nil {
-		msg = "Erreurs lors de la suppression du strike: " + HumanReadableError(err)
-		returnErr = err
-	} else {
-		err = d.DeleteStrike(ctx, int(strikeID))
-		if err != nil {
-			msg = "Erreurs lors de la suppression du strike: " + HumanReadableError(err)
-			returnErr = err
-		} else {
-			msg = "Strike supprimé avec succès"
-		}
+		msg := "Error while deleting strike: " + HumanReadableError(err)
+		return msg, fmt.Errorf("delete strike parse id: %w", err)
 	}
 
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return returnErr
+	err = d.DeleteStrike(ctx, int(strikeID))
+	if err != nil {
+		msg := "Error while deleting strike: " + HumanReadableError(err)
+		return msg, fmt.Errorf("delete strike usecase: %w", err)
+	}
+
+	return "Strike deleted successfully", nil
 }

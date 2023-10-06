@@ -38,7 +38,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 		return
 	}
 
-	mapHandler := map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{}
+	mapHandler := map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){}
 
 	auc := usecase.NewAbsenceUseCase(&backend)
 	puc := usecase.NewPlayerUseCase(&backend)
@@ -54,11 +54,11 @@ func Run(ctx context.Context, cfg *config.Config) {
 		RaidUseCase:    ruc,
 		StrikeUseCase:  suc,
 		FailUseCase:    fuc,
-		Fake:           false,
 	}
 
 	var inits []func() map[string]func(
-		ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error
+		ctx context.Context, interaction *discordgo.InteractionCreate) (string, error)
+
 	inits = append(inits,
 		disc.InitAbsence, disc.InitAdmin, disc.InitLoot,
 		disc.InitPlayer, disc.InitRaid, disc.InitStrike, disc.InitFail)
@@ -73,7 +73,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 		&discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
 	handlers = append(handlers,
 		&discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1],
-		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
+		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3],
+		&discordHandler.LootDescriptors[4])
 	handlers = append(handlers,
 		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1],
 		&discordHandler.PlayerDescriptors[2], &discordHandler.PlayerDescriptors[3], &discordHandler.PlayerDescriptors[4])
