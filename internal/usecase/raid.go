@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
@@ -50,5 +53,27 @@ func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 			return fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
 		}
 		return nil
+	}
+}
+
+func (puc RaidUseCase) ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error) {
+	ctx, span := otel.Tracer("usecase").Start(ctx, "ReadRaid")
+	span.SetAttributes(
+		attribute.String("date", date.String()),
+	)
+	defer span.End()
+
+	select {
+	case <-ctx.Done():
+		return entity.Raid{}, fmt.Errorf("RaidUseCase - DeleteRaid - ctx.Done: request took too much time to be proceed")
+	default:
+		raids, err := puc.backend.SearchRaid(ctx, "", date, "")
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
+		}
+		if len(raids) == 0 {
+			return entity.Raid{}, fmt.Errorf("database - DeleteRaid - r.DeleteRaid: %w", err)
+		}
+		return raids[0], nil
 	}
 }

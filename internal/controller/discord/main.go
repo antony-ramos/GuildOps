@@ -17,11 +17,7 @@ type Discord struct {
 	LootUseCase
 	RaidUseCase
 	FailUseCase
-
-	Fake bool // Used for testing
 }
-
-var ctxError = "Error because request took too much time to complete"
 
 type AbsenceUseCase interface {
 	CreateAbsence(ctx context.Context, playerName string, date time.Time) error
@@ -32,13 +28,14 @@ type AbsenceUseCase interface {
 type PlayerUseCase interface {
 	CreatePlayer(ctx context.Context, playerName string) (int, error)
 	DeletePlayer(ctx context.Context, playerName string) error
-	ReadPlayer(ctx context.Context, playerName string) (entity.Player, error)
+	ReadPlayer(ctx context.Context, playerName, playerLinkName string) (entity.Player, error)
 	LinkPlayer(ctx context.Context, playerName string, discordID string) error
 }
 
 type RaidUseCase interface {
 	CreateRaid(ctx context.Context, raidName, difficulty string, date time.Time) (entity.Raid, error)
 	DeleteRaid(ctx context.Context, raidID int) error
+	ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error)
 }
 
 type StrikeUseCase interface {
@@ -48,8 +45,9 @@ type StrikeUseCase interface {
 }
 
 type LootUseCase interface {
-	CreateLoot(ctx context.Context, lootName string, raidID int, playerName string) error
+	CreateLoot(ctx context.Context, lootName string, raidDate time.Time, playerName string) error
 	ListLootOnPLayer(ctx context.Context, playerName string) ([]entity.Loot, error)
+	ListLootOnRaid(ctx context.Context, raidDate time.Time) ([]entity.Loot, error)
 	SelectPlayerToAssign(
 		ctx context.Context, playerNames []string, difficulty string,
 	) (entity.Player, error)
@@ -79,6 +77,8 @@ func HumanReadableError(err error) string {
 	return err.Error()
 }
 
+// ParseDate returns a list of dates between the two dates passed as parameters.
+// If toDate is empty, it will be set to fromDate.
 func ParseDate(fromDate, toDate string) ([]time.Time, error) {
 	layout := "02/01/06"
 	startDate, err := time.Parse(layout, fromDate)

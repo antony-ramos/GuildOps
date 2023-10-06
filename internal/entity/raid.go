@@ -17,7 +17,7 @@ type Raid struct {
 	Players  []*Player
 	Bench    []*Player
 
-	Loots []*Loot
+	Loots []Loot
 }
 
 func (r *Raid) Validate() error {

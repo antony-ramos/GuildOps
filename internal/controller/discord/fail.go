@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 
 	"github.com/bwmarrin/discordgo"
@@ -75,20 +78,26 @@ var FailDescriptors = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitFail() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"guildops-fail-create":      d.FailOnPlayerHandler,
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
+		"guildops-fail-create":      d.CreateFailHandler,
 		"guildops-fail-del":         d.DeleteFailHandler,
 		"guildops-fail-list-player": d.ListFailsOnPlayerHandler,
 		"guildops-fail-list-raid":   d.ListFailsOnRaidHandler,
 	}
 }
 
-func (d Discord) FailOnPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+func (d Discord) CreateFailHandler(
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Fail/CreateFailHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -97,47 +106,39 @@ func (d Discord) FailOnPlayerHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	var msg string
 	name := optionMap["name"].StringValue()
 	reason := optionMap["reason"].StringValue()
+	span.SetAttributes(
+		attribute.String("player", name),
+		attribute.String("reason", reason),
+		attribute.String("date", optionMap["date"].StringValue()),
+	)
+
 	raidDate, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
-		if !d.Fake {
-			msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("database - FailOnPlayerHandler - parseDate: %w", err)
-	}
-	err = d.CreateFail(ctx, reason, raidDate[0], name)
-	returnErr := error(nil)
-	if err != nil {
-		msg = "Erreurs lors de la création du fail: " + HumanReadableError(err)
-		returnErr = err
-	} else {
-		msg = "Fail créé avec succès"
+		msg := "Error while creating fail: " + HumanReadableError(err)
+		return msg, fmt.Errorf("create fail parse date: %w", err)
 	}
 
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+	err = d.CreateFail(ctx, reason, raidDate[0], name)
+	if err != nil {
+		msg := "Error while creating fail: " + HumanReadableError(err)
+		return msg, fmt.Errorf("create fail usecase: %w", err)
 	}
-	return returnErr
+	return "Fail created successfully", nil
 }
 
 func (d Discord) ListFailsOnPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Fail/ListFailsOnPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -146,44 +147,35 @@ func (d Discord) ListFailsOnPlayerHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	var msg string
 	playerName := optionMap["name"].StringValue()
+	span.SetAttributes(
+		attribute.String("player_name", playerName),
+	)
 
 	fails, err := d.ListFailOnPLayer(ctx, playerName)
 	if err != nil {
-		if !d.Fake {
-			msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("database - ListFailsOnPlayerHandler - r.ReadFails: %w", err)
+		return "Fail to list fails on player", fmt.Errorf("error while listing fails on player: %w", err)
 	}
 
-	msg = "Fails de " + playerName + " (" + strconv.Itoa(len(fails)) + ") :\n"
+	msg := "Fails of " + playerName + " (" + strconv.Itoa(len(fails)) + ") :\n"
 	for _, fail := range fails {
-		msg += "* " + fail.Raid.Date.Format("02-01-2006") + " - " + fail.Reason + "\n"
+		msg += "* " + fail.Raid.Date.Format("02/01/06") + " - " + fail.Reason + "\n"
 	}
 
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return nil
+	return msg, nil
 }
 
 func (d Discord) ListFailsOnRaidHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Fail/ListFailsOnRaidHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -192,36 +184,22 @@ func (d Discord) ListFailsOnRaidHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	var msg string
+	span.SetAttributes(
+		attribute.String("date", optionMap["date"].StringValue()),
+	)
 	raidDate, err := ParseDate(optionMap["date"].StringValue(), "")
 	if err != nil {
-		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("database - ListFailsOnRaid - parseDate: %w", err)
+		msg := "Error while getting fails: " + HumanReadableError(err)
+		return msg, fmt.Errorf("list fail parse date: %w", err)
 	}
 
 	fails, err := d.ListFailOnRaid(ctx, raidDate[0])
 	if err != nil {
-		msg = "Erreurs lors de la récupération des fails: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("database - ListFailsOnPlayerHandler - r.ReadFails: %w", err)
+		msg := "Error while getting fails: " + HumanReadableError(err)
+		return msg, fmt.Errorf("list fail call usecase: %w", err)
 	}
 
-	msg = "Fails du " + raidDate[0].Format("02/01/2006") + " (" + strconv.Itoa(len(fails)) + ") :\n"
+	msg := "Fails for " + raidDate[0].Format("02/01/06") + " (" + strconv.Itoa(len(fails)) + ") :\n"
 	var players []entity.Player
 	for _, fail := range fails {
 		players = append(players, *fail.Player)
@@ -232,23 +210,21 @@ func (d Discord) ListFailsOnRaidHandler(
 			msg += "* " + player.Name + " - " + fail.Reason + "\n"
 		}
 	}
-
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return nil
+	return msg, nil
 }
 
+//nolint:dupl
 func (d Discord) DeleteFailHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Fail/DeleteFailHandle")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
@@ -257,30 +233,21 @@ func (d Discord) DeleteFailHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	var msg string
 	idString := optionMap["id"].StringValue()
+	span.SetAttributes(
+		attribute.String("id", idString),
+	)
 	failID, err := strconv.ParseInt(idString, 10, 64)
-	returnErr := error(nil)
 	if err != nil {
-		msg = "Erreurs lors de la suppression du fail: " + HumanReadableError(err)
-		returnErr = err
-	} else {
-		err = d.DeleteFail(ctx, int(failID))
-		if err != nil {
-			msg = "Erreurs lors de la suppression du fail: " + HumanReadableError(err)
-			returnErr = err
-		} else {
-			msg = "Fail supprimé avec succès"
-		}
+		msg := "Error while deleting fail: " + HumanReadableError(err)
+		return msg, fmt.Errorf("delete fail parse id: %w", err)
 	}
 
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+	err = d.DeleteFail(ctx, int(failID))
+	if err != nil {
+		msg := "Error while deleting fail: " + HumanReadableError(err)
+		return msg, fmt.Errorf("delete fail usecase: %w", err)
 	}
-	return returnErr
+
+	return "Fail successfully deleted", nil
 }

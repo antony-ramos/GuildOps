@@ -137,7 +137,7 @@ func (pg *PG) ReadAbsence(ctx context.Context, absenceID int) (entity.Absence, e
 			}
 			return absence, nil
 		}
-		return entity.Absence{}, fmt.Errorf("no absence found")
+		return entity.Absence{}, fmt.Errorf("absence not found")
 	}
 }
 

@@ -38,7 +38,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 		return
 	}
 
-	mapHandler := map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{}
+	mapHandler := map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){}
 
 	auc := usecase.NewAbsenceUseCase(&backend)
 	puc := usecase.NewPlayerUseCase(&backend)
@@ -54,12 +54,14 @@ func Run(ctx context.Context, cfg *config.Config) {
 		RaidUseCase:    ruc,
 		StrikeUseCase:  suc,
 		FailUseCase:    fuc,
-		Fake:           false,
 	}
 
 	var inits []func() map[string]func(
-		ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error
-	inits = append(inits, disc.InitAbsence, disc.InitLoot, disc.InitPlayer, disc.InitRaid, disc.InitStrike, disc.InitFail)
+		ctx context.Context, interaction *discordgo.InteractionCreate) (string, error)
+
+	inits = append(inits,
+		disc.InitAbsence, disc.InitAdmin, disc.InitLoot,
+		disc.InitPlayer, disc.InitRaid, disc.InitStrike, disc.InitFail)
 	for _, v := range inits {
 		for k, v := range v() {
 			mapHandler[k] = v
@@ -71,17 +73,20 @@ func Run(ctx context.Context, cfg *config.Config) {
 		&discordHandler.AbsenceDescriptor[0], &discordHandler.AbsenceDescriptor[1], &discordHandler.AbsenceDescriptor[2])
 	handlers = append(handlers,
 		&discordHandler.LootDescriptors[0], &discordHandler.LootDescriptors[1],
-		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3])
+		&discordHandler.LootDescriptors[2], &discordHandler.LootDescriptors[3],
+		&discordHandler.LootDescriptors[4])
 	handlers = append(handlers,
 		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1],
-		&discordHandler.PlayerDescriptors[2], &discordHandler.PlayerDescriptors[3])
+		&discordHandler.PlayerDescriptors[2], &discordHandler.PlayerDescriptors[3], &discordHandler.PlayerDescriptors[4])
 	handlers = append(handlers,
-		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1])
+		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1], &discordHandler.RaidDescriptors[2])
 	handlers = append(handlers,
 		&discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
 	handlers = append(handlers,
 		&discordHandler.FailDescriptors[0], &discordHandler.FailDescriptors[1],
 		&discordHandler.FailDescriptors[2], &discordHandler.FailDescriptors[3])
+	handlers = append(handlers,
+		&discordHandler.AdminDescriptor[0], &discordHandler.AdminDescriptor[1])
 
 	serve := discord.New(
 		discord.CommandHandlers(mapHandler),

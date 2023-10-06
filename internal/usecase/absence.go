@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,6 +25,11 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 	case <-ctx.Done():
 		return fmt.Errorf("AbsenceUseCase - CreateAbsence:  ctx.Done: request took too much time to be proceed")
 	default:
+		if date.Before(
+			time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())) {
+			return errors.New("can't create a absence in the past")
+		}
+
 		// Get player ID
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
@@ -76,13 +82,21 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 			return fmt.Errorf("no player found")
 		}
 
+		raid, err := a.backend.SearchRaid(ctx, "", date, "")
+		if err != nil {
+			return fmt.Errorf("DeleteAbsence - backend.SearchRaid: %w", err)
+		}
+		if len(raid) == 0 {
+			return fmt.Errorf("no raid found")
+		}
+
 		// Get absence ID
 		absences, err := a.backend.SearchAbsence(ctx, "", player[0].ID, date)
 		if err != nil {
 			return fmt.Errorf("DeleteAbsence - backend.SearchAbsence: %w", err)
 		}
 		if len(absences) == 0 {
-			return fmt.Errorf("no absence found")
+			return fmt.Errorf("absence not found")
 		}
 
 		// Delete absences

@@ -87,11 +87,11 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 		sql, _, err := pg.Builder.
 			Select("name", "date", "difficulty").
 			From("raids").
-			Where("name = $1 AND date = $2 AND difficulty = $3").ToSql()
+			Where("date = $1 AND difficulty = $2").ToSql()
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(ctx, sql, raid.Name, raid.Date, raid.Difficulty)
+		rows, err := pg.Pool.Query(ctx, sql, raid.Date, raid.Difficulty)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Pool.Query: %w", err)
 		}
@@ -142,6 +142,32 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Builder: %w", err)
 		}
 		rows, err := pg.Pool.Query(ctx, sql, raidID)
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Pool.Query: %w", err)
+		}
+		defer rows.Close()
+		var raid entity.Raid
+		for rows.Next() {
+			err := rows.Scan(&raid.ID, &raid.Name, &raid.Date, &raid.Difficulty)
+			if err != nil {
+				return entity.Raid{}, fmt.Errorf("database - ReadRaid - rows.Scan: %w", err)
+			}
+		}
+		return raid, nil
+	}
+}
+
+// ReadRaidOnDate returns a raid from the database.
+func (pg *PG) ReadRaidOnDate(ctx context.Context, date time.Time) (entity.Raid, error) {
+	select {
+	case <-ctx.Done():
+		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: request took too much time to be proceed")
+	default:
+		sql, _, err := pg.Builder.Select("id", "name", "date", "difficulty").From("raids").Where("date = $1").ToSql()
+		if err != nil {
+			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Builder: %w", err)
+		}
+		rows, err := pg.Pool.Query(ctx, sql, date)
 		if err != nil {
 			return entity.Raid{}, fmt.Errorf("database - ReadRaid - r.Pool.Query: %w", err)
 		}

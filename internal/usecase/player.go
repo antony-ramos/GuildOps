@@ -96,7 +96,7 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 	}
 }
 
-func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (entity.Player, error) {
+func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkName string) (entity.Player, error) {
 	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/ReadPlayer")
 	span.SetAttributes(attribute.String("playerName", playerName))
 	defer span.End()
@@ -106,6 +106,10 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName string) (ent
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: request took too much time to be proceed")
 	default:
+		if playerName == "" {
+			playerName = playerLinkName
+		}
+
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)

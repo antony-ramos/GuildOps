@@ -18,7 +18,7 @@ type Discord struct {
 	guildID         int
 	DeleteCommands  bool
 	commands        []*discordgo.ApplicationCommand
-	commandHandlers map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error
+	commandHandlers map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error)
 	s               *discordgo.Session
 }
 
@@ -58,11 +58,24 @@ func (d *Discord) Run(ctx context.Context) error {
 			ctx = logger.AddLoggerToContext(ctx, logger.FromContext(ctx).
 				With(zap.String("discordHandler", interaction.ApplicationCommandData().Name)))
 			defer span.End()
-			err := handler(ctx, session, interaction)
+			msg, err := handler(ctx, interaction)
 			if err != nil {
 				logger.FromContext(ctx).Error(
 					fmt.Sprintf("handle command %s : %s", interaction.ApplicationCommandData().Name, err.Error()))
 			}
+			data := discordgo.InteractionResponseData{
+				Content: msg,
+			}
+			if interaction.ApplicationCommandData().Name == "guildops-player-info" {
+				data = discordgo.InteractionResponseData{
+					Content: msg,
+					Flags:   discordgo.MessageFlagsEphemeral,
+				}
+			}
+			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &data,
+			})
 		}
 	})
 

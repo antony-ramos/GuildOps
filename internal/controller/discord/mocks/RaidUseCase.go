@@ -55,6 +55,30 @@ func (_m *RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 	return r0
 }
 
+// ReadRaid provides a mock function with given fields: ctx, date
+func (_m *RaidUseCase) ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error) {
+	ret := _m.Called(ctx, date)
+
+	var r0 entity.Raid
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time) (entity.Raid, error)); ok {
+		return rf(ctx, date)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time) entity.Raid); ok {
+		r0 = rf(ctx, date)
+	} else {
+		r0 = ret.Get(0).(entity.Raid)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time) error); ok {
+		r1 = rf(ctx, date)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewRaidUseCase creates a new instance of RaidUseCase. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewRaidUseCase(t interface {

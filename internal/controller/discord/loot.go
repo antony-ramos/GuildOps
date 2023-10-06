@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -22,9 +25,9 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 				Required:    true,
 			},
 			{
-				Type:        discordgo.ApplicationCommandOptionInteger,
-				Name:        "raid-id",
-				Description: "(ex: 123456789)",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "raid-date",
+				Description: "(ex: 02/10/23)",
 				Required:    true,
 			},
 			{
@@ -36,13 +39,25 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "guildops-loot-list",
-		Description: "Donner un Loot à un joueur",
+		Name:        "guildops-loot-list-on-player",
+		Description: "List loot on player",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "player-name",
 				Description: "(ex: milowenn)",
+				Required:    true,
+			},
+		},
+	},
+	{
+		Name:        "guildops-loot-list-on-raid",
+		Description: "List loot on raid",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "date",
+				Description: "(ex: 03/10/23)",
 				Required:    true,
 			},
 		},
@@ -80,18 +95,28 @@ var LootDescriptors = []discordgo.ApplicationCommand{
 }
 
 func (d Discord) InitLoot() map[string]func(
-	ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error {
-	return map[string]func(ctx context.Context, session *discordgo.Session, i *discordgo.InteractionCreate) error{
-		"guildops-loot-attribute": d.AttributeLootHandler,
-		"guildops-loot-list":      d.ListLootsOnPlayerHandler,
-		"guildops-loot-delete":    d.DeleteLootHandler,
-		"guildops-loot-selector":  d.LootCounterCheckerHandler,
+	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
+	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
+		"guildops-loot-attribute":      d.AttributeLootHandler,
+		"guildops-loot-list-on-player": d.ListLootsOnPlayerHandler,
+		"guildops-loot-list-on-raid":   d.ListLootsOnRaidHandler,
+		"guildops-loot-delete":         d.DeleteLootHandler,
+		"guildops-loot-selector":       d.LootCounterCheckerHandler,
 	}
 }
 
 func (d Discord) AttributeLootHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Loot/ListLootsOnPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -100,37 +125,40 @@ func (d Discord) AttributeLootHandler(
 	}
 
 	lootName := optionMap["loot-name"].StringValue()
-	raidID := optionMap["raid-id"].IntValue()
+	raidDate := optionMap["raid-date"].StringValue()
 	playerName := optionMap["player-name"].StringValue()
+	span.SetAttributes(
+		attribute.String("loot_name", lootName),
+		attribute.String("raid_date", raidDate),
+		attribute.String("player_name", playerName),
+	)
 
-	err := d.LootUseCase.CreateLoot(ctx, lootName, int(raidID), playerName)
+	raidDates, err := ParseDate(raidDate, "")
 	if err != nil {
-		msg := "Erreur lors de l'attribution du loot: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - AttributeLootHandler - d.LootUseCase.CreateLoot: %w", err)
+		return "invalid date", fmt.Errorf("discord - AttributeLootHandler - ParseDate: %w", err)
 	}
-	msg := "Loot attribué avec succès"
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
+
+	err = d.LootUseCase.CreateLoot(ctx, lootName, raidDates[0], playerName)
+	if err != nil {
+		msg := "Error while proceeding loot attribution: " + HumanReadableError(err)
+		return msg, fmt.Errorf("discord - AttributeLootHandler - d.LootUseCase.CreateLoot: %w", err)
 	}
-	return nil
+	msg := "Loot successfully attributed"
+	return msg, nil
 }
 
 func (d Discord) ListLootsOnPlayerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Loot/ListLootsOnPlayerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 
@@ -139,113 +167,125 @@ func (d Discord) ListLootsOnPlayerHandler(
 	}
 
 	playerName := optionMap["player-name"].StringValue()
+	span.SetAttributes(
+		attribute.String("player_name", playerName),
+	)
 
 	lootList, err := d.LootUseCase.ListLootOnPLayer(ctx, playerName)
 	if err != nil {
-		msg := "Erreur lors de la récupération des loots: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
+		msg := "Error while getting loot for player: " + HumanReadableError(err)
+		return msg, fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
 	}
-	msg := "Tous les loots de " + playerName + ":\n"
+	msg := "All loots of " + playerName + ":\n"
 	for _, loot := range lootList {
-		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
+		msg += loot.Name + " " + loot.Raid.Date.Format("02/01/06") + " " + loot.Raid.Difficulty + "\n"
 	}
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return nil
+	return msg, nil
 }
 
-func (d Discord) DeleteLootHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+func (d Discord) ListLootsOnRaidHandler(
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Loot/ListLootsOnRaidHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+	dateString := optionMap["date"].StringValue()
+	span.SetAttributes(
+		attribute.String("date", dateString),
+	)
+	date, err := ParseDate(dateString, "")
+	if err != nil {
+		return "invalid date", fmt.Errorf("discord - ListLootsOnRaidHandler - ParseDate: %w", err)
+	}
 
+	lootList, err := d.LootUseCase.ListLootOnRaid(ctx, date[0])
+	if err != nil {
+		msg := "Error while listing loot for raid: " + HumanReadableError(err)
+		return msg, fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
+	}
+	msg := "All loots of  " + date[0].Format("02/01/06") + ":\n"
+	for _, loot := range lootList {
+		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
+	}
+	return msg, nil
+}
+
+func (d Discord) DeleteLootHandler(
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Loot/DeleteLootHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
+	options := interaction.ApplicationCommandData().Options
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
 
+	span.SetAttributes(
+		attribute.String("id", optionMap["id"].StringValue()))
 	id, err := strconv.Atoi(optionMap["id"].StringValue())
 	if err != nil {
-		return fmt.Errorf("discord - DeleteLootHandler - strconv.Atoi: %w", err)
+		return "", fmt.Errorf("discord - DeleteLootHandler - strconv.Atoi: %w", err)
 	}
 
 	err = d.LootUseCase.DeleteLoot(ctx, id)
 	if err != nil {
-		msg := "Erreur lors de la suppression du loot: " + HumanReadableError(err)
-		if !d.Fake {
-			_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: msg,
-				},
-			})
-		}
-		return fmt.Errorf("discord - DeleteLootHandler - d.LootUseCase.DeleteLoot: %w", err)
+		msg := "Error while deleting loot: " + HumanReadableError(err)
+		return msg, fmt.Errorf("discord - DeleteLootHandler - d.LootUseCase.DeleteLoot: %w", err)
 	}
-	msg := "Loot supprimé avec succès"
-	if !d.Fake {
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-	}
-	return nil
+	msg := "Loot successfully deleted"
+	return msg, nil
 }
 
 func (d Discord) LootCounterCheckerHandler(
-	ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-) error {
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Loot/LootCounterCheckerHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-
 	for _, opt := range options {
 		optionMap[opt.Name] = opt
 	}
 
 	playerNames := strings.Split(optionMap["player-list"].StringValue(), ",")
 	difficulty := optionMap["difficulty"].StringValue()
+	span.SetAttributes(
+		attribute.String("player_list", optionMap["player-list"].StringValue()),
+		attribute.String("difficulty", difficulty),
+	)
 
 	player, err := d.LootUseCase.SelectPlayerToAssign(ctx, playerNames, difficulty)
 	if err != nil {
-		msg := "Erreur lors de l'assignation du loot: " + HumanReadableError(err)
-		_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: msg,
-			},
-		})
-		return fmt.Errorf("discord - LootCounterCheckerHandler - d.LootUseCase.SelectPlayerToAssign: %w", err)
+		msg := "Error while searching a player to attribute loot: " + HumanReadableError(err)
+		return msg, fmt.Errorf("discord - LootCounterCheckerHandler - d.LootUseCase.SelectPlayerToAssign: %w", err)
 	}
 
-	msg := "Le joueur " + player.Name + " a été sélectionné pour recevoir le loot"
-
-	_ = session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: msg,
-		},
-	})
-	return nil
+	msg := "The player with " + player.Name + " have been selected to receive the loot"
+	return msg, nil
 }

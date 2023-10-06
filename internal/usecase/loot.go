@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
@@ -17,15 +18,16 @@ func NewLootUseCase(bk Backend) *LootUseCase {
 	return &LootUseCase{backend: bk}
 }
 
-func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidID int, playerName string) error {
+func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidDate time.Time, playerName string) error {
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("LootUseCase - CreateLoot - ctx.Done: request took too much time to be proceed")
 	default:
-		raid, err := puc.backend.ReadRaid(ctx, raidID)
+		raids, err := puc.backend.SearchRaid(ctx, "", raidDate, "")
 		if err != nil {
 			return fmt.Errorf("CreateLoot - backend.ReadRaid: %w", err)
 		}
+		raid := raids[0]
 		if raid.ID == 0 {
 			return fmt.Errorf("raid not found")
 		}
@@ -72,6 +74,26 @@ func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 		}
 
 		return player[0].Loots, nil
+	}
+}
+
+func (puc LootUseCase) ListLootOnRaid(ctx context.Context, date time.Time) ([]entity.Loot, error) {
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: request took too much time to be proceed")
+	default:
+		raids, err := puc.backend.SearchRaid(ctx, "", date, "")
+		if err != nil {
+			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
+		}
+
+		loots, err := puc.backend.SearchLoot(ctx, "", raids[0].Date, raids[0].Difficulty)
+		if err != nil {
+			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchLoot: %w", err)
+		}
+		raids[0].Loots = loots
+
+		return raids[0].Loots, nil
 	}
 }
 
