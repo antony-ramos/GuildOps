@@ -671,4 +671,32 @@ It creates or delete an absence for a player.
 
   ``` Error while creating absence: date cannot be in the past```
 
+### Create a range of raids
 
+It creates a range of raids with the name, date and difficulty specified. It outputs the raid id.
+
+```shell
+/guildops-raid-create-multiple from: 30/09/23 to: 30/10/23 difficulty: Mythic weekdays: Monday, Wendesday
+
+TODO
+```
+
+**Requirements:**
+* Difficulty should be : Normal, Heroic, Mythic.
+* Date must be in format : dd/mm/yy.
+* Weekdays should be a list of weekdays separated by a comma. If there is uppercase, it will be converted to lowercase.
+* to must be equal or after from.
+
+**Errors :**
+* If weekdays is malformed
+
+    ```week days must be one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday```
+* if to is before from 
+
+    ```error while creating multiple raids: endDate is before startDate```
+* if difficulty is incorrect 
+
+    ```difficulty must be one of: Normal, Heroic, Mythic```
+* if all raids already exists 
+
+    ```no raid created```
