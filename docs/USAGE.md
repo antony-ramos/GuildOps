@@ -467,7 +467,7 @@ Loot successfully attributed
 
   ``` Error while proceeding loot attribution: no player found```
 
-* If the loot name is more than 255 characters or less than 1 character.
+* If the loot name is more than 20 characters or less than 1 character.
  
   ``` Error while creating loot: loot name is too long```
 
