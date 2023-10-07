@@ -101,7 +101,7 @@ func (pg *PG) Init(ctx context.Context, connStr string, database *sql.DB) error 
 		createTableSQL = `
 		CREATE TABLE IF NOT EXISTS loots (
 			id serial PRIMARY KEY,
-			name VARCHAR(255),
+			name VARCHAR(20),
 			raid_id INTEGER REFERENCES raids(id) ON DELETE CASCADE,
 			player_id INTEGER 
 				REFERENCES players(id) ON DELETE CASCADE,

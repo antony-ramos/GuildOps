@@ -13,7 +13,7 @@ func (l Loot) Validate() error {
 	if l.Name == "" {
 		return fmt.Errorf("loot name is empty")
 	}
-	if len(l.Name) > 255 {
+	if len(l.Name) > 20 {
 		return fmt.Errorf("loot name is too long")
 	}
 	if l.Player == nil {

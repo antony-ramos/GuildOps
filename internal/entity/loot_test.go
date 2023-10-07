@@ -59,6 +59,16 @@ func TestLoot_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Loot Name is too long",
+			fields: fields{
+				ID:     1,
+				Name:   "Loot name is too long, it should be less than 20",
+				Player: &entity.Player{},
+				Raid:   &entity.Raid{},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		test := tt
