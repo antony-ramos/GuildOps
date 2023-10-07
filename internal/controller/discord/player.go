@@ -3,6 +3,7 @@ package discordhandler
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -105,12 +106,16 @@ func (d Discord) PlayerHandler(
 	)
 
 	if interaction.ApplicationCommandData().Name == "guildops-player-create" {
-		id, err := d.CreatePlayer(ctx, name)
+		playerID, err := d.CreatePlayer(ctx, name)
 		if err != nil {
+			alreadyExists := regexp.MustCompile(".*player already exists.*")
+			if alreadyExists.MatchString(err.Error()) {
+				return "Player " + name + " already exists", err
+			}
 			msg := "Error while creating player: " + HumanReadableError(err)
 			return msg, fmt.Errorf("call create player usecase : %w", err)
 		}
-		return "Player " + name + " created successfully: ID " + strconv.Itoa(id), nil
+		return "Player " + name + " created successfully: ID " + strconv.Itoa(playerID), nil
 	}
 
 	if interaction.ApplicationCommandData().Name == "guildops-player-delete" {
