@@ -11,6 +11,7 @@ import (
 
 	"github.com/antony-ramos/guildops/internal/entity"
 
+	"github.com/alitto/pond"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -169,7 +170,7 @@ func (d Discord) DeleteRaidHandler(
 func (d Discord) ListRaidHandler(
 	ctx context.Context, interaction *discordgo.InteractionCreate,
 ) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	ctx, span := otel.Tracer("Discord").Start(ctx, "Raid/ListRaidHandler")
@@ -202,24 +203,35 @@ func (d Discord) ListRaidHandler(
 	}
 
 	var raids []entity.Raid
-	for _, date := range dates {
-		raid, err := d.ReadRaid(ctx, date)
-		if err == nil {
-			raids = append(raids, raid)
-		}
-	}
+	pool := pond.New(len(dates), 5, pond.Context(ctx))
 
-	if len(raids) == 0 {
-		msg := "no raid found"
+	for _, date := range dates {
+		date := date
+		pool.Submit(func() {
+			raid, err := d.ReadRaid(ctx, date)
+			if err == nil {
+				raids = append(raids, raid)
+			}
+		})
+	}
+	pool.StopAndWaitFor(2 * time.Second)
+	select {
+	case <-ctx.Done():
+		msg := "error while list raids: " + HumanReadableError(ctx.Err())
+		return msg, fmt.Errorf("list raids wait goroutines: %w", ctx.Err())
+	default:
+		if len(raids) == 0 {
+			msg := "no raid found"
+			return msg, nil
+		}
+
+		msg := "Raid List:\n"
+		for _, raid := range raids {
+			msg += "* " + raid.Name + " " +
+				raid.Date.Format("Mon 02/01/06") + " " +
+				raid.Difficulty + " " +
+				strconv.Itoa(raid.ID) + "\n"
+		}
 		return msg, nil
 	}
-
-	msg := "Raid List:\n"
-	for _, raid := range raids {
-		msg += "* " + raid.Name + " " +
-			raid.Date.Format("Mon 02/01/06") + " " +
-			raid.Difficulty + " " +
-			strconv.Itoa(raid.ID) + "\n"
-	}
-	return msg, nil
 }
