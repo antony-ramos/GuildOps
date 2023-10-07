@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgconn"
+
 	"github.com/antony-ramos/guildops/internal/usecase/postgresbackend"
 
 	"github.com/Masterminds/squirrel"
@@ -157,6 +159,91 @@ func TestPG_CreateAbsence(t *testing.T) {
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.CreateAbsence(context.Background(), abs)
+		assert.Error(t, err)
+	})
+}
+
+func TestPG_DeleteAbsence(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		commandTag := pgconn.CommandTag("DELETE 1")
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"DELETE FROM absences WHERE id = $1", 1).
+			Return(commandTag, nil)
+
+		err := pgBackend.DeleteAbsence(context.Background(), 1)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Context is done", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := pgBackend.DeleteAbsence(ctx, 1)
+		assert.Error(t, err)
+	})
+
+	t.Run("Error deleting", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"DELETE FROM absences WHERE id = $1", 1).
+			Return(nil, errors.New("error"))
+
+		err := pgBackend.DeleteAbsence(context.Background(), 1)
+		assert.Error(t, err)
+	})
+
+	t.Run("Absence not found", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPool := pgxpoolmock.NewMockPgxPool(ctrl)
+
+		pgBackend := postgresbackend.PG{Postgres: &postgres.Postgres{
+			Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+			Pool:    mockPool,
+		}}
+
+		commandTag := pgconn.CommandTag("DELETE 0")
+		mockPool.EXPECT().Exec(gomock.Any(),
+			"DELETE FROM absences WHERE id = $1", 1).
+			Return(commandTag, nil)
+
+		err := pgBackend.DeleteAbsence(context.Background(), 1)
 		assert.Error(t, err)
 	})
 }

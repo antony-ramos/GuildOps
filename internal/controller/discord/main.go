@@ -95,6 +95,11 @@ func ParseDate(fromDate, toDate string) ([]time.Time, error) {
 		return nil, errors.Wrap(err, "parse date")
 	}
 
+	// check if endDate is before startDate
+	if endDate.Before(startDate) {
+		return nil, errors.New("endDate is before startDate")
+	}
+
 	var dates []time.Time
 	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
 		dates = append(dates, currentDate)

@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
@@ -29,6 +32,13 @@ func SeasonCalculator(date time.Time) string {
 
 // CreateStrike is a function which call backend to Create a Strike Object.
 func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerName string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Strike/CreateStrike")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("strikeReason", strikeReason),
+		attribute.String("playerName", playerName),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("StrikeUseCase - CreateStrike - ctx.Done: request took too much time to be proceed")
@@ -59,14 +69,19 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 }
 
 // DeleteStrike is a function which call backend to Delete a Strike Object.
-func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
+func (puc StrikeUseCase) DeleteStrike(ctx context.Context, strikeID int) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Strike/DeleteStrike")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("strikeID", strikeID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("StrikeUseCase - DeleteStrike - ctx.Done: request took too much time to be proceed")
 	default:
-		err := puc.backend.DeleteStrike(ctx, id)
+		err := puc.backend.DeleteStrike(ctx, strikeID)
 		if err != nil {
-			return fmt.Errorf("database - DeleteStrike - r.DeleteStrike: %w", err)
+			return fmt.Errorf("database DeleteStrike: r.DeleteStrike: %w", err)
 		}
 		return nil
 	}
@@ -74,6 +89,12 @@ func (puc StrikeUseCase) DeleteStrike(ctx context.Context, id int) error {
 
 // ReadStrikes is a function which call backend to Read all strikes on a player.
 func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]entity.Strike, error) {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Strike/ReadStrikes")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+	)
+
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("StrikeUseCase - ReadStrikes - ctx.Done: request took too much time to be proceed")

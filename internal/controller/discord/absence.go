@@ -2,7 +2,6 @@ package discordhandler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 )
 
 var AbsenceDescriptor = []discordgo.ApplicationCommand{
@@ -113,7 +113,7 @@ func (d Discord) ListAbsenceHandler(
 		return msg, nil
 	}
 
-	msg := "Absence(s) pour le " + dates[0].Format("02/01/06") + " :\n"
+	msg := dates[0].Format("02/01/06") + " absences :\n"
 	for _, absence := range absences {
 		msg += "* " + absence.Player.Name + "\n"
 	}
@@ -134,10 +134,13 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 	}
 
 	dates, err := ParseDate(fromDate, toDate)
+	if err != nil {
+		return errorMsg + HumanReadableError(err), err
+	}
 
 	if dates[0].Before(
 		time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())) {
-		return "You can't create a absence in the past",
+		return "You can't create or delete an absence in the past",
 			errors.New("discord - GenerateAbsenceHandlerMsg: can't create a absence in the past")
 	}
 
@@ -149,6 +152,7 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 	AbsenceAlreadyExist := regexp.MustCompile(".*absence already exist.*")
 	AbsenceNotFound := regexp.MustCompile(".*absence not found.*")
 
+	atLeastADate := false
 	for _, date := range dates {
 		date := date
 		if !created {
@@ -159,13 +163,15 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 				if len(dates) == 1 || !matched {
 					return errorMsg + HumanReadableError(err), err
 				} else {
-					matched = RaidNotFound.MatchString(err.Error())
+					matched = RaidNotFound.MatchString(err.Error()) || AbsenceNotFound.MatchString(err.Error())
 					if !matched {
 						msg += "* " + date.Format("Mon 02/01/06") + "\n"
+						atLeastADate = true
 					}
 				}
 			} else {
 				msg += "* " + date.Format("Mon 02/01/06") + "\n"
+				atLeastADate = true
 			}
 		} else {
 			err = d.CreateAbsence(ctx, user, date)
@@ -177,15 +183,23 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 				} else {
 					matched = RaidNotFound.MatchString(err.Error())
 					if !matched {
-						msg += "* " + date.Format("Mon 02/01/06") + "\n"
+						if AbsenceAlreadyExist.MatchString(err.Error()) {
+							msg += "* " + date.Format("Mon 02/01/06") + " Absence already exists" + "\n"
+						} else {
+							msg += "* " + date.Format("Mon 02/01/06") + "\n"
+						}
+						atLeastADate = true
 					}
 				}
 			} else {
 				msg += "* " + date.Format("Mon 02/01/06") + "\n"
+				atLeastADate = true
 			}
 		}
 	}
-
+	if !atLeastADate {
+		return "No absence created or deleted, there is no raids on this range", nil
+	}
 	return msg, nil
 }
 
@@ -202,6 +216,13 @@ func (d Discord) AbsenceHandler(
 	span.SetAttributes(
 		attribute.String("request_from", interaction.Member.User.Username),
 	)
+
+	p, err := d.ReadPlayer(ctx, "", user)
+	if err != nil {
+		return "You are not linked to any existing player",
+			errors.Wrap(err, "discord - AbsenceHandler: read player from discord id")
+	}
+	user = p.Name
 
 	options := interaction.ApplicationCommandData().Options
 	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))

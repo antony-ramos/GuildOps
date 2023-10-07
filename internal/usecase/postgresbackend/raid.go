@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
@@ -12,6 +15,14 @@ import (
 func (pg *PG) SearchRaid(
 	ctx context.Context, raidName string, date time.Time, difficulty string,
 ) ([]entity.Raid, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Raid/SearchRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("raidName", raidName),
+		attribute.String("date", date.String()),
+		attribute.String("difficulty", difficulty),
+	)
+
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("database - SearchRaid - ctx.Done: request took too much time to be proceed")
@@ -80,6 +91,13 @@ func (pg *PG) SearchRaid(
 
 // CreateRaid creates a raid in the database.
 func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Raid/CreateRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("raidName", raid.Name),
+		attribute.String("difficulty", raid.Difficulty),
+		attribute.String("date", raid.Date.String()),
+	)
 	select {
 	case <-ctx.Done():
 		return entity.Raid{}, fmt.Errorf("database - CreateRaid - ctx.Done: request took too much time to be proceed")
@@ -133,6 +151,12 @@ func (pg *PG) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Raid, er
 
 // ReadRaid returns a raid from the database.
 func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Raid/ReadRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("raidID", raidID),
+	)
+
 	select {
 	case <-ctx.Done():
 		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: request took too much time to be proceed")
@@ -159,6 +183,11 @@ func (pg *PG) ReadRaid(ctx context.Context, raidID int) (entity.Raid, error) {
 
 // ReadRaidOnDate returns a raid from the database.
 func (pg *PG) ReadRaidOnDate(ctx context.Context, date time.Time) (entity.Raid, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Raid/ReadRaidOnDate")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("date", date.Format("02/01/2006")),
+	)
 	select {
 	case <-ctx.Done():
 		return entity.Raid{}, fmt.Errorf("database - ReadRaid - ctx.Done: request took too much time to be proceed")
@@ -185,6 +214,15 @@ func (pg *PG) ReadRaidOnDate(ctx context.Context, date time.Time) (entity.Raid, 
 
 // UpdateRaid updates a raid in the database.
 func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Raid/UpdateRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("raidID", raid.ID),
+		attribute.String("raidName", raid.Name),
+		attribute.String("difficulty", raid.Difficulty),
+		attribute.String("date", raid.Date.Format("02/01/2006")),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - UpdateRaid - ctx.Done: request took too much time to be proceed")
@@ -224,6 +262,11 @@ func (pg *PG) UpdateRaid(ctx context.Context, raid entity.Raid) error {
 }
 
 func (pg *PG) DeleteRaid(ctx context.Context, raidID int) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Raid/DeleteRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("raidID", raidID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - DeleteRaid - ctx.Done: request took too much time to be proceed")

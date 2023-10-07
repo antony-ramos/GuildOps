@@ -23,7 +23,7 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 }
 
 func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (int, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/CreatePlayer")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/CreatePlayer")
 	span.SetAttributes(attribute.String("playerName", playerName))
 	defer span.End()
 	select {
@@ -51,6 +51,12 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (i
 }
 
 func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/DeletePlayer")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: request took too much time to be proceed")
@@ -85,6 +91,17 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 			}
 		}
 
+		absences, err := puc.backend.SearchAbsence(ctx, "", player[0].ID, time.Time{})
+		if err != nil {
+			return fmt.Errorf("database - DeletePlayer - r.SearchAbsence: %w", err)
+		}
+		for _, absence := range absences {
+			err = puc.backend.DeleteAbsence(ctx, absence.ID)
+			if err != nil {
+				return fmt.Errorf("database - DeletePlayer - r.DeleteAbsence: %w", err)
+			}
+		}
+
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.SearchStrike: %w", err)
 		}
@@ -97,39 +114,57 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 }
 
 func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkName string) (entity.Player, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/ReadPlayer")
-	span.SetAttributes(attribute.String("playerName", playerName))
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/ReadPlayer")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+		attribute.String("playerLinkName", playerLinkName),
+	)
 	logger.FromContext(ctx).Debug("read player use case")
 
 	select {
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: request took too much time to be proceed")
 	default:
-		if playerName == "" {
-			playerName = playerLinkName
+
+		player := entity.Player{
+			ID: -1,
+		}
+		if playerName != "" {
+			plrs, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
+			}
+			if len(plrs) == 0 {
+				return entity.Player{}, fmt.Errorf("player %s not found", playerName)
+			}
+			player = plrs[0]
+		} else if playerLinkName != "" {
+			plrs, err := puc.backend.SearchPlayer(ctx, -1, "", playerLinkName)
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
+			}
+			if len(plrs) == 0 {
+				return entity.Player{}, fmt.Errorf("didn't find a player linked to this discord user named %s", playerLinkName)
+			}
+			player = plrs[0]
 		}
 
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
-		if err != nil {
-			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
-		}
-
-		if len(player) == 0 {
+		if player.ID == -1 {
 			return entity.Player{}, fmt.Errorf("player %s not found", playerName)
 		}
 
-		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
+		strikes, err := puc.backend.SearchStrike(ctx, player.ID, time.Time{}, "", "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchStrike: %w", err)
 		}
-		player[0].Strikes = strikes
+		player.Strikes = strikes
 
-		fails, err := puc.backend.SearchFail(ctx, "", player[0].ID, -1, "")
+		fails, err := puc.backend.SearchFail(ctx, "", player.ID, -1, "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchFail: %w", err)
 		}
-		player[0].Fails = fails
+		player.Fails = fails
 
 		for k, fail := range fails {
 			r, err := puc.backend.ReadRaid(ctx, fail.Raid.ID)
@@ -139,11 +174,17 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 			fails[k].Raid = &r
 		}
 
-		return player[0], nil
+		return player, nil
 	}
 }
 
 func (puc PlayerUseCase) LinkPlayer(ctx context.Context, playerName string, discordID string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/LinkPlayer")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+		attribute.String("discordID", discordID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - LinkPlayer - ctx.Done: request took too much time to be proceed")

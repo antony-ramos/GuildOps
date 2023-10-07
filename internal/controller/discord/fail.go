@@ -64,7 +64,7 @@ var FailDescriptors = []discordgo.ApplicationCommand{
 		},
 	},
 	{
-		Name:        "guildops-fail-del",
+		Name:        "guildops-fail-delete",
 		Description: "Supprimer un fail via son ID (ListFails pour l'avoir)",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -81,7 +81,7 @@ func (d Discord) InitFail() map[string]func(
 	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
 	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
 		"guildops-fail-create":      d.CreateFailHandler,
-		"guildops-fail-del":         d.DeleteFailHandler,
+		"guildops-fail-delete":      d.DeleteFailHandler,
 		"guildops-fail-list-player": d.ListFailsOnPlayerHandler,
 		"guildops-fail-list-raid":   d.ListFailsOnRaidHandler,
 	}
@@ -157,9 +157,13 @@ func (d Discord) ListFailsOnPlayerHandler(
 		return "Fail to list fails on player", fmt.Errorf("error while listing fails on player: %w", err)
 	}
 
+	if len(fails) == 0 {
+		return "No fails found for " + playerName, nil
+	}
+
 	msg := "Fails of " + playerName + " (" + strconv.Itoa(len(fails)) + ") :\n"
 	for _, fail := range fails {
-		msg += "* " + fail.Raid.Date.Format("02/01/06") + " - " + fail.Reason + "\n"
+		msg += "* " + fail.Raid.Date.Format("02/01/06") + " - " + fail.Reason + " - " + strconv.Itoa(fail.ID) + "\n"
 	}
 
 	return msg, nil
@@ -199,6 +203,10 @@ func (d Discord) ListFailsOnRaidHandler(
 		return msg, fmt.Errorf("list fail call usecase: %w", err)
 	}
 
+	if len(fails) == 0 {
+		return "No fails found for " + raidDate[0].Format("02/01/06"), nil
+	}
+
 	msg := "Fails for " + raidDate[0].Format("02/01/06") + " (" + strconv.Itoa(len(fails)) + ") :\n"
 	var players []entity.Player
 	for _, fail := range fails {
@@ -213,7 +221,6 @@ func (d Discord) ListFailsOnRaidHandler(
 	return msg, nil
 }
 
-//nolint:dupl
 func (d Discord) DeleteFailHandler(
 	ctx context.Context, interaction *discordgo.InteractionCreate,
 ) (string, error) {

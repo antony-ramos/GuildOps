@@ -18,7 +18,7 @@ import (
 //
 //nolint:gocyclo
 func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName string) ([]entity.Player, error) {
-	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "SearchPlayer")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Player/SearchPlayer")
 	span.SetAttributes(
 		attribute.String("playerName", name),
 		attribute.String("discordName", discordName),
@@ -185,7 +185,7 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 
 // CreatePlayer is a function which call backend to Create a Player Object.
 func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Player, error) {
-	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "CreatePlayer")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Player/CreatePlayer")
 	span.SetAttributes(attribute.String("playerName", player.Name))
 	defer span.End()
 	select {
@@ -230,7 +230,7 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 
 // ReadPlayer is a function which call backend to Read a Player Object.
 func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, error) {
-	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "ReadPlayer")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Player/ReadPlayer")
 	span.SetAttributes(
 		attribute.Int("playerID", playerID))
 	defer span.End()
@@ -262,7 +262,7 @@ func (pg *PG) ReadPlayer(ctx context.Context, playerID int) (entity.Player, erro
 
 // UpdatePlayer is a function which call backend to Update a Player Object.
 func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
-	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "UpdatePlayer")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Player/UpdatePlayer")
 	span.SetAttributes(
 		attribute.String("playerName", player.Name),
 		attribute.String("discordName", player.DiscordName),
@@ -293,7 +293,7 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 
 // DeletePlayer is a function which call backend to Delete a Player Object.
 func (pg *PG) DeletePlayer(ctx context.Context, playerID int) error {
-	ctx, span := otel.Tracer("postgresbackend").Start(ctx, "DeletePlayer")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Player/DeletePlayer")
 	span.SetAttributes(
 		attribute.Int("playerID", playerID))
 	defer span.End()

@@ -226,9 +226,50 @@ func TestDiscord_ListFailsOnPlayerHandler(t *testing.T) {
 		msg, err := discord.ListFailsOnPlayerHandler(context.Background(), interaction)
 		assert.NoError(t, err)
 		assert.Equal(t, "Fails of Milowenn (2) :\n* "+
-			time.Now().Format("02/01/06")+" - why not\n* "+
-			time.Now().Format("02/01/06")+" - why not 2\n",
+			time.Now().Format("02/01/06")+" - why not - 1\n* "+
+			time.Now().Format("02/01/06")+" - why not 2 - 1\n",
 			msg)
+		mockFailUseCase.AssertExpectations(t)
+	})
+
+	t.Run("Success with no fails", func(t *testing.T) {
+		t.Parallel()
+		mockFailUseCase := mocks.NewFailUseCase(t)
+
+		discord := discordHandler.Discord{
+			FailUseCase: mockFailUseCase,
+		}
+
+		mockFailUseCase.On("ListFailOnPLayer", mock.Anything, mock.Anything).
+			Return([]entity.Fail{}, nil)
+
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "mock",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "name",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "Milowenn",
+						},
+					},
+				},
+			},
+		}
+
+		msg, err := discord.ListFailsOnPlayerHandler(context.Background(), interaction)
+		assert.NoError(t, err)
+		assert.Equal(t, "No fails found for Milowenn", msg)
 		mockFailUseCase.AssertExpectations(t)
 	})
 }
@@ -295,6 +336,47 @@ func TestDiscord_ListFailsOnRaidHandler(t *testing.T) {
 		msg, err := discord.ListFailsOnRaidHandler(context.Background(), interaction)
 		assert.NoError(t, err)
 		assert.Equal(t, msg, "Fails for 29/09/23 (2) :\n* Paragon - why not\n* Milowenn - why not 2\n")
+		mockFailUseCase.AssertExpectations(t)
+	})
+
+	t.Run("Success with no fails", func(t *testing.T) {
+		t.Parallel()
+		mockFailUseCase := mocks.NewFailUseCase(t)
+
+		discord := discordHandler.Discord{
+			FailUseCase: mockFailUseCase,
+		}
+
+		mockFailUseCase.On("ListFailOnRaid", mock.Anything, mock.Anything).
+			Return([]entity.Fail{}, nil)
+
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "mock",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "date",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "29/09/23",
+						},
+					},
+				},
+			},
+		}
+
+		msg, err := discord.ListFailsOnRaidHandler(context.Background(), interaction)
+		assert.NoError(t, err)
+		assert.Equal(t, msg, "No fails found for 29/09/23")
 		mockFailUseCase.AssertExpectations(t)
 	})
 }

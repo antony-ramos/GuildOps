@@ -176,9 +176,13 @@ func (d Discord) ListLootsOnPlayerHandler(
 		msg := "Error while getting loot for player: " + HumanReadableError(err)
 		return msg, fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
 	}
+	if len(lootList) == 0 {
+		return "no loot for " + playerName, nil
+	}
 	msg := "All loots of " + playerName + ":\n"
 	for _, loot := range lootList {
-		msg += loot.Name + " " + loot.Raid.Date.Format("02/01/06") + " " + loot.Raid.Difficulty + "\n"
+		msg += "* " + loot.Name + " " + loot.Raid.Date.Format("02/01/06") + " " +
+			loot.Raid.Difficulty + " " + strconv.Itoa(loot.ID) + "\n"
 	}
 	return msg, nil
 }
@@ -214,9 +218,12 @@ func (d Discord) ListLootsOnRaidHandler(
 		msg := "Error while listing loot for raid: " + HumanReadableError(err)
 		return msg, fmt.Errorf("discord - ListLootsOnPlayerHandler - d.LootUseCase.ListLootOnPLayer: %w", err)
 	}
+	if len(lootList) == 0 {
+		return "no loot for " + date[0].Format("02/01/06"), nil
+	}
 	msg := "All loots of  " + date[0].Format("02/01/06") + ":\n"
 	for _, loot := range lootList {
-		msg += loot.Name + " " + loot.Raid.Date.String() + " " + loot.Raid.Difficulty + "\n"
+		msg += "* " + loot.Name + " " + loot.Player.Name + " " + loot.Raid.Difficulty + " " + strconv.Itoa(loot.ID) + "\n"
 	}
 	return msg, nil
 }
@@ -243,7 +250,7 @@ func (d Discord) DeleteLootHandler(
 		attribute.String("id", optionMap["id"].StringValue()))
 	id, err := strconv.Atoi(optionMap["id"].StringValue())
 	if err != nil {
-		return "", fmt.Errorf("discord - DeleteLootHandler - strconv.Atoi: %w", err)
+		return "id format is invalid", fmt.Errorf("discord - DeleteLootHandler - strconv.Atoi: %w", err)
 	}
 
 	err = d.LootUseCase.DeleteLoot(ctx, id)
@@ -273,7 +280,9 @@ func (d Discord) LootCounterCheckerHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	playerNames := strings.Split(optionMap["player-list"].StringValue(), ",")
+	playerList := optionMap["player-list"].StringValue()
+	playerList = strings.ReplaceAll(playerList, " ", "")
+	playerNames := strings.Split(playerList, ",")
 	difficulty := optionMap["difficulty"].StringValue()
 	span.SetAttributes(
 		attribute.String("player_list", optionMap["player-list"].StringValue()),
@@ -286,6 +295,6 @@ func (d Discord) LootCounterCheckerHandler(
 		return msg, fmt.Errorf("discord - LootCounterCheckerHandler - d.LootUseCase.SelectPlayerToAssign: %w", err)
 	}
 
-	msg := "The player with " + player.Name + " have been selected to receive the loot"
+	msg := player.Name + " have been selected to receive the loot"
 	return msg, nil
 }

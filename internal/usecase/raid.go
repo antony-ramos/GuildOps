@@ -22,6 +22,14 @@ func NewRaidUseCase(bk Backend) *RaidUseCase {
 func (puc RaidUseCase) CreateRaid(
 	ctx context.Context, raidName, difficulty string, date time.Time,
 ) (entity.Raid, error) {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Raid/CreateRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("raidName", raidName),
+		attribute.String("difficulty", difficulty),
+		attribute.String("date", date.String()),
+	)
+
 	select {
 	case <-ctx.Done():
 		return entity.Raid{}, fmt.Errorf("RaidUseCase - CreateRaid - ctx.Done: request took too much time to be proceed")
@@ -44,6 +52,11 @@ func (puc RaidUseCase) CreateRaid(
 }
 
 func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Raid/DeleteRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("raidID", raidID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("RaidUseCase - DeleteRaid - ctx.Done: request took too much time to be proceed")
@@ -57,9 +70,9 @@ func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 }
 
 func (puc RaidUseCase) ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error) {
-	ctx, span := otel.Tracer("usecase").Start(ctx, "ReadRaid")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Raid/ReadRaid")
 	span.SetAttributes(
-		attribute.String("date", date.String()),
+		attribute.String("date", date.Format("02/01/06")),
 	)
 	defer span.End()
 

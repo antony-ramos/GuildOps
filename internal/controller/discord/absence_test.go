@@ -8,6 +8,9 @@ import (
 
 	discordHandler "github.com/antony-ramos/guildops/internal/controller/discord"
 	"github.com/antony-ramos/guildops/internal/controller/discord/mocks"
+	"github.com/antony-ramos/guildops/internal/entity"
+
+	"github.com/bwmarrin/discordgo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -109,7 +112,7 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "Absence(s) created for :\n"+
 			"* "+time.Now().AddDate(0, 0, 1).Format("Mon 02/01/06")+"\n"+
-			"* "+time.Now().AddDate(0, 0, 2).Format("Mon 02/01/06")+"\n", msg)
+			"* "+time.Now().AddDate(0, 0, 2).Format("Mon 02/01/06")+" Absence already exists\n", msg)
 		mockAbsenceUseCase.AssertExpectations(t)
 	})
 
@@ -180,5 +183,67 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, "Error while deleting absence: Backend Error", msg)
 		mockAbsenceUseCase.AssertExpectations(t)
+	})
+}
+
+func TestDiscord_ListAbsenceHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		AbsenceUseCase := mocks.NewAbsenceUseCase(t)
+
+		discord := discordHandler.Discord{
+			AbsenceUseCase: AbsenceUseCase,
+		}
+
+		AbsenceUseCase.On("ListAbsence", mock.Anything, mock.Anything).
+			Return([]entity.Absence{
+				{
+					Player: &entity.Player{
+						Name: "Paragon",
+					},
+					Raid: &entity.Raid{
+						Date: time.Date(2030, time.September, 29, 0, 0, 0, 0, time.UTC),
+					},
+				},
+				{
+					Player: &entity.Player{
+						Name: "Paragon",
+					},
+					Raid: &entity.Raid{
+						Date: time.Date(2030, time.September, 30, 0, 0, 0, 0, time.UTC),
+					},
+				},
+			}, nil)
+
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "mock",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "date",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "29/09/23",
+						},
+					},
+				},
+			},
+		}
+
+		msg, err := discord.ListAbsenceHandler(context.Background(), interaction)
+		assert.NoError(t, err)
+		assert.Equal(t, "29/09/23 absences :\n* Paragon\n* Paragon\n", msg)
+		AbsenceUseCase.AssertExpectations(t)
 	})
 }

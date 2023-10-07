@@ -14,7 +14,7 @@ import (
 
 // SearchFailOnParam is a function which call backend to Search an entity.Fail on a given parameter.
 func (pg *PG) SearchFailOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Fail, error) {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "FailBackend/SearchFailOnParam")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Fail/SearchFailOnParam")
 	span.SetAttributes(
 		attribute.String("paramName", paramName),
 		attribute.String("param", fmt.Sprintf("%v", param)))
@@ -59,7 +59,7 @@ func (pg *PG) SearchFailOnParam(ctx context.Context, paramName string, param int
 func (pg *PG) SearchFail(
 	ctx context.Context, playerName string, playerID int, raidID int, reason string,
 ) ([]entity.Fail, error) {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "FailBackend/SearchFail")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Fail/SearchFail")
 	span.SetAttributes(
 		attribute.String("playerName", playerName),
 		attribute.Int("playerID", playerID),
@@ -106,7 +106,7 @@ func (pg *PG) SearchFail(
 
 // CreateFail create an entity.Fail in database.
 func (pg *PG) CreateFail(ctx context.Context, fail entity.Fail) (entity.Fail, error) {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "FailBackend/CreateFail")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Fail/CreateFail")
 	span.SetAttributes(
 		attribute.String("failReason", fail.Reason),
 		attribute.String("playerName", fail.Player.Name),
@@ -140,7 +140,7 @@ func (pg *PG) CreateFail(ctx context.Context, fail entity.Fail) (entity.Fail, er
 
 // ReadFail read an entity.Fail from database.
 func (pg *PG) ReadFail(ctx context.Context, failID int) (entity.Fail, error) {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "FailBackend/ReadFail")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Fail/ReadFail")
 	span.SetAttributes(attribute.Int("failID", failID))
 	defer span.End()
 	logger.FromContext(ctx).Debug("ReadFail", zap.Int("failID", failID))
@@ -173,7 +173,7 @@ func (pg *PG) ReadFail(ctx context.Context, failID int) (entity.Fail, error) {
 
 // UpdateFail update an entity.Fail from database.
 func (pg *PG) UpdateFail(ctx context.Context, fail entity.Fail) error {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "FailBackend/UpdateFail")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Fail/UpdateFail")
 	span.SetAttributes(attribute.Int("failID", fail.ID), attribute.String("failReason", fail.Reason))
 	defer span.End()
 
@@ -200,7 +200,7 @@ func (pg *PG) UpdateFail(ctx context.Context, fail entity.Fail) error {
 
 // DeleteFail delete an entity.Fail from database based on entity.Fail ID.
 func (pg *PG) DeleteFail(ctx context.Context, failID int) error {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "FailBackend/DeleteFail")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Fail/DeleteFail")
 	span.SetAttributes(attribute.Int("failID", failID))
 	defer span.End()
 

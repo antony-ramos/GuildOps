@@ -5,7 +5,11 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
@@ -19,6 +23,13 @@ func NewLootUseCase(bk Backend) *LootUseCase {
 }
 
 func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidDate time.Time, playerName string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Loot/CreateLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("lootName", lootName),
+		attribute.String("raidDate", raidDate.Format("02/01/2006")),
+		attribute.String("playerName", playerName),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("LootUseCase - CreateLoot - ctx.Done: request took too much time to be proceed")
@@ -64,6 +75,11 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidDate
 }
 
 func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) ([]entity.Loot, error) {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Loot/ListLootOnPLayer")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+	)
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: request took too much time to be proceed")
@@ -78,6 +94,11 @@ func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 }
 
 func (puc LootUseCase) ListLootOnRaid(ctx context.Context, date time.Time) ([]entity.Loot, error) {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Loot/ListLootOnRaid")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("date", date.Format("02/01/2006")),
+	)
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: request took too much time to be proceed")
@@ -85,6 +106,10 @@ func (puc LootUseCase) ListLootOnRaid(ctx context.Context, date time.Time) ([]en
 		raids, err := puc.backend.SearchRaid(ctx, "", date, "")
 		if err != nil {
 			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
+		}
+
+		if len(raids) == 0 {
+			return nil, fmt.Errorf("raid not found")
 		}
 
 		loots, err := puc.backend.SearchLoot(ctx, "", raids[0].Date, raids[0].Difficulty)
@@ -100,6 +125,13 @@ func (puc LootUseCase) ListLootOnRaid(ctx context.Context, date time.Time) ([]en
 func (puc LootUseCase) SelectPlayerToAssign(
 	ctx context.Context, playerNames []string, difficulty string,
 ) (entity.Player, error) {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Loot/SelectPlayerToAssign")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerNames", fmt.Sprintf("%v", playerNames)),
+		attribute.String("difficulty", difficulty),
+	)
+
 	select {
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("LootUseCase - SelectPlayerToAssign - " +
@@ -109,6 +141,11 @@ func (puc LootUseCase) SelectPlayerToAssign(
 			return entity.Player{}, fmt.Errorf("player list empty")
 		}
 
+		difficulty = strings.ToLower(difficulty)
+		if difficulty != "normal" && difficulty != "heroic" && difficulty != "mythic" {
+			return entity.Player{}, fmt.Errorf("difficulty not valid. Must be normal, Heroic or mythic")
+		}
+
 		playerList := make([]entity.Player, 0)
 		for _, playerName := range playerNames {
 			player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
@@ -116,7 +153,7 @@ func (puc LootUseCase) SelectPlayerToAssign(
 				return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - backend.SearchPlayer: %w", err)
 			}
 			if len(player) == 0 {
-				return entity.Player{}, fmt.Errorf("no player found")
+				return entity.Player{}, fmt.Errorf("no player found in database for %s", playerName)
 			}
 			playerList = append(playerList, player[0])
 		}
@@ -154,6 +191,11 @@ func (puc LootUseCase) SelectPlayerToAssign(
 }
 
 func (puc LootUseCase) DeleteLoot(ctx context.Context, lootID int) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Loot/DeleteLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("lootID", lootID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("LootUseCase - DeleteLoot - ctx.Done: request took too much time to be proceed")
