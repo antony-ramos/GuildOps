@@ -42,21 +42,81 @@ func TestHumanReadableError(t *testing.T) {
 
 func TestGenerateDateList(t *testing.T) {
 	t.Parallel()
-	startDate := "01/01/21"
-	endDate := "03/01/21"
 
-	expectedDates := []time.Time{
-		time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC),
-		time.Date(2021, time.January, 2, 0, 0, 0, 0, time.UTC),
-		time.Date(2021, time.January, 3, 0, 0, 0, 0, time.UTC),
-	}
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
 
-	dateList, err := discordHandler.ParseDate(startDate, endDate)
-	if err != nil {
-		t.Errorf("Error: %v", err)
-	}
+		startDate := "01/01/21"
+		endDate := "03/01/21"
 
-	if !reflect.DeepEqual(dateList, expectedDates) {
-		t.Errorf("Expected %v, but got %v", expectedDates, dateList)
-	}
+		expectedDates := []time.Time{
+			time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(2021, time.January, 2, 0, 0, 0, 0, time.UTC),
+			time.Date(2021, time.January, 3, 0, 0, 0, 0, time.UTC),
+		}
+
+		dateList, err := discordHandler.ParseDate(startDate, endDate)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+
+		if !reflect.DeepEqual(dateList, expectedDates) {
+			t.Errorf("Expected %v, but got %v", expectedDates, dateList)
+		}
+	})
+
+	t.Run("Success with no endDate", func(t *testing.T) {
+		t.Parallel()
+
+		startDate := "01/01/22"
+		endDate := ""
+
+		expectedDates := []time.Time{
+			time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC),
+		}
+
+		dateList, err := discordHandler.ParseDate(startDate, endDate)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+
+		if !reflect.DeepEqual(dateList, expectedDates) {
+			t.Errorf("Expected %v, but got %v", expectedDates, dateList)
+		}
+	})
+
+	t.Run("Error with format", func(t *testing.T) {
+		t.Parallel()
+
+		startDate := "01-01/22"
+		endDate := "01-03/21"
+
+		_, err := discordHandler.ParseDate(startDate, endDate)
+		if err == nil {
+			t.Errorf("Expected error, but got nil")
+		}
+	})
+
+	t.Run("Error with format", func(t *testing.T) {
+		t.Parallel()
+
+		startDate := "01/01/22"
+		endDate := "01-03/22"
+
+		_, err := discordHandler.ParseDate(startDate, endDate)
+		if err == nil {
+			t.Errorf("Expected error, but got nil")
+		}
+	})
+
+	t.Run("Error with date order", func(t *testing.T) {
+		t.Parallel()
+		startDate := "01/03/23"
+		endDate := "01/01/23"
+
+		_, err := discordHandler.ParseDate(startDate, endDate)
+		if err == nil {
+			t.Errorf("Expected error, but got nil")
+		}
+	})
 }

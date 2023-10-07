@@ -91,6 +91,17 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 			}
 		}
 
+		absences, err := puc.backend.SearchAbsence(ctx, "", player[0].ID, time.Time{})
+		if err != nil {
+			return fmt.Errorf("database - DeletePlayer - r.SearchAbsence: %w", err)
+		}
+		for _, absence := range absences {
+			err = puc.backend.DeleteAbsence(ctx, absence.ID)
+			if err != nil {
+				return fmt.Errorf("database - DeletePlayer - r.DeleteAbsence: %w", err)
+			}
+		}
+
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.SearchStrike: %w", err)
 		}
