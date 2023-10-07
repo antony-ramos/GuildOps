@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"time"
 
-
-	"github.com/pkg/errors"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/antony-ramos/guildops/internal/entity"
+	"github.com/pkg/errors"
 )
 
 func (pg *PG) searchAbsenceOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Absence, error) {

@@ -203,7 +203,7 @@ func (d Discord) ListRaidHandler(
 		return msg, fmt.Errorf("list raids parse date: %w", err)
 	}
 
-	mu := &sync.Mutex{}
+	raidsLock := &sync.Mutex{}
 	var raids []entity.Raid
 	pool := pond.New(len(dates), 5, pond.Context(ctx))
 
@@ -212,9 +212,9 @@ func (d Discord) ListRaidHandler(
 		pool.Submit(func() {
 			raid, err := d.ReadRaid(ctx, date)
 			if err == nil {
-				mu.Lock()
+				raidsLock.Lock()
 				raids = append(raids, raid)
-				mu.Unlock()
+				raidsLock.Unlock()
 			}
 		})
 	}
