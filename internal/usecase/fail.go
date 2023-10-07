@@ -21,7 +21,7 @@ func NewFailUseCase(bk Backend) *FailUseCase {
 }
 
 func (fuc FailUseCase) CreateFail(ctx context.Context, failReason string, date time.Time, playerName string) error {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/CreateFail")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/CreateFail")
 	span.SetAttributes(
 		attribute.String("failReason", failReason),
 		attribute.String("playerName", playerName),
@@ -69,7 +69,7 @@ func (fuc FailUseCase) CreateFail(ctx context.Context, failReason string, date t
 }
 
 func (fuc FailUseCase) ListFailOnPLayer(ctx context.Context, playerName string) ([]entity.Fail, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/ListFailOnPLayer")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/ListFailOnPLayer")
 	span.SetAttributes(attribute.String("playerName", playerName))
 	defer span.End()
 	logger.FromContext(ctx).Debug("create fail use case")
@@ -103,7 +103,7 @@ func (fuc FailUseCase) ListFailOnPLayer(ctx context.Context, playerName string) 
 }
 
 func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, date time.Time) ([]entity.Fail, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/ListFailOnRaid")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/ListFailOnRaid")
 	span.SetAttributes(attribute.String("date", date.String()))
 	defer span.End()
 	logger.FromContext(ctx).Debug("list fail on raid use case")
@@ -112,7 +112,6 @@ func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, date time.Time) ([]en
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "list fail on raid")
 	default:
-
 		raid, err := fuc.backend.SearchRaid(ctx, "", date, "")
 		if err != nil {
 			return nil, errors.Wrap(err, "list fail on raid search raid")
@@ -140,7 +139,7 @@ func (fuc FailUseCase) ListFailOnRaid(ctx context.Context, date time.Time) ([]en
 func (fuc FailUseCase) ListFailOnRaidAndPlayer(
 	ctx context.Context, raidName string, playerName string,
 ) ([]entity.Fail, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/ListFailOnRaidAndPlayer")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/ListFailOnRaidAndPlayer")
 	span.SetAttributes(attribute.String("raidName", raidName), attribute.String("playerName", playerName))
 	defer span.End()
 	logger.FromContext(ctx).Debug("list fail on raid and player use case")
@@ -174,7 +173,7 @@ func (fuc FailUseCase) ListFailOnRaidAndPlayer(
 }
 
 func (fuc FailUseCase) DeleteFail(ctx context.Context, failID int) error {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/DeleteFail")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/DeleteFail")
 	span.SetAttributes(attribute.Int("failID", failID))
 	defer span.End()
 	logger.FromContext(ctx).Debug("delete fail use case")
@@ -192,7 +191,7 @@ func (fuc FailUseCase) DeleteFail(ctx context.Context, failID int) error {
 }
 
 func (fuc FailUseCase) UpdateFail(ctx context.Context, failID int, failReason string) error {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/UpdateFail")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/UpdateFail")
 	span.SetAttributes(attribute.Int("failID", failID), attribute.String("failReason", failReason))
 	defer span.End()
 	logger.FromContext(ctx).Debug("update fail use case")
@@ -220,7 +219,7 @@ func (fuc FailUseCase) UpdateFail(ctx context.Context, failID int, failReason st
 }
 
 func (fuc FailUseCase) ReadFail(ctx context.Context, failID int) (entity.Fail, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "FailUseCase/ReadFail")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Fail/ReadFail")
 	span.SetAttributes(attribute.Int("failID", failID))
 	defer span.End()
 	logger.FromContext(ctx).Debug("read fail use case")

@@ -3,6 +3,7 @@ package discordhandler
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -146,7 +147,7 @@ func (d Discord) ListStrikesOnPlayerHandler(
 // and return a message to the user.
 // It requires an id field to be passed in the interaction.
 //
-//nolint:dupl
+
 func (d Discord) DeleteStrikeHandler(
 	ctx context.Context, interaction *discordgo.InteractionCreate,
 ) (string, error) {
@@ -179,6 +180,10 @@ func (d Discord) DeleteStrikeHandler(
 	err = d.DeleteStrike(ctx, int(strikeID))
 	if err != nil {
 		msg := "Error while deleting strike: " + HumanReadableError(err)
+		strikeNotFound := regexp.MustCompile(".*strike not found.*")
+		if strikeNotFound.MatchString(msg) {
+			return "strike not found", fmt.Errorf("delete strike usecase: %w", err)
+		}
 		return msg, fmt.Errorf("delete strike usecase: %w", err)
 	}
 

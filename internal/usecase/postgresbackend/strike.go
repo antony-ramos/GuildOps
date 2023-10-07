@@ -16,6 +16,12 @@ import (
 
 // SearchStrikeOnParam is a function which call backend to Search a Strike Object on a given parameter.
 func (pg *PG) SearchStrikeOnParam(ctx context.Context, paramName string, param interface{}) ([]entity.Strike, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/SearchStrikeOnParam")
+	span.SetAttributes(
+		attribute.String("paramName", paramName),
+		attribute.String("param", fmt.Sprintf("%v", param)))
+	defer span.End()
+
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("database - SearchStrike - searchStrikeOnID - " +
@@ -51,7 +57,7 @@ func (pg *PG) SearchStrikeOnParam(ctx context.Context, paramName string, param i
 func (pg *PG) SearchStrike(
 	ctx context.Context, playerID int, date time.Time, season, reason string,
 ) ([]entity.Strike, error) {
-	ctx, span := otel.Tracer("Backend").Start(ctx, "SearchStrike")
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/SearchStrike")
 	span.SetAttributes(
 		attribute.Int("playerID", playerID),
 		attribute.String("season", season),
@@ -103,6 +109,14 @@ func (pg *PG) SearchStrike(
 
 // CreateStrike is a function which call backend to Create a Strike Object.
 func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/CreateStrike")
+	span.SetAttributes(
+		attribute.String("season", strike.Season),
+		attribute.String("reason", strike.Reason),
+		attribute.String("player", player.Name))
+
+	defer span.End()
+
 	logger.FromContext(ctx).Debug("CreateStrike",
 		zap.String("season", strike.Season),
 		zap.String("reason", strike.Reason),
@@ -127,6 +141,12 @@ func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player ent
 }
 
 func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/ReadStrike")
+	span.SetAttributes(
+		attribute.Int("strikeID", strikeID))
+
+	defer span.End()
+
 	logger.FromContext(ctx).Debug("ReadStrike", zap.Int("strikeID", strikeID))
 	select {
 	case <-ctx.Done():
@@ -157,6 +177,14 @@ func (pg *PG) ReadStrike(ctx context.Context, strikeID int) (entity.Strike, erro
 }
 
 func (pg *PG) UpdateStrike(ctx context.Context, strike entity.Strike) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/UpdateStrike")
+	span.SetAttributes(
+		attribute.Int("strikeID", strike.ID),
+		attribute.String("season", strike.Season),
+		attribute.String("reason", strike.Reason))
+
+	defer span.End()
+
 	logger.FromContext(ctx).Debug("UpdateStrike",
 		zap.Int("strikeID", strike.ID),
 		zap.String("season", strike.Season),
@@ -182,21 +210,26 @@ func (pg *PG) UpdateStrike(ctx context.Context, strike entity.Strike) error {
 }
 
 func (pg *PG) DeleteStrike(ctx context.Context, strikeID int) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/DeleteStrike")
+	span.SetAttributes(
+		attribute.Int("strikeID", strikeID))
+	defer span.End()
+
 	logger.FromContext(ctx).Debug("DeleteStrike", zap.Int("strikeID", strikeID))
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("database - DeleteStrike - ctx.Done: request took too much time to be proceed")
+		return fmt.Errorf("database DeleteStrike: ctx.Done: request took too much time to be proceed")
 	default:
 		sql, _, errInsert := pg.Builder.Delete("strikes").Where("id = $1").ToSql()
 		if errInsert != nil {
-			return fmt.Errorf("database - DeleteStrike - r.Builder: %w", errInsert)
+			return fmt.Errorf("database DeleteStrike: r.Builder: %w", errInsert)
 		}
 		isDelete, err := pg.Pool.Exec(ctx, sql, strikeID)
 		if err != nil {
-			return fmt.Errorf("database - DeleteStrike - r.Pool.Exec: %w", err)
+			return fmt.Errorf("database DeleteStrike: r.Pool.Exec: %w", err)
 		}
 		if isDelete.String() == isNotDeleted {
-			return fmt.Errorf("database - DeleteStrike - strike not found")
+			return fmt.Errorf("database DeleteStrike: strike not found")
 		}
 		return nil
 	}

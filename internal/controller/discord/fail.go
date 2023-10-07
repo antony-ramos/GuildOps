@@ -213,7 +213,6 @@ func (d Discord) ListFailsOnRaidHandler(
 	return msg, nil
 }
 
-//nolint:dupl
 func (d Discord) DeleteFailHandler(
 	ctx context.Context, interaction *discordgo.InteractionCreate,
 ) (string, error) {

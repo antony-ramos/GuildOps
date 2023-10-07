@@ -135,8 +135,8 @@ func TestDiscord_ListLootsOnPlayerHandler(t *testing.T) {
 		msg, err := discord.ListLootsOnPlayerHandler(context.Background(), interaction)
 		assert.NoError(t, err)
 		assert.Equal(t, msg, "All loots of TestPlayer:\n"+
-			"TestLoot "+time.Now().Format("02/01/06")+" Heroic\n"+
-			"TestLoot2 "+time.Now().Format("02/01/06")+" Heroic\n")
+			"* TestLoot "+time.Now().Format("02/01/06")+" Heroic 1\n"+
+			"* TestLoot2 "+time.Now().Format("02/01/06")+" Heroic 2\n")
 		mockLootUseCase.AssertExpectations(t)
 	})
 }

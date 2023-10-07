@@ -5,10 +5,21 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
 func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Loot/SearchLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("name", name),
+		attribute.String("date", date.String()),
+		attribute.String("difficulty", difficulty),
+	)
+
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("database - SearchLoot - ctx.Done: request took too much time to be proceed")
@@ -47,6 +58,14 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 }
 
 func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Loot/CreateLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("lootName", loot.Name),
+		attribute.String("raidName", loot.Raid.Date.Format("02/01/2006")),
+		attribute.String("playerName", loot.Player.Name),
+	)
+
 	select {
 	case <-ctx.Done():
 		return entity.Loot{}, fmt.Errorf("database - CreateLoot - ctx.Done: request took too much time to be proceed")
@@ -85,6 +104,12 @@ func (pg *PG) CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, er
 }
 
 func (pg *PG) ReadLoot(ctx context.Context, lootID int) (entity.Loot, error) {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Loot/ReadLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("lootID", lootID),
+	)
+
 	select {
 	case <-ctx.Done():
 		return entity.Loot{}, fmt.Errorf("database - ReadLoot - ctx.Done: request took too much time to be proceed")
@@ -125,6 +150,15 @@ func (pg *PG) ReadLoot(ctx context.Context, lootID int) (entity.Loot, error) {
 }
 
 func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Loot/UpdateLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("lootID", loot.ID),
+		attribute.String("lootName", loot.Name),
+		attribute.Int("raidID", loot.Raid.ID),
+		attribute.Int("playerID", loot.Player.ID),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - UpdateLoot - ctx.Done: request took too much time to be proceed")
@@ -147,6 +181,11 @@ func (pg *PG) UpdateLoot(ctx context.Context, loot entity.Loot) error {
 }
 
 func (pg *PG) DeleteLoot(ctx context.Context, lootID int) error {
+	ctx, span := otel.Tracer("Backend").Start(ctx, "Loot/DeleteLoot")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("lootID", lootID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - DeleteLoot - ctx.Done: request took too much time to be proceed")

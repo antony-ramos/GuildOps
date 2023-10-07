@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
@@ -21,6 +24,13 @@ func NewAbsenceUseCase(bk Backend) *AbsenceUseCase {
 
 // CreateAbsence creates an absence for a given player and date.
 func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, date time.Time) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Absence/CreateAbsence")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+		attribute.String("date", date.Format("02/01/06")),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("AbsenceUseCase - CreateAbsence:  ctx.Done: request took too much time to be proceed")
@@ -70,6 +80,13 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 
 // DeleteAbsence deletes an absence for a given player and date.
 func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, date time.Time) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Absence/DeleteAbsence")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+		attribute.String("date", date.Format("02/01/06")),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("AbsenceUseCase - DeleteAbsence - ctx.Done: request took too much time to be proceed")
@@ -112,6 +129,11 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 
 // ListAbsence returns a list of absences for a given date.
 func (a AbsenceUseCase) ListAbsence(ctx context.Context, date time.Time) ([]entity.Absence, error) {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Absence/ListAbsence")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("date", date.Format("02/01/06")),
+	)
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("AbsenceUseCase - ListAbsence - ctx.Done: request took too much time to be proceed")

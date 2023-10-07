@@ -113,7 +113,7 @@ func (d Discord) ListAbsenceHandler(
 		return msg, nil
 	}
 
-	msg := "Absence(s) pour le " + dates[0].Format("02/01/06") + " :\n"
+	msg := dates[0].Format("02/01/06") + " absences :\n"
 	for _, absence := range absences {
 		msg += "* " + absence.Player.Name + "\n"
 	}
@@ -134,6 +134,9 @@ func (d Discord) GenerateAbsenceHandlerMsg(
 	}
 
 	dates, err := ParseDate(fromDate, toDate)
+	if err != nil {
+		return errorMsg + HumanReadableError(err), err
+	}
 
 	if dates[0].Before(
 		time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())) {

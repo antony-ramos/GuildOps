@@ -23,7 +23,7 @@ func NewPlayerUseCase(bk Backend) *PlayerUseCase {
 }
 
 func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (int, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/CreatePlayer")
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/CreatePlayer")
 	span.SetAttributes(attribute.String("playerName", playerName))
 	defer span.End()
 	select {
@@ -51,6 +51,12 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (i
 }
 
 func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/DeletePlayer")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+	)
+
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: request took too much time to be proceed")
@@ -97,9 +103,12 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 }
 
 func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkName string) (entity.Player, error) {
-	ctx, span := otel.Tracer("UseCase").Start(ctx, "PlayerUseCase/ReadPlayer")
-	span.SetAttributes(attribute.String("playerName", playerName))
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/ReadPlayer")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+		attribute.String("playerLinkName", playerLinkName),
+	)
 	logger.FromContext(ctx).Debug("read player use case")
 
 	select {
@@ -144,6 +153,12 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 }
 
 func (puc PlayerUseCase) LinkPlayer(ctx context.Context, playerName string, discordID string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Player/LinkPlayer")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("playerName", playerName),
+		attribute.String("discordID", discordID),
+	)
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - LinkPlayer - ctx.Done: request took too much time to be proceed")
