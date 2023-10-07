@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+
+	"github.com/pkg/errors"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -72,26 +75,40 @@ func (pg *PG) SearchAbsence(
 	default:
 		var absences []entity.Absence
 		switch {
+		case playerID != -1 && !date.IsZero():
+			a, err := pg.searchAbsenceOnParam(ctx, "date", date)
+			if err != nil {
+				return nil, errors.Wrap(err, "database - SearchAbsence - searchAbsenceOnParam")
+			}
+			var absencesOnPlayer []entity.Absence
+			for _, absence := range a {
+				if absence.Player.ID == playerID {
+					absencesOnPlayer = append(absencesOnPlayer, absence)
+				}
+			}
+			return append(absences, absencesOnPlayer...), nil
 		case playerID != -1 && playerName == "":
 			a, err := pg.searchAbsenceOnParam(ctx, "player_id", playerID)
 			if err != nil {
 				return nil, err
 			}
-			absences = append(absences, a...)
+			return append(absences, a...), nil
+
 		case playerID == -1 && playerName != "":
 			a, err := pg.searchAbsenceOnParam(ctx, "players.name", playerName)
 			if err != nil {
 				return nil, err
 			}
-			absences = append(absences, a...)
+			return append(absences, a...), nil
+
 		case playerID == -1 && playerName == "" && !date.IsZero():
 			a, err := pg.searchAbsenceOnParam(ctx, "date", date)
 			if err != nil {
 				return nil, err
 			}
-			absences = append(absences, a...)
+			return append(absences, a...), nil
 		}
-		return absences, nil
+		return nil, errors.New("database - SearchAbsence: no param given")
 	}
 }
 

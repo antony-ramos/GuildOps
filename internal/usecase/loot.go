@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -140,6 +141,11 @@ func (puc LootUseCase) SelectPlayerToAssign(
 			return entity.Player{}, fmt.Errorf("player list empty")
 		}
 
+		difficulty = strings.ToLower(difficulty)
+		if difficulty != "normal" && difficulty != "heroic" && difficulty != "mythic" {
+			return entity.Player{}, fmt.Errorf("difficulty not valid. Must be normal, Heroic or mythic")
+		}
+
 		playerList := make([]entity.Player, 0)
 		for _, playerName := range playerNames {
 			player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
@@ -147,7 +153,7 @@ func (puc LootUseCase) SelectPlayerToAssign(
 				return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - backend.SearchPlayer: %w", err)
 			}
 			if len(player) == 0 {
-				return entity.Player{}, fmt.Errorf("no player found")
+				return entity.Player{}, fmt.Errorf("no player found in database for %s", playerName)
 			}
 			playerList = append(playerList, player[0])
 		}

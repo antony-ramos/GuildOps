@@ -226,8 +226,8 @@ func TestDiscord_ListFailsOnPlayerHandler(t *testing.T) {
 		msg, err := discord.ListFailsOnPlayerHandler(context.Background(), interaction)
 		assert.NoError(t, err)
 		assert.Equal(t, "Fails of Milowenn (2) :\n* "+
-			time.Now().Format("02/01/06")+" - why not\n* "+
-			time.Now().Format("02/01/06")+" - why not 2\n",
+			time.Now().Format("02/01/06")+" - why not - 1\n* "+
+			time.Now().Format("02/01/06")+" - why not 2 - 1\n",
 			msg)
 		mockFailUseCase.AssertExpectations(t)
 	})

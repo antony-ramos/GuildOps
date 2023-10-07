@@ -115,30 +115,45 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: request took too much time to be proceed")
 	default:
-		if playerName == "" {
-			playerName = playerLinkName
+
+		player := entity.Player{
+			ID: -1,
+		}
+		if playerName != "" {
+			plrs, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
+			}
+			if len(plrs) == 0 {
+				return entity.Player{}, fmt.Errorf("player %s not found", playerName)
+			}
+			player = plrs[0]
+		} else if playerLinkName != "" {
+			plrs, err := puc.backend.SearchPlayer(ctx, -1, "", playerLinkName)
+			if err != nil {
+				return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
+			}
+			if len(plrs) == 0 {
+				return entity.Player{}, fmt.Errorf("didn't find a player linked to this discord user named %s", playerLinkName)
+			}
+			player = plrs[0]
 		}
 
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
-		if err != nil {
-			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchPlayer: %w", err)
-		}
-
-		if len(player) == 0 {
+		if player.ID == -1 {
 			return entity.Player{}, fmt.Errorf("player %s not found", playerName)
 		}
 
-		strikes, err := puc.backend.SearchStrike(ctx, player[0].ID, time.Time{}, "", "")
+		strikes, err := puc.backend.SearchStrike(ctx, player.ID, time.Time{}, "", "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchStrike: %w", err)
 		}
-		player[0].Strikes = strikes
+		player.Strikes = strikes
 
-		fails, err := puc.backend.SearchFail(ctx, "", player[0].ID, -1, "")
+		fails, err := puc.backend.SearchFail(ctx, "", player.ID, -1, "")
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchFail: %w", err)
 		}
-		player[0].Fails = fails
+		player.Fails = fails
 
 		for k, fail := range fails {
 			r, err := puc.backend.ReadRaid(ctx, fail.Raid.ID)
@@ -148,7 +163,7 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 			fails[k].Raid = &r
 		}
 
-		return player[0], nil
+		return player, nil
 	}
 }
 

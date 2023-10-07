@@ -109,7 +109,7 @@ func TestDiscord_GenerateAbsenceHandlerMsg(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "Absence(s) created for :\n"+
 			"* "+time.Now().AddDate(0, 0, 1).Format("Mon 02/01/06")+"\n"+
-			"* "+time.Now().AddDate(0, 0, 2).Format("Mon 02/01/06")+"\n", msg)
+			"* "+time.Now().AddDate(0, 0, 2).Format("Mon 02/01/06")+" Absence already exists\n", msg)
 		mockAbsenceUseCase.AssertExpectations(t)
 	})
 

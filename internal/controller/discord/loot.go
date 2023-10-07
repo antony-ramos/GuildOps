@@ -280,7 +280,9 @@ func (d Discord) LootCounterCheckerHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	playerNames := strings.Split(optionMap["player-list"].StringValue(), ",")
+	playerList := optionMap["player-list"].StringValue()
+	playerList = strings.ReplaceAll(playerList, " ", "")
+	playerNames := strings.Split(playerList, ",")
 	difficulty := optionMap["difficulty"].StringValue()
 	span.SetAttributes(
 		attribute.String("player_list", optionMap["player-list"].StringValue()),
@@ -293,6 +295,6 @@ func (d Discord) LootCounterCheckerHandler(
 		return msg, fmt.Errorf("discord - LootCounterCheckerHandler - d.LootUseCase.SelectPlayerToAssign: %w", err)
 	}
 
-	msg := "The player with " + player.Name + " have been selected to receive the loot"
+	msg := player.Name + " have been selected to receive the loot"
 	return msg, nil
 }
