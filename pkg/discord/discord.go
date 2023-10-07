@@ -81,7 +81,6 @@ func (d *Discord) Run(ctx context.Context) error {
 
 	logger.FromContext(ctx).Debug("register commands to discord")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(d.commands))
-
 	pool := pond.New(100, 1000)
 	group, _ := pool.GroupContext(ctx)
 
@@ -90,7 +89,7 @@ func (d *Discord) Run(ctx context.Context) error {
 		command := v
 		group.Submit(func() error {
 			logger.FromContext(ctx).Info("register command " + command.Name)
-			cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, strconv.Itoa(d.guildID), command)
+			cmd, err := d.s.ApplicationCommandCreate(d.s.State.User.ID, "", command)
 			if err != nil {
 				return errors.Wrap(err, "try to create command "+command.Name)
 			}

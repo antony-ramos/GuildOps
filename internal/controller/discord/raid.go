@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,9 +20,10 @@ import (
 func (d Discord) InitRaid() map[string]func(
 	ctx context.Context, interaction *discordgo.InteractionCreate) (string, error) {
 	return map[string]func(ctx context.Context, interaction *discordgo.InteractionCreate) (string, error){
-		"guildops-raid-create": d.CreateRaidHandler,
-		"guildops-raid-delete": d.DeleteRaidHandler,
-		"guildops-raid-list":   d.ListRaidHandler,
+		"guildops-raid-create":          d.CreateRaidHandler,
+		"guildops-raid-delete":          d.DeleteRaidHandler,
+		"guildops-raid-list":            d.ListRaidHandler,
+		"guildops-raid-create-multiple": d.GenerateRaidsOnRangeHandler,
 	}
 }
 
@@ -77,6 +79,36 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 				Name:        "to",
 				Description: "ex: 02/10/23",
 				Required:    false,
+			},
+		},
+	},
+	{
+		Name:        "guildops-raid-create-multiple",
+		Description: "Create multiple raids on a date range",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "from",
+				Description: "ex: 02/10/23",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "to",
+				Description: "ex: 02/10/23",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "difficulty",
+				Description: "Must be one of: Normal, Heroic, Mythic",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "weekdays",
+				Description: "Must be one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",
+				Required:    true,
 			},
 		},
 	},
@@ -226,6 +258,117 @@ func (d Discord) ListRaidHandler(
 	default:
 		if len(raids) == 0 {
 			msg := "no raid found"
+			return msg, nil
+		}
+
+		msg := "Raid List:\n"
+		for _, raid := range raids {
+			msg += "* " + raid.Name + " " +
+				raid.Date.Format("Mon 02/01/06") + " " +
+				raid.Difficulty + " " +
+				strconv.Itoa(raid.ID) + "\n"
+		}
+		return msg, nil
+	}
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (d Discord) GenerateRaidsOnRangeHandler(
+	ctx context.Context, interaction *discordgo.InteractionCreate,
+) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	ctx, span := otel.Tracer("Discord").Start(ctx, "Raid/GenerateRaidsOnRangeHandler")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("request_from", interaction.Member.User.Username),
+	)
+
+	select {
+	case <-ctx.Done():
+		msg := "error while creating multiple raids: " + HumanReadableError(ctx.Err())
+		return msg, fmt.Errorf("create multiple raids wait goroutines: %w", ctx.Err())
+	default:
+
+		options := interaction.ApplicationCommandData().Options
+		optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+
+		for _, opt := range options {
+			optionMap[opt.Name] = opt
+		}
+
+		from := optionMap["from"].StringValue()
+		toDate := ""
+		if len(optionMap) > 3 {
+			toDate = optionMap["to"].StringValue()
+		}
+
+		dates, err := ParseDate(from, toDate)
+		if err != nil {
+			msg := "error while creating multiple raids: " + HumanReadableError(err)
+			return msg, fmt.Errorf("create multiple raids parse date: %w", err)
+		}
+
+		difficulty := optionMap["difficulty"].StringValue()
+		difficulty = strings.ToLower(difficulty)
+		if difficulty != "normal" && difficulty != "heroic" && difficulty != "mythic" {
+			return "difficulty must be one of: Normal, Heroic, Mythic",
+				fmt.Errorf("create multiple raids parse difficulty: %w", err)
+		}
+
+		onWeekDays := optionMap["weekdays"].StringValue()
+		onWeekDays = strings.ReplaceAll(onWeekDays, " ", "")
+		onWeekDays = strings.ToLower(onWeekDays)
+		weekDays := strings.Split(onWeekDays, ",")
+		for _, weekDay := range weekDays {
+			weekDay = strings.ToLower(weekDay)
+			if weekDay != "monday" && weekDay != "tuesday" &&
+				weekDay != "wednesday" && weekDay != "thursday" &&
+				weekDay != "friday" && weekDay != "saturday" &&
+				weekDay != "sunday" {
+				return "week days must be one of: Monday, Tuesday, Wednesday, " +
+					"Thursday, Friday, Saturday, Sunday", fmt.Errorf("create multiple raids parse week days: %w", err)
+			}
+		}
+
+		raidsDays := make([]time.Time, 0)
+		for index, date := range dates {
+			weekDay := date.Weekday().String()
+			weekDay = strings.ToLower(weekDay)
+			if contains(weekDays, weekDay) {
+				raidsDays = append(raidsDays, dates[index])
+			}
+		}
+
+		raidsLock := &sync.Mutex{}
+		var raids []entity.Raid
+		pool := pond.New(len(dates), 5, pond.Context(ctx))
+
+		for _, date := range raidsDays {
+			date := date
+			pool.Submit(func() {
+				raid, err := d.CreateRaid(ctx, "Raid", difficulty, date)
+				if err == nil {
+					raidsLock.Lock()
+					raids = append(raids, raid)
+					raidsLock.Unlock()
+				}
+			})
+		}
+		pool.StopAndWait()
+
+		if len(raids) == 0 || raids == nil {
+			msg := "no raid created"
 			return msg, nil
 		}
 

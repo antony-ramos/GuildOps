@@ -79,7 +79,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 		&discordHandler.PlayerDescriptors[0], &discordHandler.PlayerDescriptors[1],
 		&discordHandler.PlayerDescriptors[2], &discordHandler.PlayerDescriptors[3], &discordHandler.PlayerDescriptors[4])
 	handlers = append(handlers,
-		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1], &discordHandler.RaidDescriptors[2])
+		&discordHandler.RaidDescriptors[0], &discordHandler.RaidDescriptors[1],
+		&discordHandler.RaidDescriptors[2], &discordHandler.RaidDescriptors[3])
 	handlers = append(handlers,
 		&discordHandler.StrikeDescriptors[0], &discordHandler.StrikeDescriptors[1], &discordHandler.StrikeDescriptors[2])
 	handlers = append(handlers,
