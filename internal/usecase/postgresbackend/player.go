@@ -2,9 +2,12 @@ package postgresbackend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/jackc/pgconn"
 
 	"github.com/jackc/pgx/v4"
 	"go.opentelemetry.io/otel"
@@ -192,39 +195,33 @@ func (pg *PG) CreatePlayer(ctx context.Context, player entity.Player) (entity.Pl
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("database - CreatePlayer - ctx.Done: request took too much time to be proceed")
 	default:
-		sql, _, err := pg.Builder.Select("name").From("players").Where("name = $1").ToSql()
-		if err != nil {
-			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Builder: %w", err)
-		}
-		rows, err := pg.Pool.Query(ctx, sql, player.Name)
-		if err != nil {
-			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Pool.Query: %w", err)
-		}
-		defer rows.Close()
-		if rows.Next() {
-			return entity.Player{}, fmt.Errorf("database - CreatePlayer: player already exists")
-		}
-
 		if player.DiscordName == "" {
 			player.DiscordName = "tmp_" + strconv.FormatInt(time.Now().Unix(), 10)
 		}
 
-		sql, args, errInsert := pg.Builder.
+		req, args, errInsert := pg.Builder.
 			Insert("players").
 			Columns("name", "discord_id").
-			Values(player.Name, player.DiscordName).ToSql()
+			Values(player.Name, player.DiscordName).
+			Suffix("RETURNING \"id\"").
+			ToSql()
 		if errInsert != nil {
 			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Builder.Insert: %w", errInsert)
 		}
-		_, err = pg.Pool.Exec(ctx, sql, args...)
-		if err != nil {
-			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.Pool.Exec: %w", err)
+		row := pg.Pool.QueryRow(ctx, req, args...)
+		if row == nil {
+			return entity.Player{}, fmt.Errorf("call insert player, returned row is empty")
 		}
-		player, err := pg.SearchPlayer(ctx, -1, player.Name, "")
+		err := row.Scan(&player.ID)
 		if err != nil {
-			return entity.Player{}, fmt.Errorf("database - CreatePlayer - r.SearchPlayer: %w", err)
+			var pgErr *pgconn.PgError
+			ok := errors.As(err, &pgErr)
+			if ok && pgErr.Code == "23505" {
+				return entity.Player{}, fmt.Errorf("player already exists")
+			}
+			return entity.Player{}, fmt.Errorf("scan row from query row on insert player: %w", err)
 		}
-		return player[0], nil
+		return player, nil
 	}
 }
 
