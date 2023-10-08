@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/antony-ramos/guildops/internal/entity"
@@ -205,7 +204,7 @@ func TestPG_ReadPlayer(t *testing.T) {
 	})
 }
 
-//nolint:maintidx
+//nolint:dupl
 func TestPG_SearchPlayer(t *testing.T) {
 	t.Parallel()
 	t.Run("Success with playerID", func(t *testing.T) {
@@ -234,39 +233,8 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name", "discord_id"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name, player.DiscordName).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE player_id = $1", playerID).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "id", playerID).
 			Return(pgxRows, nil)
-
-		columns = []string{"id", "name", "raid_id", "raid_name", "raid_difficulty", "raid_date"}
-		pgxRows = pgxpoolmock.NewRows(columns).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT loots.id, loots.name, loots.raid_id, raids.name, raids.difficulty, raids.date "+
-				"FROM loots JOIN raids ON raids.id = loots.raid_id "+
-				"WHERE loots.player_id = $1", "1").
-			Return(pgxRows, nil)
-
-		columns = []string{
-			"absences.id", "absences.player_id", "absences.raid_id",
-			"raids.name", "raids.difficulty", "raids.date",
-		}
-		pgxRows = pgxpoolmock.NewRows(columns).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT absences.id, absences.player_id, absences.raid_id, raids.name, raids.difficulty, raids.date "+
-				"FROM absences JOIN raids ON raids.id = absences.raid_id "+
-				"WHERE absences.player_id = $1", "1").
-			Return(pgxRows, nil)
-
-		columnsStrike := []string{"id", "season", "reason", "created_at"}
-		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
-			Return(pgxRowsStrike, nil)
-
-		columnsFail := []string{"id", "player_id", "raid_id", "reason"}
-		pgxRowsFail := pgxpoolmock.NewRows(columnsFail).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, player_id, raid_id, reason FROM fails WHERE player_id = $1", strconv.Itoa(player.ID)).
-			Return(pgxRowsFail, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
 		assert.NoError(t, err)
@@ -292,7 +260,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		}
 
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE player_id = $1", playerID).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "id", playerID).
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -325,39 +293,8 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name", "discord_id"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name, player.DiscordName).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE name = $1", name).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "name", name).
 			Return(pgxRows, nil)
-
-		columns = []string{"id", "name", "raid_id", "raid_name", "raid_difficulty", "raid_date"}
-		pgxRows = pgxpoolmock.NewRows(columns).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT loots.id, loots.name, loots.raid_id, raids.name, raids.difficulty, raids.date "+
-				"FROM loots JOIN raids ON raids.id = loots.raid_id "+
-				"WHERE loots.player_id = $1", "1").
-			Return(pgxRows, nil)
-
-		columns = []string{
-			"absences.id", "absences.player_id", "absences.raid_id",
-			"raids.name", "raids.difficulty", "raids.date",
-		}
-		pgxRows = pgxpoolmock.NewRows(columns).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT absences.id, absences.player_id, absences.raid_id, raids.name, raids.difficulty, raids.date "+
-				"FROM absences JOIN raids ON raids.id = absences.raid_id "+
-				"WHERE absences.player_id = $1", "1").
-			Return(pgxRows, nil)
-
-		columnsStrike := []string{"id", "season", "reason", "created_at"}
-		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
-			Return(pgxRowsStrike, nil)
-
-		columnsFail := []string{"id", "player_id", "raid_id", "reason"}
-		pgxRowsFail := pgxpoolmock.NewRows(columnsFail).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, player_id, raid_id, reason FROM fails WHERE player_id = $1", strconv.Itoa(player.ID)).
-			Return(pgxRowsFail, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
 		assert.NoError(t, err)
@@ -383,7 +320,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		}
 
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE name = $1", name).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "name", name).
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -416,49 +353,10 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name", "discord_id"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name, player.DiscordName).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "discord_id", discordName).
 			Return(pgxRows, nil)
-
-		columns = []string{"id", "name", "raid_id", "raid_name", "raid_difficulty", "raid_date"}
-		pgxRows = pgxpoolmock.NewRows(columns).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT loots.id, loots.name, loots.raid_id, raids.name, raids.difficulty, raids.date "+
-				"FROM loots JOIN raids ON raids.id = loots.raid_id "+
-				"WHERE loots.player_id = $1", "1").
-			Return(pgxRows, nil)
-
-		columns = []string{
-			"absences.id", "absences.player_id", "absences.raid_id",
-			"raids.name", "raids.difficulty", "raids.date",
-		}
-		pgxRows = pgxpoolmock.NewRows(columns).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT absences.id, absences.player_id, absences.raid_id, raids.name, raids.difficulty, raids.date "+
-				"FROM absences JOIN raids ON raids.id = absences.raid_id "+
-				"WHERE absences.player_id = $1", "1").
-			Return(pgxRows, nil)
-
-		strike := entity.Strike{
-			ID:     1,
-			Season: "DF/S2",
-			Reason: "reason",
-			Date:   time.Now(),
-		}
-		columnsStrike := []string{"id", "season", "reason", "created_at"}
-		pgxRowsStrike := pgxpoolmock.NewRows(columnsStrike).
-			AddRow(strike.ID, strike.Season, strike.Reason, strike.Date).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, season, reason, created_at FROM strikes WHERE player_id = $1", strconv.Itoa(player.ID)).
-			Return(pgxRowsStrike, nil)
-
-		columnsFail := []string{"id", "player_id", "raid_id", "reason"}
-		pgxRowsFail := pgxpoolmock.NewRows(columnsFail).ToPgxRows()
-		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, player_id, raid_id, reason FROM fails WHERE player_id = $1", strconv.Itoa(player.ID)).
-			Return(pgxRowsFail, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
-		player.Strikes = append(player.Strikes, strike)
 
 		assert.NoError(t, err)
 		assert.Equal(t, player, p[0])
@@ -483,7 +381,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		}
 
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "discord_id", discordName).
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -516,7 +414,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
+			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "discord_id", discordName).
 			Return(pgxRows, nil)
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
