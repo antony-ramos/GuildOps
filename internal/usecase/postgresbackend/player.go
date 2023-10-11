@@ -31,26 +31,30 @@ func (pg *PG) SearchPlayer(ctx context.Context, playerID int, name, discordName 
 		return nil, fmt.Errorf("database - SearchPlayer - ctx.Done: request took too much time to be proceed")
 	default:
 		var players []entity.Player
-		var param any
-		var field string
-
-		switch {
-		case playerID != -1:
-			param = playerID
-			field = "id"
-		case name != "":
-			param = name
-			field = "name"
-		case discordName != "":
-			param = discordName
-			field = "discord_id"
+		sqlQuery := pg.Builder.Select("id", "name", "discord_id").From("players")
+		count := 0
+		args := make([]any, 0)
+		if playerID != -1 {
+			count++
+			sqlQuery = sqlQuery.Where("id = $" + strconv.Itoa(count))
+			args = append(args, playerID)
+		}
+		if name != "" {
+			count++
+			sqlQuery = sqlQuery.Where("name = $" + strconv.Itoa(count))
+			args = append(args, name)
+		}
+		if discordName != "" {
+			count++
+			sqlQuery = sqlQuery.Where("discord_id = $" + strconv.Itoa(count))
+			args = append(args, discordName)
 		}
 
-		sql, _, err := pg.Builder.Select("id", "name", "discord_id").From("players").Where("$1 = $2").ToSql()
+		sql, _, err := sqlQuery.ToSql()
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchPlayer - r.Builder: %w", err)
 		}
-		rows, err := pg.Pool.Query(ctx, sql, field, param)
+		rows, err := pg.Pool.Query(ctx, sql, args...)
 		if err != nil {
 			return nil, fmt.Errorf("database - SearchPlayer - r.Pool.Query: %w", err)
 		}

@@ -233,7 +233,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name", "discord_id"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name, player.DiscordName).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "id", playerID).
+			"SELECT id, name, discord_id FROM players WHERE id = $1", playerID).
 			Return(pgxRows, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -260,7 +260,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		}
 
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "id", playerID).
+			"SELECT id, name, discord_id FROM players WHERE id = $1", playerID).
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -293,7 +293,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name", "discord_id"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name, player.DiscordName).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "name", name).
+			"SELECT id, name, discord_id FROM players WHERE name = $1", name).
 			Return(pgxRows, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -320,7 +320,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		}
 
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "name", name).
+			"SELECT id, name, discord_id FROM players WHERE name = $1", name).
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -353,7 +353,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name", "discord_id"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name, player.DiscordName).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "discord_id", discordName).
+			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
 			Return(pgxRows, nil)
 
 		p, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -381,7 +381,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		}
 
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "discord_id", discordName).
+			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
 			Return(nil, errors.New("error"))
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)
@@ -414,7 +414,7 @@ func TestPG_SearchPlayer(t *testing.T) {
 		columns := []string{"id", "name"}
 		pgxRows := pgxpoolmock.NewRows(columns).AddRow(player.ID, player.Name).ToPgxRows()
 		mockPool.EXPECT().Query(gomock.Any(),
-			"SELECT id, name, discord_id FROM players WHERE $1 = $2", "discord_id", discordName).
+			"SELECT id, name, discord_id FROM players WHERE discord_id = $1", discordName).
 			Return(pgxRows, nil)
 
 		_, err := pgBackend.SearchPlayer(context.Background(), playerID, name, discordName)

@@ -38,6 +38,9 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidDate
 		if err != nil {
 			return fmt.Errorf("CreateLoot - backend.ReadRaid: %w", err)
 		}
+		if len(raids) == 0 {
+			return fmt.Errorf("raid not found")
+		}
 		raid := raids[0]
 		if raid.ID == 0 {
 			return fmt.Errorf("raid not found")
@@ -45,7 +48,7 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidDate
 
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
-			return fmt.Errorf("CreateLoot - backend.SearchPlayer: %w", err)
+			return fmt.Errorf("check if player exists in database: %w", err) // OK
 		}
 
 		if len(player) == 0 {
@@ -84,12 +87,11 @@ func (puc LootUseCase) ListLootOnPLayer(ctx context.Context, playerName string) 
 	case <-ctx.Done():
 		return nil, fmt.Errorf("LootUseCase - ListLootOnPLayer - ctx.Done: request took too much time to be proceed")
 	default:
-		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
+		loots, err := puc.backend.SearchLoot(ctx, "", time.Time{}, "", playerName)
 		if err != nil {
-			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
+			return nil, fmt.Errorf("list loots on player: %w", err)
 		}
-
-		return player[0].Loots, nil
+		return loots, nil
 	}
 }
 
@@ -105,14 +107,14 @@ func (puc LootUseCase) ListLootOnRaid(ctx context.Context, date time.Time) ([]en
 	default:
 		raids, err := puc.backend.SearchRaid(ctx, "", date, "")
 		if err != nil {
-			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchPlayer: %w", err)
+			return nil, fmt.Errorf("checking if raid exists on this date: %w", err)
 		}
 
 		if len(raids) == 0 {
 			return nil, fmt.Errorf("raid not found")
 		}
 
-		loots, err := puc.backend.SearchLoot(ctx, "", raids[0].Date, raids[0].Difficulty)
+		loots, err := puc.backend.SearchLoot(ctx, "", raids[0].Date, raids[0].Difficulty, "")
 		if err != nil {
 			return nil, fmt.Errorf("ListLootOnPLayer - backend.SearchLoot: %w", err)
 		}
@@ -149,13 +151,20 @@ func (puc LootUseCase) SelectPlayerToAssign(
 		playerList := make([]entity.Player, 0)
 		for _, playerName := range playerNames {
 			player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
+			if len(player) == 0 || err != nil {
+				return entity.Player{}, fmt.Errorf("player %s not found", playerName)
+			}
+
+			loots, err := puc.backend.SearchLoot(ctx, "", time.Time{}, difficulty, playerName)
 			if err != nil {
-				return entity.Player{}, fmt.Errorf("SelectPlayerToAssign - backend.SearchPlayer: %w", err)
+				return entity.Player{},
+					fmt.Errorf("in a loot to check if each players given by parameters exists in database: %w", err)
 			}
-			if len(player) == 0 {
-				return entity.Player{}, fmt.Errorf("no player found in database for %s", playerName)
-			}
-			playerList = append(playerList, player[0])
+			playerList = append(playerList, entity.Player{
+				ID:    player[0].ID,
+				Name:  playerName,
+				Loots: loots,
+			})
 		}
 
 		counter := make(map[string]int)
