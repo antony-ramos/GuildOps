@@ -26,7 +26,7 @@ type Player interface {
 
 type Strike interface {
 	SearchStrike(ctx context.Context, playerID int, Date time.Time, Season, Reason string) ([]entity.Strike, error)
-	CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error
+	CreateStrike(ctx context.Context, strike entity.Strike, playerID int) error
 	ReadStrike(ctx context.Context, strikeID int) (entity.Strike, error)
 	UpdateStrike(ctx context.Context, strike entity.Strike) error
 	DeleteStrike(ctx context.Context, strikeID int) error

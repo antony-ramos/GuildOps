@@ -108,19 +108,19 @@ func (pg *PG) SearchStrike(
 }
 
 // CreateStrike is a function which call backend to Create a Strike Object.
-func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error {
+func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, playerID int) error {
 	ctx, span := otel.Tracer("Backend").Start(ctx, "Strike/CreateStrike")
 	span.SetAttributes(
 		attribute.String("season", strike.Season),
 		attribute.String("reason", strike.Reason),
-		attribute.String("player", player.Name))
+		attribute.Int("playerID", playerID))
 
 	defer span.End()
 
 	logger.FromContext(ctx).Debug("CreateStrike",
 		zap.String("season", strike.Season),
 		zap.String("reason", strike.Reason),
-		zap.String("player", player.Name))
+		zap.Int("player", playerID))
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - CreateStrike - ctx.Done: request took too much time to be proceed")
@@ -128,7 +128,7 @@ func (pg *PG) CreateStrike(ctx context.Context, strike entity.Strike, player ent
 		sql, args, errInsert := pg.Builder.
 			Insert("strikes").
 			Columns("player_id", "season", "reason").
-			Values(player.ID, strike.Season, strike.Reason).ToSql()
+			Values(playerID, strike.Season, strike.Reason).ToSql()
 		if errInsert != nil {
 			return fmt.Errorf("database - CreateStrike - r.Builder: %w", errInsert)
 		}

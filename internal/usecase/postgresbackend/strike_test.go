@@ -204,12 +204,7 @@ func TestPG_CreateStrike(t *testing.T) {
 			Reason: "reason",
 		}
 
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-
-		err := pgBackend.CreateStrike(context.Background(), strike, player)
+		err := pgBackend.CreateStrike(context.Background(), strike, 1)
 		assert.NoError(t, err)
 	})
 
@@ -232,12 +227,7 @@ func TestPG_CreateStrike(t *testing.T) {
 			Reason: "reason",
 		}
 
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-
-		err := pgBackend.CreateStrike(ctx, strike, player)
+		err := pgBackend.CreateStrike(ctx, strike, 1)
 		assert.Error(t, err)
 	})
 
@@ -262,12 +252,7 @@ func TestPG_CreateStrike(t *testing.T) {
 			Reason: "reason",
 		}
 
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-
-		err := pgBackend.CreateStrike(context.Background(), strike, player)
+		err := pgBackend.CreateStrike(context.Background(), strike, 1)
 		assert.Error(t, err)
 	})
 }
