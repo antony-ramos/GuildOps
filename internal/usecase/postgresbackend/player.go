@@ -173,21 +173,37 @@ func (pg *PG) UpdatePlayer(ctx context.Context, player entity.Player) error {
 }
 
 // DeletePlayer is a function which call backend to Delete a Player Object.
-func (pg *PG) DeletePlayer(ctx context.Context, playerID int) error {
+func (pg *PG) DeletePlayer(ctx context.Context, player entity.Player) error {
 	ctx, span := otel.Tracer("Backend").Start(ctx, "Player/DeletePlayer")
 	span.SetAttributes(
-		attribute.Int("playerID", playerID))
+		attribute.String("playerName", player.Name),
+		attribute.String("discordName", player.DiscordName),
+		attribute.Int("playerID", player.ID))
 	defer span.End()
 
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("database - DeletePlayer - ctx.Done: request took too much time to be proceed")
 	default:
-		sql, _, err := pg.Builder.Delete("players").Where("id = $1").ToSql()
+		sqlQuery := pg.Builder.Delete("players")
+		args := make([]any, 0)
+		if player.ID != 0 {
+			sqlQuery = sqlQuery.Where("id = ?", player.ID)
+			args = append(args, player.ID)
+		}
+		if player.Name != "" {
+			sqlQuery = sqlQuery.Where("name = ?", player.Name)
+			args = append(args, player.Name)
+		}
+		if player.DiscordName != "" {
+			sqlQuery = sqlQuery.Where("discord_id = ?", player.DiscordName)
+			args = append(args, player.DiscordName)
+		}
+		sql, _, err := sqlQuery.ToSql()
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.Builder.Delete: %w", err)
 		}
-		isDelete, err := pg.Pool.Exec(ctx, sql, playerID)
+		isDelete, err := pg.Pool.Exec(ctx, sql, args...)
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.Pool.Exec: %w", err)
 		}

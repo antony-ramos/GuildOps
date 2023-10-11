@@ -540,7 +540,7 @@ func TestPG_DeletePlayer(t *testing.T) {
 			"DELETE FROM players WHERE id = $1", 1).
 			Return(nil, nil)
 
-		err := pgBackend.DeletePlayer(context.Background(), 1)
+		err := pgBackend.DeletePlayer(context.Background(), entity.Player{ID: 1})
 		assert.NoError(t, err)
 	})
 
@@ -558,7 +558,7 @@ func TestPG_DeletePlayer(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		err := pgBackend.DeletePlayer(ctx, 1)
+		err := pgBackend.DeletePlayer(ctx, entity.Player{ID: 1})
 		assert.Error(t, err)
 	})
 
@@ -578,7 +578,7 @@ func TestPG_DeletePlayer(t *testing.T) {
 			},
 		}
 
-		err := pgBackend.DeletePlayer(context.Background(), 1)
+		err := pgBackend.DeletePlayer(context.Background(), entity.Player{ID: 1})
 		assert.Error(t, err)
 	})
 
@@ -600,7 +600,7 @@ func TestPG_DeletePlayer(t *testing.T) {
 			},
 		}
 
-		err := pgBackend.DeletePlayer(context.Background(), 1)
+		err := pgBackend.DeletePlayer(context.Background(), entity.Player{ID: 1})
 		assert.Error(t, err)
 	})
 }
