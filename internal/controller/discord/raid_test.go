@@ -140,7 +140,7 @@ func TestDiscord_ListRaidHandler(t *testing.T) {
 				ID:         1,
 				Name:       "random raid",
 				Difficulty: "Heroic",
-				Date:       time.Date(2030, time.September, 30, 0, 0, 0, 0, time.UTC),
+				Date:       time.Date(2030, time.September, 4, 0, 0, 0, 0, time.UTC),
 			}, nil).Once()
 		mockRaidUseCase.On("ReadRaid", mock.Anything, mock.Anything).Return(entity.Raid{}, errors.New("Not found"))
 
@@ -175,7 +175,7 @@ func TestDiscord_ListRaidHandler(t *testing.T) {
 
 		msg, err := discord.ListRaidHandler(context.Background(), interaction)
 		assert.NoError(t, err)
-		assert.Equal(t, msg, "Raid List:\n* random raid Thu 05/09/30 Heroic 1\n* random raid Mon 30/09/30 Heroic 1\n")
+		assert.Equal(t, "Raid List:\n* random raid Wed 04/09/30 Heroic 1\n* random raid Thu 05/09/30 Heroic 1\n", msg)
 		mockRaidUseCase.AssertExpectations(t)
 	})
 }
