@@ -59,7 +59,7 @@ func TestDiscord_PlayerHandler(t *testing.T) {
 
 		msg, err := discord.PlayerHandler(context.Background(), interaction)
 		mockPlayerUseCase.AssertExpectations(t)
-		assert.Equal(t, msg, "Player TestPlayer created successfully: ID 1")
+		assert.Equal(t, msg, "Player testplayer created successfully: ID 1")
 		assert.NoError(t, err)
 	})
 
@@ -103,7 +103,7 @@ func TestDiscord_PlayerHandler(t *testing.T) {
 		}
 
 		msg, err := discord.PlayerHandler(context.Background(), interaction)
-		assert.Equal(t, msg, "Player TestPlayer deleted successfully")
+		assert.Equal(t, msg, "Player testplayer deleted successfully")
 		mockPlayerUseCase.AssertExpectations(t)
 		assert.NoError(t, err)
 	})

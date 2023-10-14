@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -43,6 +44,7 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 	case <-ctx.Done():
 		return fmt.Errorf("StrikeUseCase - CreateStrike - ctx.Done: request took too much time to be proceed")
 	default:
+		playerName := strings.ToLower(playerName)
 		strike := entity.Strike{
 			Reason: strikeReason,
 			Date:   time.Now(),
@@ -99,6 +101,7 @@ func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]
 	case <-ctx.Done():
 		return nil, fmt.Errorf("StrikeUseCase - ReadStrikes - ctx.Done: request took too much time to be proceed")
 	default:
+		playerName := strings.ToLower(playerName)
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
 			return nil, fmt.Errorf("get basic info about player: %w", err)

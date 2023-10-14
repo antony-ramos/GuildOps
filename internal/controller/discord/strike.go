@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -136,7 +137,7 @@ func (d Discord) ListStrikesOnPlayerHandler(
 		return msg, fmt.Errorf("database - ListStrikesOnPlayerHandler - r.ReadStrikes: %w", err)
 	}
 
-	msg := "Strikes of " + playerName + " (" + strconv.Itoa(len(strikes)) + ") :\n"
+	msg := "Strikes of " + strings.ToLower(playerName) + " (" + strconv.Itoa(len(strikes)) + ") :\n"
 	for _, strike := range strikes {
 		msg += "* " + strike.Date.Format("02/01/06") + " | " + strike.Reason + " | " + strconv.Itoa(strike.ID) + "\n"
 	}

@@ -261,6 +261,20 @@ func (d Discord) ListRaidHandler(
 			return msg, nil
 		}
 
+		swap := true
+		for swap {
+			swap = false
+			for k, v := range raids {
+				if k == 0 {
+					continue
+				}
+				if raids[k-1].Date.After(v.Date) {
+					raids[k-1], raids[k] = raids[k], raids[k-1]
+					swap = true
+				}
+			}
+		}
+
 		msg := "Raid List:\n"
 		for _, raid := range raids {
 			msg += "* " + raid.Name + " " +

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/antony-ramos/guildops/pkg/logger"
@@ -60,6 +61,7 @@ func (puc PlayerUseCase) DeletePlayer(ctx context.Context, playerName string) er
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - DeletePlayer - ctx.Done: request took too much time to be proceed")
 	default:
+		playerName := strings.ToLower(playerName)
 		err := puc.backend.DeletePlayer(ctx, entity.Player{Name: playerName})
 		if err != nil {
 			return fmt.Errorf("database - DeletePlayer - r.DeletePlayer: %w", err)
@@ -81,6 +83,8 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 	case <-ctx.Done():
 		return entity.Player{}, fmt.Errorf("PlayerUseCase - ReadPlayer - ctx.Done: request took too much time to be proceed")
 	default:
+		playerName := strings.ToLower(playerName)
+		playerLinkName := strings.ToLower(playerLinkName)
 
 		player := entity.Player{
 			ID: -1,
@@ -131,12 +135,8 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchAbsence: %w", err)
 		}
-		for k, missedRaid := range missedRaids {
-			r, err := puc.backend.ReadRaid(ctx, missedRaid.Raid.ID)
-			if err != nil {
-				return entity.Player{}, errors.Wrap(err, "read player, for each missed raid, read raid")
-			}
-			missedRaids[k].Raid = &r
+		for _, missedRaid := range missedRaids {
+			player.MissedRaids = append(player.MissedRaids, *missedRaid.Raid)
 		}
 
 		for k, fail := range fails {
@@ -162,6 +162,8 @@ func (puc PlayerUseCase) LinkPlayer(ctx context.Context, playerName string, disc
 	case <-ctx.Done():
 		return fmt.Errorf("PlayerUseCase - LinkPlayer - ctx.Done: request took too much time to be proceed")
 	default:
+		playerName := strings.ToLower(playerName)
+		discordID := strings.ToLower(discordID)
 
 		alreadyLinked, err := puc.backend.SearchPlayer(ctx, -1, "", discordID)
 		if err != nil {

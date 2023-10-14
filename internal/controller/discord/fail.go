@@ -16,7 +16,7 @@ import (
 
 var FailDescriptors = []discordgo.ApplicationCommand{
 	{
-		Name:        "guildops-fail-create", // Tested
+		Name:        "guildops-fail-create",
 		Description: "Générer un Fail sur un joueur",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
