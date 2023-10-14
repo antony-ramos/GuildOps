@@ -135,12 +135,8 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 		if err != nil {
 			return entity.Player{}, fmt.Errorf("database - ReadPlayer - r.SearchAbsence: %w", err)
 		}
-		for k, missedRaid := range missedRaids {
-			r, err := puc.backend.ReadRaid(ctx, missedRaid.Raid.ID)
-			if err != nil {
-				return entity.Player{}, errors.Wrap(err, "read player, for each missed raid, read raid")
-			}
-			missedRaids[k].Raid = &r
+		for _, missedRaid := range missedRaids {
+			player.MissedRaids = append(player.MissedRaids, *missedRaid.Raid)
 		}
 
 		for k, fail := range fails {
