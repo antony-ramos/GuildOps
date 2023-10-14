@@ -8,21 +8,17 @@ type Absence struct {
 	Raid   *Raid
 }
 
-func (a Absence) Validate() error {
-	// check if absence is valid
-	if a.Player == nil {
-		return fmt.Errorf("player cannot be nil")
+func NewAbsence(index int, player *Player, raid *Raid) (Absence, error) {
+	if player == nil {
+		return Absence{}, fmt.Errorf("player cannot be nil")
 	}
-	if a.Raid == nil {
-		return fmt.Errorf("raid cannot be nil")
+	if raid == nil {
+		return Absence{}, fmt.Errorf("raid cannot be nil")
 	}
-	err := a.Player.Validate()
-	if err != nil {
-		return fmt.Errorf("absence Validate error : %w", err)
-	}
-	err = a.Raid.Validate()
-	if err != nil {
-		return fmt.Errorf("absence Validate error : %w", err)
-	}
-	return nil
+
+	return Absence{
+		ID:     index,
+		Player: player,
+		Raid:   raid,
+	}, nil
 }

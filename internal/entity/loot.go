@@ -1,6 +1,9 @@
 package entity
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Loot struct {
 	ID     int
@@ -9,18 +12,27 @@ type Loot struct {
 	Raid   *Raid
 }
 
-func (l Loot) Validate() error {
-	if l.Name == "" {
-		return fmt.Errorf("loot name is empty")
+func NewLoot(index int, name string, player *Player, raid *Raid) (Loot, error) {
+	if len(name) == 0 {
+		return Loot{}, fmt.Errorf("name cannot be empty")
 	}
-	if len(l.Name) > 20 {
-		return fmt.Errorf("loot name is too long")
+	name = strings.ToLower(name)
+	if len(name) < 1 || len(name) > 30 {
+		return Loot{}, fmt.Errorf("name must be between 1 and 30 characters")
 	}
-	if l.Player == nil {
-		return fmt.Errorf("loot player is empty")
+
+	if player == nil {
+		return Loot{}, fmt.Errorf("player cannot be nil")
 	}
-	if l.Raid == nil {
-		return fmt.Errorf("loot raid is empty")
+
+	if raid == nil {
+		return Loot{}, fmt.Errorf("raid cannot be nil")
 	}
-	return nil
+
+	return Loot{
+		ID:     index,
+		Name:   name,
+		Player: player,
+		Raid:   raid,
+	}, nil
 }

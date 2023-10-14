@@ -1,83 +1,79 @@
 package entity_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
-func TestPlayer_Validate(t *testing.T) {
-	t.Parallel()
-	type fields struct {
-		ID          int
-		Name        string
-		Strikes     []entity.Strike
-		Loots       []entity.Loot
-		MissedRaids []entity.Raid
+func TestNewPlayer(t *testing.T) {
+	type args struct {
+		id          int
+		name        string
+		discordName string
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		args    args
+		want    entity.Player
 		wantErr bool
 	}{
 		{
 			name: "Valid Player",
-			fields: fields{
+			args: args{
+				id:          1,
+				name:        "playername",
+				discordName: "discordname",
+			},
+			want: entity.Player{
 				ID:          1,
 				Name:        "playername",
-				Strikes:     []entity.Strike{},
-				Loots:       []entity.Loot{},
-				MissedRaids: []entity.Raid{},
+				DiscordName: "discordname",
 			},
 			wantErr: false,
 		},
 		{
 			name: "Invalid Player - Name",
-			fields: fields{
-				ID:          1,
-				Name:        "",
-				Strikes:     []entity.Strike{},
-				Loots:       []entity.Loot{},
-				MissedRaids: []entity.Raid{},
+			args: args{
+				id:          1,
+				name:        "",
+				discordName: "discordname",
 			},
+			want:    entity.Player{},
 			wantErr: true,
 		},
 		{
 			name: "Invalid Player - Name Length",
-			fields: fields{
-				ID:          1,
-				Name:        "playernameplayername",
-				Strikes:     []entity.Strike{},
-				Loots:       []entity.Loot{},
-				MissedRaids: []entity.Raid{},
+			args: args{
+				id:          1,
+				name:        "playernameplayer",
+				discordName: "discordname",
 			},
+			want:    entity.Player{},
 			wantErr: true,
 		},
 		{
 			name: "Invalid Player - Name Characters",
-			fields: fields{
-				ID:          1,
-				Name:        "playername123",
-				Strikes:     []entity.Strike{},
-				Loots:       []entity.Loot{},
-				MissedRaids: []entity.Raid{},
+			args: args{
+				id:          1,
+				name:        "player123",
+				discordName: "discordname",
 			},
+			want:    entity.Player{},
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
-		test := tt
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			player := entity.Player{
-				ID:          test.fields.ID,
-				Name:        test.fields.Name,
-				Strikes:     test.fields.Strikes,
-				Loots:       test.fields.Loots,
-				MissedRaids: test.fields.MissedRaids,
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := entity.NewPlayer(tt.args.id, tt.args.name, tt.args.discordName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewPlayer() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			if err := player.Validate(); (err != nil) != test.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewPlayer() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

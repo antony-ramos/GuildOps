@@ -14,16 +14,26 @@ type Strike struct {
 	Player *Player
 }
 
-func (s Strike) Validate() error {
-	if len(s.Reason) == 0 {
-		return fmt.Errorf("reason must not be empty")
+func SeasonCalculator(date time.Time) string {
+	if date.After(time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC)) &&
+		date.Before(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)) {
+		return "DF/S2"
+	} else {
+		return "Unknown"
 	}
-	if len(s.Reason) > 255 {
-		return fmt.Errorf("reason must not be longer than 255 characters")
+}
+
+func NewStrike(reason string) (Strike, error) {
+	if len(reason) == 0 {
+		return Strike{}, fmt.Errorf("reason must not be empty")
+	}
+	if len(reason) > 255 {
+		return Strike{}, fmt.Errorf("reason must not be longer than 255 characters")
 	}
 
-	if s.Date.After(time.Now()) {
-		return nil
-	}
-	return nil
+	return Strike{
+		Reason: reason,
+		Date:   time.Now(),
+		Season: SeasonCalculator(time.Now()),
+	}, nil
 }

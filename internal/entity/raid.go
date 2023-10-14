@@ -20,32 +20,31 @@ type Raid struct {
 	Loots []Loot
 }
 
-func (r *Raid) Validate() error {
-	if len(r.Name) == 0 {
-		return fmt.Errorf("name cannot be empty")
+func NewRaid(name, difficulty string, date time.Time) (Raid, error) {
+	if len(name) == 0 {
+		return Raid{}, fmt.Errorf("name cannot be empty")
 	}
 
-	r.Difficulty = strings.ToLower(r.Difficulty)
+	difficulty = strings.ToLower(difficulty)
+	name = strings.ToLower(name)
 
-	if r.Difficulty != "normal" && r.Difficulty != "heroic" && r.Difficulty != "mythic" {
-		return fmt.Errorf("difficulty must be normal, heroic, or mythic")
+	if difficulty != "normal" && difficulty != "heroic" && difficulty != "mythic" {
+		return Raid{}, fmt.Errorf("difficulty must be normal, heroic, or mythic")
 	}
 
-	// r.Name must be between 1 and 12 characters, only a-z
-	if len(r.Name) < 1 || len(r.Name) > 12 {
-		return fmt.Errorf("name must be between 1 and 12 characters")
+	if len(name) < 1 || len(name) > 12 {
+		return Raid{}, fmt.Errorf("name must be between 1 and 12 characters")
 	}
 
-	for _, char := range r.Name {
+	for _, char := range name {
 		if !unicode.IsLetter(char) && !unicode.IsSpace(char) {
-			return fmt.Errorf("name must only contain letters")
+			return Raid{}, fmt.Errorf("name must only contain letters")
 		}
 	}
 
-	r.Name = strings.ToLower(r.Name)
-
-	if r.Name != strings.ToLower(r.Name) {
-		return fmt.Errorf("name must be lowercase")
-	}
-	return nil
+	return Raid{
+		Name:       name,
+		Difficulty: difficulty,
+		Date:       date,
+	}, nil
 }

@@ -71,20 +71,6 @@ func TestCreateAbsence(t *testing.T) {
 
 		absenceUseCase := usecase.NewAbsenceUseCase(mockBackend)
 
-		player := entity.Player{
-			ID:   1,
-			Name: "",
-		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Player{player}, nil)
-		raids := []entity.Raid{
-			{
-				ID:   1,
-				Name: "RaidName",
-			},
-		}
-		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
-
 		// Call the function you want to test
 		err := absenceUseCase.CreateAbsence(context.Background(), "", time.Now())
 
@@ -122,17 +108,20 @@ func TestCreateAbsence(t *testing.T) {
 
 		player := entity.Player{
 			ID:   1,
-			Name: "PlayerName",
+			Name: "playername",
 		}
 		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]entity.Player{player}, nil)
 		raids := []entity.Raid{
 			{
 				ID:   1,
-				Name: "RaidName",
+				Name: "Raidname",
 			},
 		}
 		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(raids, nil)
+
+		mockBackend.On("CreateAbsence", mock.Anything, mock.Anything).Return(entity.Absence{},
+			errors.New("absence already exists"))
 
 		err := absenceUseCase.CreateAbsence(context.Background(), "playername", time.Now())
 

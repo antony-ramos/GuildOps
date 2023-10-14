@@ -34,14 +34,9 @@ func (puc RaidUseCase) CreateRaid(
 	case <-ctx.Done():
 		return entity.Raid{}, fmt.Errorf("RaidUseCase - CreateRaid - ctx.Done: request took too much time to be proceed")
 	default:
-		raid := entity.Raid{
-			Name:       raidName,
-			Difficulty: difficulty,
-			Date:       date,
-		}
-		err := raid.Validate()
+		raid, err := entity.NewRaid(raidName, difficulty, date)
 		if err != nil {
-			return entity.Raid{}, fmt.Errorf("database - CreateRaid - r.Validate: %w", err)
+			return entity.Raid{}, fmt.Errorf("create entity raid for backend: %w", err)
 		}
 		raid, err = puc.backend.CreateRaid(ctx, raid)
 		if err != nil {

@@ -13,40 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSeasonCalculator(t *testing.T) {
-	t.Parallel()
-	type args struct {
-		date time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "Season 2",
-			args: args{
-				date: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC),
-			},
-			want: "DF/S2",
-		},
-		{
-			name: "Unknown",
-			args: args{
-				date: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			},
-			want: "Unknown",
-		},
-	}
-	for _, tt := range tests {
-		test := tt
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equalf(t, test.want, usecase.SeasonCalculator(test.args.date), "SeasonCalculator(%v)", test.args.date)
-		})
-	}
-}
-
 func TestStrikeUseCase_CreateStrike(t *testing.T) {
 	t.Parallel()
 
