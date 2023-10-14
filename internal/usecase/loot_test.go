@@ -83,6 +83,8 @@ func TestLootUseCase_SelectPlayerToAssign(t *testing.T) {
 		for _, player := range players {
 			mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, player.Name, mock.Anything).
 				Return([]entity.Player{player}, nil)
+			mockBackend.On("SearchLoot", mock.Anything, mock.Anything, mock.Anything, mock.Anything, player.Name).
+				Return(player.Loots, nil)
 		}
 
 		p, err := LootUseCase.SelectPlayerToAssign(context.Background(), playersNames, "mythic")

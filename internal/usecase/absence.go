@@ -43,7 +43,7 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 		// Get player ID
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
-			return fmt.Errorf("CreateAbsence:  backend.SearchPlayer: %w", err)
+			return fmt.Errorf("check if player exists in database: %w", err)
 		}
 		if len(player) == 0 {
 			return fmt.Errorf("no player found")
@@ -93,7 +93,7 @@ func (a AbsenceUseCase) DeleteAbsence(ctx context.Context, playerName string, da
 	default:
 		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
-			return fmt.Errorf("DeleteAbsence - backend.SearchPlayer: %w", err)
+			return fmt.Errorf("check if player exists in database: %w", err)
 		}
 		if len(player) == 0 {
 			return fmt.Errorf("no player found")

@@ -99,11 +99,13 @@ func TestPG_SearchLoot(t *testing.T) {
 				"raids.name, raids.difficulty, raids.date, loots.player_id, p"+
 				"layers.name FROM loots JOIN raids ON raids.id = loots.raid_id "+
 				"JOIN players ON players.id = loots.player_id "+
-				"WHERE raids.date = $1 AND raids.difficulty = $2",
-			loot.Raid.Date, loot.Raid.Difficulty).
+				"WHERE loots.name = $1 AND raids.date = $2 AND raids.difficulty = $3"+
+				" AND players.name = $4",
+			loot.Name, loot.Raid.Date, loot.Raid.Difficulty, loot.Player.Name).
 			Return(pgxRows, nil)
 
-		loots, err := pgBackend.SearchLoot(context.Background(), loot.Name, loot.Raid.Date, loot.Raid.Difficulty)
+		loots, err := pgBackend.SearchLoot(
+			context.Background(), loot.Name, loot.Raid.Date, loot.Raid.Difficulty, loot.Player.Name)
 		assert.NoError(t, err)
 		assert.Equal(t, loots, []entity.Loot{loot})
 	})

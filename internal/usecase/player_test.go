@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 	"github.com/antony-ramos/guildops/internal/usecase"
@@ -124,162 +123,12 @@ func TestPlayerUseCase_LinkPlayer(t *testing.T) {
 func TestPlayerUseCase_DeletePlayer(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Delete player with no strikes, fails or absences", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 
 		mockBackend := mocks.NewBackend(t)
 
 		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
-
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Player{player}, nil)
-		mockBackend.On("SearchStrike", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("DeletePlayer", mock.Anything, mock.Anything).
-			Return(nil)
-
-		err := playerUseCase.DeletePlayer(context.Background(), "playername")
-		assert.NoError(t, err)
-		mockBackend.AssertExpectations(t)
-	})
-
-	t.Run("Delete player with strikes", func(t *testing.T) {
-		t.Parallel()
-
-		mockBackend := mocks.NewBackend(t)
-
-		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
-
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Player{player}, nil)
-		mockBackend.On("SearchStrike", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Strike{
-				{
-					ID:     1,
-					Player: &player,
-					Date:   time.Now(),
-				},
-				{
-					ID:     1,
-					Player: &player,
-					Date:   time.Now(),
-				},
-			}, nil)
-		mockBackend.On("DeleteStrike", mock.Anything, mock.Anything).
-			Return(nil).Twice()
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("DeletePlayer", mock.Anything, mock.Anything).
-			Return(nil)
-
-		err := playerUseCase.DeletePlayer(context.Background(), "playername")
-		assert.NoError(t, err)
-		mockBackend.AssertExpectations(t)
-	})
-
-	t.Run("Delete player with fails", func(t *testing.T) {
-		t.Parallel()
-
-		mockBackend := mocks.NewBackend(t)
-
-		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
-
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Player{player}, nil)
-		mockBackend.On("SearchStrike", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Fail{
-				{
-					ID:     1,
-					Player: &player,
-					Raid: &entity.Raid{
-						ID:   1,
-						Name: "raidname",
-						Date: time.Now(),
-					},
-				},
-				{
-					ID:     1,
-					Player: &player,
-					Raid: &entity.Raid{
-						ID:   2,
-						Name: "raidname",
-						Date: time.Now(),
-					},
-				},
-			}, nil)
-
-		mockBackend.On("DeleteFail", mock.Anything, mock.Anything).
-			Return(nil).Twice()
-		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("DeletePlayer", mock.Anything, mock.Anything).
-			Return(nil)
-
-		err := playerUseCase.DeletePlayer(context.Background(), "playername")
-		assert.NoError(t, err)
-		mockBackend.AssertExpectations(t)
-	})
-
-	t.Run("Delete player with absences", func(t *testing.T) {
-		t.Parallel()
-
-		mockBackend := mocks.NewBackend(t)
-
-		playerUseCase := usecase.NewPlayerUseCase(mockBackend)
-
-		player := entity.Player{
-			ID:   1,
-			Name: "playername",
-		}
-		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Player{player}, nil)
-		mockBackend.On("SearchStrike", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("SearchFail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, nil)
-		mockBackend.On("SearchAbsence", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]entity.Absence{
-				{
-					ID:     1,
-					Player: &player,
-					Raid: &entity.Raid{
-						ID:   1,
-						Name: "raidname",
-						Date: time.Now(),
-					},
-				},
-				{
-					ID:     1,
-					Player: &player,
-					Raid: &entity.Raid{
-						ID:   2,
-						Name: "raidname",
-						Date: time.Now(),
-					},
-				},
-			}, nil)
-		mockBackend.On("DeleteAbsence", mock.Anything, mock.Anything).
-			Return(nil).Twice()
 
 		mockBackend.On("DeletePlayer", mock.Anything, mock.Anything).
 			Return(nil)

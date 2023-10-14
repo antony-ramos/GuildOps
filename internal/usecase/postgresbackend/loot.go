@@ -3,6 +3,7 @@ package postgresbackend
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -11,13 +12,15 @@ import (
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
-func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
+func (pg *PG) SearchLoot(
+	ctx context.Context, name string, date time.Time, difficulty, playerName string,
+) ([]entity.Loot, error) {
 	ctx, span := otel.Tracer("Backend").Start(ctx, "Loot/SearchLoot")
 	defer span.End()
 	span.SetAttributes(
-		attribute.String("name", name),
 		attribute.String("date", date.String()),
 		attribute.String("difficulty", difficulty),
+		attribute.String("playerName", playerName),
 	)
 
 	select {
@@ -25,20 +28,45 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 		return nil, fmt.Errorf("database - SearchLoot - ctx.Done: request took too much time to be proceed")
 	default:
 		var loots []entity.Loot
-		sql, _, err := pg.Builder.
+		var request string
+		selectSQL := pg.Builder.
 			Select("loots.id", "loots.name", "loots.raid_id",
 				"raids.name", "raids.difficulty", "raids.date",
 				"loots.player_id", "players.name").
 			From("loots").
-			Join("raids ON raids.id = loots.raid_id").Join("players ON players.id = loots.player_id").
-			Where("raids.date = $1").
-			Where("raids.difficulty = $2").ToSql()
-		if err != nil {
-			return nil, fmt.Errorf("database - SearchLoot - r.Builder: %w", err)
+			Join("raids ON raids.id = loots.raid_id").Join("players ON players.id = loots.player_id")
+
+		count := 0
+		var args []any
+		if name != "" {
+			count++
+			selectSQL = selectSQL.Where("loots.name = $" + strconv.Itoa(count))
+			args = append(args, name)
 		}
-		rows, err := pg.Pool.Query(ctx, sql, date, difficulty)
+		if date != (time.Time{}) {
+			count++
+			selectSQL = selectSQL.Where("raids.date = $" + strconv.Itoa(count))
+			args = append(args, date)
+		}
+		if difficulty != "" {
+			count++
+			selectSQL = selectSQL.Where("raids.difficulty = $" + strconv.Itoa(count))
+			args = append(args, difficulty)
+		}
+		if playerName != "" {
+			count++
+			selectSQL = selectSQL.Where("players.name = $" + strconv.Itoa(count))
+			args = append(args, playerName)
+		}
+
+		request, _, err := selectSQL.ToSql()
 		if err != nil {
-			return nil, fmt.Errorf("database - SearchLoot - r.Pool.Query: %w", err)
+			return nil, fmt.Errorf("create query to search loot: %w", err)
+		}
+
+		rows, err := pg.Pool.Query(ctx, request, args...)
+		if err != nil {
+			return nil, fmt.Errorf("send query to search loot: %w", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
@@ -47,7 +75,7 @@ func (pg *PG) SearchLoot(ctx context.Context, name string, date time.Time, diffi
 			var player entity.Player
 			err := rows.Scan(&loot.ID, &loot.Name, &raid.ID, &raid.Name, &raid.Difficulty, &raid.Date, &player.ID, &player.Name)
 			if err != nil {
-				return nil, fmt.Errorf("database - SearchLoot - rows.Scan: %w", err)
+				return nil, fmt.Errorf("populate loots table with row data: %w", err)
 			}
 			loot.Raid = &raid
 			loot.Player = &player

@@ -136,13 +136,13 @@ func (_m *Backend) CreateRaid(ctx context.Context, raid entity.Raid) (entity.Rai
 	return r0, r1
 }
 
-// CreateStrike provides a mock function with given fields: ctx, strike, player
-func (_m *Backend) CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error {
-	ret := _m.Called(ctx, strike, player)
+// CreateStrike provides a mock function with given fields: ctx, strike, playerID
+func (_m *Backend) CreateStrike(ctx context.Context, strike entity.Strike, playerID int) error {
+	ret := _m.Called(ctx, strike, playerID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.Strike, entity.Player) error); ok {
-		r0 = rf(ctx, strike, player)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Strike, int) error); ok {
+		r0 = rf(ctx, strike, playerID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -192,13 +192,13 @@ func (_m *Backend) DeleteLoot(ctx context.Context, lootID int) error {
 	return r0
 }
 
-// DeletePlayer provides a mock function with given fields: ctx, playerID
-func (_m *Backend) DeletePlayer(ctx context.Context, playerID int) error {
-	ret := _m.Called(ctx, playerID)
+// DeletePlayer provides a mock function with given fields: ctx, player
+func (_m *Backend) DeletePlayer(ctx context.Context, player entity.Player) error {
+	ret := _m.Called(ctx, player)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, playerID)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Player) error); ok {
+		r0 = rf(ctx, player)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -430,25 +430,25 @@ func (_m *Backend) SearchFail(ctx context.Context, playerName string, playerID i
 	return r0, r1
 }
 
-// SearchLoot provides a mock function with given fields: ctx, name, date, difficulty
-func (_m *Backend) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error) {
-	ret := _m.Called(ctx, name, date, difficulty)
+// SearchLoot provides a mock function with given fields: ctx, name, date, difficulty, playerName
+func (_m *Backend) SearchLoot(ctx context.Context, name string, date time.Time, difficulty string, playerName string) ([]entity.Loot, error) {
+	ret := _m.Called(ctx, name, date, difficulty, playerName)
 
 	var r0 []entity.Loot
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, string) ([]entity.Loot, error)); ok {
-		return rf(ctx, name, date, difficulty)
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, string, string) ([]entity.Loot, error)); ok {
+		return rf(ctx, name, date, difficulty, playerName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, string) []entity.Loot); ok {
-		r0 = rf(ctx, name, date, difficulty)
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, string, string) []entity.Loot); ok {
+		r0 = rf(ctx, name, date, difficulty, playerName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entity.Loot)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, time.Time, string) error); ok {
-		r1 = rf(ctx, name, date, difficulty)
+	if rf, ok := ret.Get(1).(func(context.Context, string, time.Time, string, string) error); ok {
+		r1 = rf(ctx, name, date, difficulty, playerName)
 	} else {
 		r1 = ret.Error(1)
 	}

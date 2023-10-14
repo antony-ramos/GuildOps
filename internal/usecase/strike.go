@@ -55,12 +55,12 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
-			return fmt.Errorf("database - CreateStrike - r.SearchPlayer: %w", err)
+			return fmt.Errorf("get basic info for player: %w", err)
 		}
 		if len(player) == 0 {
 			return errors.New("player not found")
 		}
-		err = puc.backend.CreateStrike(ctx, strike, player[0])
+		err = puc.backend.CreateStrike(ctx, strike, player[0].ID)
 		if err != nil {
 			return fmt.Errorf("database - CreateStrike - r.CreateStrike: %w", err)
 		}
@@ -101,7 +101,7 @@ func (puc StrikeUseCase) ReadStrikes(ctx context.Context, playerName string) ([]
 	default:
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
 		if err != nil {
-			return nil, fmt.Errorf("database - ReadStrikes - r.SearchPlayer: %w", err)
+			return nil, fmt.Errorf("get basic info about player: %w", err)
 		}
 		if len(player) == 0 {
 			return nil, errors.New("player not found")

@@ -21,12 +21,12 @@ type Player interface {
 	CreatePlayer(ctx context.Context, player entity.Player) (entity.Player, error)
 	ReadPlayer(ctx context.Context, playerID int) (entity.Player, error)
 	UpdatePlayer(ctx context.Context, player entity.Player) error
-	DeletePlayer(ctx context.Context, playerID int) error
+	DeletePlayer(ctx context.Context, player entity.Player) error
 }
 
 type Strike interface {
 	SearchStrike(ctx context.Context, playerID int, Date time.Time, Season, Reason string) ([]entity.Strike, error)
-	CreateStrike(ctx context.Context, strike entity.Strike, player entity.Player) error
+	CreateStrike(ctx context.Context, strike entity.Strike, playerID int) error
 	ReadStrike(ctx context.Context, strikeID int) (entity.Strike, error)
 	UpdateStrike(ctx context.Context, strike entity.Strike) error
 	DeleteStrike(ctx context.Context, strikeID int) error
@@ -41,7 +41,7 @@ type Raid interface {
 }
 
 type Loot interface {
-	SearchLoot(ctx context.Context, name string, date time.Time, difficulty string) ([]entity.Loot, error)
+	SearchLoot(ctx context.Context, name string, date time.Time, difficulty, playerName string) ([]entity.Loot, error)
 	CreateLoot(ctx context.Context, loot entity.Loot) (entity.Loot, error)
 	ReadLoot(ctx context.Context, lootID int) (entity.Loot, error)
 	UpdateLoot(ctx context.Context, loot entity.Loot) error
