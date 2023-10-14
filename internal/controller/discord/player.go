@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/antony-ramos/guildops/internal/entity"
@@ -110,12 +111,12 @@ func (d Discord) PlayerHandler(
 		if err != nil {
 			alreadyExists := regexp.MustCompile(".*player already exists.*")
 			if alreadyExists.MatchString(err.Error()) {
-				return "Player " + name + " already exists", err
+				return "Player " + strings.ToLower(name) + " already exists", err
 			}
 			msg := "Error while creating player: " + HumanReadableError(err)
 			return msg, fmt.Errorf("call create player usecase : %w", err)
 		}
-		return "Player " + name + " created successfully: ID " + strconv.Itoa(playerID), nil
+		return "Player " + strings.ToLower(name) + " created successfully: ID " + strconv.Itoa(playerID), nil
 	}
 
 	if interaction.ApplicationCommandData().Name == "guildops-player-delete" {
@@ -124,7 +125,7 @@ func (d Discord) PlayerHandler(
 			msg := "Error while deleting player: " + HumanReadableError(err)
 			return msg, fmt.Errorf("call delete player usecase: %w", err)
 		} else {
-			return "Player " + name + " deleted successfully", nil
+			return "Player " + strings.ToLower(name) + " deleted successfully", nil
 		}
 	}
 
@@ -257,8 +258,8 @@ func (d Discord) LinkPlayerHandler(
 	}
 
 	msg := "You are now linked to this player : \n"
-	msg += "Name : **" + playerName + "**\n"
-	msg += "Discord Name : **" + discordName + "**\n"
+	msg += "Name : **" + strings.ToLower(playerName) + "**\n"
+	msg += "Discord Name : **" + strings.ToLower(discordName) + "**\n"
 
 	return msg, nil
 }

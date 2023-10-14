@@ -301,7 +301,7 @@ func TestDiscord_ListStrikesOnPlayerHandler(t *testing.T) {
 		msg, err := discord.ListStrikesOnPlayerHandler(context.Background(), interaction)
 		assert.NoError(t, err)
 
-		wantedMsg := `Strikes of Milowenn (2) :
+		wantedMsg := `Strikes of milowenn (2) :
 * 01/01/01 | test strike | 1
 * 01/01/01 | test strike 2 | 2
 `
