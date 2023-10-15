@@ -9,23 +9,21 @@ type Fail struct {
 	Raid   *Raid
 }
 
-func (f Fail) Validate() error {
-	if f.Player == nil {
-		return fmt.Errorf("player cannot be nil")
+func NewFail(index int, reason string, player *Player, raid *Raid) (Fail, error) {
+	if len(reason) == 0 {
+		return Fail{}, fmt.Errorf("reason cannot be empty")
 	}
-	if f.Raid == nil {
-		return fmt.Errorf("raid cannot be nil")
+	if player == nil {
+		return Fail{}, fmt.Errorf("player cannot be nil")
 	}
-	err := f.Player.Validate()
-	if err != nil {
-		return fmt.Errorf("validate absence player : %w", err)
+	if raid == nil {
+		return Fail{}, fmt.Errorf("raid cannot be nil")
 	}
-	err = f.Raid.Validate()
-	if err != nil {
-		return fmt.Errorf("validate absence raid : %w", err)
-	}
-	if len(f.Reason) == 0 {
-		return fmt.Errorf("reason cannot be empty")
-	}
-	return nil
+
+	return Fail{
+		ID:     index,
+		Reason: reason,
+		Player: player,
+		Raid:   raid,
+	}, nil
 }

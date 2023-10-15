@@ -75,7 +75,7 @@ func TestDiscord_CreateRaidHandler(t *testing.T) {
 func TestDiscord_DeleteRaidHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Success", func(t *testing.T) {
+	t.Run("Success with ID", func(t *testing.T) {
 		t.Parallel()
 		mockRaidUseCase := mocks.NewRaidUseCase(t)
 
@@ -83,7 +83,7 @@ func TestDiscord_DeleteRaidHandler(t *testing.T) {
 			RaidUseCase: mockRaidUseCase,
 		}
 
-		mockRaidUseCase.On("DeleteRaid", mock.Anything, mock.Anything).
+		mockRaidUseCase.On("DeleteRaidWithID", mock.Anything, mock.Anything).
 			Return(nil)
 
 		interaction := &discordgo.InteractionCreate{
@@ -113,6 +113,52 @@ func TestDiscord_DeleteRaidHandler(t *testing.T) {
 		msg, err := discord.DeleteRaidHandler(context.Background(), interaction)
 		assert.NoError(t, err)
 		assert.Equal(t, msg, "Raid with ID 1 successfully deleted")
+		mockRaidUseCase.AssertExpectations(t)
+	})
+
+	t.Run("Success with Date/Difficulty", func(t *testing.T) {
+		t.Parallel()
+		mockRaidUseCase := mocks.NewRaidUseCase(t)
+
+		discord := discordHandler.Discord{
+			RaidUseCase: mockRaidUseCase,
+		}
+
+		mockRaidUseCase.On("DeleteRaidOnDate", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil)
+
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: "test",
+					},
+				},
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "mock",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Name:  "date",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "30/09/30",
+						},
+						{
+							Name:  "difficulty",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: "Heroic",
+						},
+					},
+				},
+			},
+		}
+
+		msg, err := discord.DeleteRaidHandler(context.Background(), interaction)
+		assert.NoError(t, err)
+		assert.Equal(t, msg, "Raid on 30/09/30 with difficulty Heroic successfully deleted")
 		mockRaidUseCase.AssertExpectations(t)
 	})
 }

@@ -1,87 +1,68 @@
 package entity_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
-func TestAbsence_Validate(t *testing.T) {
+func TestNewAbsence(t *testing.T) {
 	t.Parallel()
-	type fields struct {
-		ID     int
-		Player *entity.Player
-		Raid   *entity.Raid
+
+	type args struct {
+		id     int
+		player *entity.Player
+		raid   *entity.Raid
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		args    args
+		want    entity.Absence
 		wantErr bool
 	}{
 		{
 			name: "Valid Absence",
-			fields: fields{
-				ID: 1,
-				Player: &entity.Player{
-					ID:   1,
-					Name: "playername",
-				},
-				Raid: &entity.Raid{
-					ID:         1,
-					Name:       "raidname",
-					Difficulty: "normal",
-				},
+			args: args{
+				id:     1,
+				player: &entity.Player{},
+				raid:   &entity.Raid{},
+			},
+			want: entity.Absence{
+				ID:     1,
+				Player: &entity.Player{},
+				Raid:   &entity.Raid{},
 			},
 			wantErr: false,
 		},
 		{
-			name: "Invalid Absence Player",
-			fields: fields{
-				ID:     1,
-				Player: nil,
-				Raid:   &entity.Raid{},
+			name: "Invalid Absence - Player Nil",
+			args: args{
+				id:     1,
+				player: nil,
+				raid:   &entity.Raid{},
 			},
+			want:    entity.Absence{},
 			wantErr: true,
 		},
 		{
-			name: "Invalid Absence Raid",
-			fields: fields{
-				ID:     1,
-				Player: &entity.Player{},
-				Raid:   nil,
+			name: "Invalid Absence - Raid Nil",
+			args: args{
+				id:     1,
+				player: &entity.Player{},
+				raid:   nil,
 			},
+			want:    entity.Absence{},
 			wantErr: true,
 		},
 		{
-			name: "Invalid Absence Player Validate",
-			fields: fields{
-				ID: 1,
-				Player: &entity.Player{
-					ID:   1,
-					Name: "",
-				},
-				Raid: &entity.Raid{
-					ID:         1,
-					Name:       "raidname",
-					Difficulty: "normal",
-				},
+			name: "Invalid Absence - Player and Raid Nil",
+			args: args{
+				id:     1,
+				player: nil,
+				raid:   nil,
 			},
-			wantErr: true,
-		},
-		{
-			name: "Invalid Absence Raid Validate",
-			fields: fields{
-				ID: 1,
-				Player: &entity.Player{
-					ID:   1,
-					Name: "playername",
-				},
-				Raid: &entity.Raid{
-					ID:         1,
-					Name:       "",
-					Difficulty: "normal",
-				},
-			},
+			want:    entity.Absence{},
 			wantErr: true,
 		},
 	}
@@ -89,13 +70,13 @@ func TestAbsence_Validate(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			a := entity.Absence{
-				ID:     test.fields.ID,
-				Player: test.fields.Player,
-				Raid:   test.fields.Raid,
+			got, err := entity.NewAbsence(test.args.id, test.args.player, test.args.raid)
+			if (err != nil) != test.wantErr {
+				t.Errorf("NewAbsence() error = %v, wantErr %v", err, test.wantErr)
+				return
 			}
-			if err := a.Validate(); (err != nil) != test.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("NewAbsence() got = %v, want %v", got, test.want)
 			}
 		})
 	}

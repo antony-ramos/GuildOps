@@ -31,17 +31,13 @@ func (puc PlayerUseCase) CreatePlayer(ctx context.Context, playerName string) (i
 	case <-ctx.Done():
 		return -1, fmt.Errorf("PlayerUseCase - CreatePlayer - ctx.Done: request took too much time to be proceed")
 	default:
-		player := entity.Player{
-			Name: playerName,
-		}
-
-		_, spanValidate := otel.Tracer("Entity").Start(ctx, "Player/Validate")
+		_, spanValidate := otel.Tracer("Usecase").Start(ctx, "Player/CreatePlayer")
 		span.SetAttributes(attribute.String("playerName", playerName))
-		err := player.Validate()
 		spanValidate.End()
 
+		player, err := entity.NewPlayer(-1, playerName, "")
 		if err != nil {
-			return -1, fmt.Errorf("database - CreatePlayer - r.Validate: %w", err)
+			return -1, fmt.Errorf("create player entity: %w", err)
 		}
 		player, err = puc.backend.CreatePlayer(ctx, player)
 		if err != nil {
@@ -86,31 +82,32 @@ func (puc PlayerUseCase) ReadPlayer(ctx context.Context, playerName, playerLinkN
 		playerName := strings.ToLower(playerName)
 		playerLinkName := strings.ToLower(playerLinkName)
 
-		player := entity.Player{
-			ID: -1,
-		}
-		if playerName != "" {
-			plrs, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
-			if err != nil {
-				return entity.Player{}, fmt.Errorf("get basic info for player: %w", err)
+		player, err := func() (entity.Player, error) {
+			switch {
+			case playerName != "":
+				plrs, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")
+				if err != nil {
+					return entity.Player{}, fmt.Errorf("get basic info for player: %w", err)
+				}
+				if len(plrs) == 0 {
+					return entity.Player{}, fmt.Errorf("player %s not found", playerName)
+				}
+				return plrs[0], nil
+			case playerLinkName != "":
+				plrs, err := puc.backend.SearchPlayer(ctx, -1, "", playerLinkName)
+				if err != nil {
+					return entity.Player{}, fmt.Errorf("get basic info for player: %w", err)
+				}
+				if len(plrs) == 0 {
+					return entity.Player{}, fmt.Errorf("didn't find a player linked to this discord user named %s", playerLinkName)
+				}
+				return plrs[0], nil
+			default:
+				return entity.Player{}, fmt.Errorf("playerName or discordName must be set")
 			}
-			if len(plrs) == 0 {
-				return entity.Player{}, fmt.Errorf("player %s not found", playerName)
-			}
-			player = plrs[0]
-		} else if playerLinkName != "" {
-			plrs, err := puc.backend.SearchPlayer(ctx, -1, "", playerLinkName)
-			if err != nil {
-				return entity.Player{}, fmt.Errorf("get basic info for player: %w", err)
-			}
-			if len(plrs) == 0 {
-				return entity.Player{}, fmt.Errorf("didn't find a player linked to this discord user named %s", playerLinkName)
-			}
-			player = plrs[0]
-		}
-
-		if player.ID == -1 {
-			return entity.Player{}, fmt.Errorf("player %s not found", playerName)
+		}()
+		if err != nil {
+			return entity.Player{}, err
 		}
 
 		strikes, err := puc.backend.SearchStrike(ctx, player.ID, time.Time{}, "", "")
