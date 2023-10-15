@@ -22,15 +22,6 @@ func NewStrikeUseCase(bk Backend) *StrikeUseCase {
 	return &StrikeUseCase{backend: bk}
 }
 
-func SeasonCalculator(date time.Time) string {
-	if date.After(time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC)) &&
-		date.Before(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)) {
-		return "DF/S2"
-	} else {
-		return "Unknown"
-	}
-}
-
 // CreateStrike is a function which call backend to Create a Strike Object.
 func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerName string) error {
 	ctx, span := otel.Tracer("Usecase").Start(ctx, "Strike/CreateStrike")
@@ -45,14 +36,9 @@ func (puc StrikeUseCase) CreateStrike(ctx context.Context, strikeReason, playerN
 		return fmt.Errorf("StrikeUseCase - CreateStrike - ctx.Done: request took too much time to be proceed")
 	default:
 		playerName := strings.ToLower(playerName)
-		strike := entity.Strike{
-			Reason: strikeReason,
-			Date:   time.Now(),
-			Season: SeasonCalculator(time.Now()),
-		}
-		err := strike.Validate()
+		strike, err := entity.NewStrike(strikeReason)
 		if err != nil {
-			return fmt.Errorf("database - CreateStrike - r.Validate: %w", err)
+			return fmt.Errorf("create an object strike for backend: %w", err)
 		}
 
 		player, err := puc.backend.SearchPlayer(ctx, -1, playerName, "")

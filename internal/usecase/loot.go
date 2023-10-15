@@ -55,14 +55,9 @@ func (puc LootUseCase) CreateLoot(ctx context.Context, lootName string, raidDate
 			return fmt.Errorf("no player found")
 		}
 
-		loot := entity.Loot{
-			Name:   lootName,
-			Player: &player[0],
-			Raid:   &raid,
-		}
-		err = loot.Validate()
+		loot, err := entity.NewLoot(-1, lootName, &player[0], &raid)
 		if err != nil {
-			return fmt.Errorf("CreateLoot - loot.Validate: %w", err)
+			return fmt.Errorf("create a loot object: %w", err)
 		}
 
 		_, err = puc.backend.CreateLoot(ctx, loot)
@@ -160,11 +155,8 @@ func (puc LootUseCase) SelectPlayerToAssign(
 				return entity.Player{},
 					fmt.Errorf("in a loot to check if each players given by parameters exists in database: %w", err)
 			}
-			playerList = append(playerList, entity.Player{
-				ID:    player[0].ID,
-				Name:  playerName,
-				Loots: loots,
-			})
+			player[0].Loots = loots
+			playerList = append(playerList, player[0])
 		}
 
 		counter := make(map[string]int)

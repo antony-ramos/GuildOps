@@ -17,23 +17,26 @@ type Player struct {
 	Fails       []Fail
 }
 
-func (p *Player) Validate() error {
-	if len(p.Name) == 0 {
-		return fmt.Errorf("name cannot be empty")
+func NewPlayer(index int, name, discordName string) (Player, error) {
+	if len(name) == 0 {
+		return Player{}, fmt.Errorf("name cannot be empty")
 	}
 
-	// p.Name must be between 1 and 12 characters, only a-z
-	if len(p.Name) < 1 || len(p.Name) > 12 {
-		return fmt.Errorf("name must be between 1 and 12 characters")
+	name = strings.ToLower(name)
+
+	if len(name) < 1 || len(name) > 12 {
+		return Player{}, fmt.Errorf("name must be between 1 and 12 characters")
 	}
-	// only a-z characters
-	for _, char := range p.Name {
+
+	for _, char := range name {
 		if !unicode.IsLetter(char) {
-			return fmt.Errorf("name must only contain letters")
+			return Player{}, fmt.Errorf("name must only contain letters")
 		}
 	}
 
-	p.Name = strings.ToLower(p.Name)
-
-	return nil
+	return Player{
+		ID:          index,
+		Name:        name,
+		DiscordName: discordName,
+	}, nil
 }

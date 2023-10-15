@@ -40,12 +40,17 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 			return errors.New("can't create a absence in the past")
 		}
 
+		player, err := entity.NewPlayer(-1, playerName, "")
+		if err != nil {
+			return fmt.Errorf("create player entity: %w", err)
+		}
+
 		// Get player ID
-		player, err := a.backend.SearchPlayer(ctx, -1, playerName, "")
+		players, err := a.backend.SearchPlayer(ctx, -1, player.Name, "")
 		if err != nil {
 			return fmt.Errorf("check if player exists in database: %w", err)
 		}
-		if len(player) == 0 {
+		if len(players) == 0 {
 			return fmt.Errorf("no player found")
 		}
 
@@ -61,13 +66,9 @@ func (a AbsenceUseCase) CreateAbsence(ctx context.Context, playerName string, da
 		// For each raid ID, create an absence
 		for _, raid := range raids {
 			raid := raid
-			absence := entity.Absence{
-				Player: &player[0],
-				Raid:   &raid,
-			}
-			err := absence.Validate()
+			absence, err := entity.NewAbsence(-1, &players[0], &raid)
 			if err != nil {
-				return fmt.Errorf("CreateAbsence:  absence.Validate: %w", err)
+				return fmt.Errorf("create absence object: %w", err)
 			}
 			_, err = a.backend.CreateAbsence(ctx, absence)
 			if err != nil {

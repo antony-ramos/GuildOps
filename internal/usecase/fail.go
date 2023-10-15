@@ -49,14 +49,9 @@ func (fuc FailUseCase) CreateFail(ctx context.Context, failReason string, date t
 			return errors.New("raid not found")
 		}
 
-		fail := entity.Fail{
-			Reason: failReason,
-			Player: &player[0],
-			Raid:   &raid[0],
-		}
-		err = fail.Validate()
+		fail, err := entity.NewFail(-1, failReason, &player[0], &raid[0])
 		if err != nil {
-			return errors.Wrap(err, "create fail validate")
+			return errors.Wrap(err, "create a fail object")
 		}
 
 		_, err = fuc.backend.CreateFail(ctx, fail)
@@ -204,10 +199,10 @@ func (fuc FailUseCase) UpdateFail(ctx context.Context, failID int, failReason st
 		if err != nil {
 			return errors.Wrap(err, "update fail read fail")
 		}
-		fail.Reason = failReason
-		err = fail.Validate()
+
+		fail, err = entity.NewFail(fail.ID, failReason, fail.Player, fail.Raid)
 		if err != nil {
-			return errors.Wrap(err, "update fail validate")
+			return errors.Wrap(err, "create a new fail object")
 		}
 
 		err = fuc.backend.UpdateFail(ctx, fail)

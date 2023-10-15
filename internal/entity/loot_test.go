@@ -1,29 +1,38 @@
 package entity_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
-func TestLoot_Validate(t *testing.T) {
+func TestNewLoot(t *testing.T) {
 	t.Parallel()
-	type fields struct {
-		ID     int
-		Name   string
-		Player *entity.Player
-		Raid   *entity.Raid
+
+	type args struct {
+		id     int
+		name   string
+		player *entity.Player
+		raid   *entity.Raid
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		args    args
+		want    entity.Loot
 		wantErr bool
 	}{
 		{
 			name: "Valid Loot",
-			fields: fields{
+			args: args{
+				id:     1,
+				name:   "loot name",
+				player: &entity.Player{},
+				raid:   &entity.Raid{},
+			},
+			want: entity.Loot{
 				ID:     1,
-				Name:   "LootName",
+				Name:   "loot name",
 				Player: &entity.Player{},
 				Raid:   &entity.Raid{},
 			},
@@ -31,42 +40,46 @@ func TestLoot_Validate(t *testing.T) {
 		},
 		{
 			name: "Invalid Loot - Name",
-			fields: fields{
-				ID:     1,
-				Name:   "",
-				Player: &entity.Player{},
-				Raid:   &entity.Raid{},
+			args: args{
+				id:     1,
+				name:   "",
+				player: &entity.Player{},
+				raid:   &entity.Raid{},
 			},
+			want:    entity.Loot{},
+			wantErr: true,
+		},
+		{
+			name: "Invalid Loot - Name Length",
+			args: args{
+				id:     1,
+				name:   "lootnameadzqdqzdklqzdkqzdlqzkdqlzdkqzmdkqzdlqzdkqzd",
+				player: &entity.Player{},
+				raid:   &entity.Raid{},
+			},
+			want:    entity.Loot{},
 			wantErr: true,
 		},
 		{
 			name: "Invalid Loot - Player",
-			fields: fields{
-				ID:     1,
-				Name:   "LootName",
-				Player: nil,
-				Raid:   &entity.Raid{},
+			args: args{
+				id:     1,
+				name:   "loot name",
+				player: nil,
+				raid:   &entity.Raid{},
 			},
+			want:    entity.Loot{},
 			wantErr: true,
 		},
 		{
 			name: "Invalid Loot - Raid",
-			fields: fields{
-				ID:     1,
-				Name:   "LootName",
-				Player: &entity.Player{},
-				Raid:   nil,
+			args: args{
+				id:     1,
+				name:   "loot name",
+				player: &entity.Player{},
+				raid:   nil,
 			},
-			wantErr: true,
-		},
-		{
-			name: "Loot Name is too long",
-			fields: fields{
-				ID:     1,
-				Name:   "Loot name is too long, it should be less than 20",
-				Player: &entity.Player{},
-				Raid:   &entity.Raid{},
-			},
+			want:    entity.Loot{},
 			wantErr: true,
 		},
 	}
@@ -74,14 +87,14 @@ func TestLoot_Validate(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			loot := entity.Loot{
-				ID:     test.fields.ID,
-				Name:   test.fields.Name,
-				Player: test.fields.Player,
-				Raid:   test.fields.Raid,
+
+			got, err := entity.NewLoot(test.args.id, test.args.name, test.args.player, test.args.raid)
+			if (err != nil) != test.wantErr {
+				t.Errorf("NewLoot() error = %v, wantErr %v", err, test.wantErr)
+				return
 			}
-			if err := loot.Validate(); (err != nil) != test.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("NewLoot() got = %v, want %v", got, test.want)
 			}
 		})
 	}

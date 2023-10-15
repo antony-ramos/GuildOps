@@ -1,69 +1,87 @@
 package entity_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/antony-ramos/guildops/internal/entity"
 )
 
-func TestFail_Validate(t *testing.T) {
+func TestNewFail(t *testing.T) {
 	t.Parallel()
-	type fields struct {
-		ID     int
-		Reason string
-		Player *entity.Player
-		Raid   *entity.Raid
+
+	type args struct {
+		id     int
+		reason string
+		player *entity.Player
+		raid   *entity.Raid
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		args    args
+		want    entity.Fail
 		wantErr bool
 	}{
 		{
 			name: "Valid Fail",
-			fields: fields{
+			args: args{
+				id:     1,
+				reason: "fail reason",
+				player: &entity.Player{},
+				raid:   &entity.Raid{},
+			},
+			want: entity.Fail{
 				ID:     1,
-				Reason: "reason",
-				Player: &entity.Player{
-					ID:   1,
-					Name: "playername",
-				},
-				Raid: &entity.Raid{
-					ID:         1,
-					Name:       "raidname",
-					Difficulty: "normal",
-				},
+				Reason: "fail reason",
+				Player: &entity.Player{},
+				Raid:   &entity.Raid{},
 			},
 			wantErr: false,
 		},
 		{
-			name: "Invalid Fail Player",
-			fields: fields{
-				ID:     1,
-				Reason: "reason",
-				Player: nil,
-				Raid:   &entity.Raid{},
+			name: "Invalid Fail - Reason",
+			args: args{
+				id:     1,
+				reason: "",
+				player: &entity.Player{},
+				raid:   &entity.Raid{},
 			},
+			want:    entity.Fail{},
 			wantErr: true,
 		},
 		{
-			name: "Invalid Fail Raid",
-			fields: fields{
-				ID:     1,
-				Reason: "reason",
-				Player: &entity.Player{},
-				Raid:   nil,
+			name: "Invalid Fail - Raid Nil",
+			args: args{
+				id:     1,
+				reason: "fail reason",
+				player: &entity.Player{},
+				raid:   nil,
 			},
+			want:    entity.Fail{},
 			wantErr: true,
 		},
 		{
-			name: "Invalid Reason",
-			fields: fields{
-				ID:     1,
-				Reason: "",
-				Player: &entity.Player{},
-				Raid:   nil,
+			name: "Invalid Fail - Player Nil",
+			args: args{
+				id:     1,
+				reason: "fail reason",
+				player: nil,
+				raid:   &entity.Raid{},
 			},
+
+			want:    entity.Fail{},
+			wantErr: true,
+		},
+		{
+			name: "Invalid Fail - Player and Raid Nil",
+			args: args{
+				id:     1,
+				reason: "fail reason",
+				player: nil,
+
+				raid: nil,
+			},
+			want:    entity.Fail{},
 			wantErr: true,
 		},
 	}
@@ -71,14 +89,14 @@ func TestFail_Validate(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			fail := entity.Fail{
-				ID:     test.fields.ID,
-				Reason: test.fields.Reason,
-				Player: test.fields.Player,
-				Raid:   test.fields.Raid,
+
+			got, err := entity.NewFail(test.args.id, test.args.reason, test.args.player, test.args.raid)
+			if (err != nil) != test.wantErr {
+				t.Errorf("NewFail() error = %v, wantErr %v", err, test.wantErr)
+				return
 			}
-			if err := fail.Validate(); (err != nil) != test.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("NewFail() got = %v, want %v", got, test.want)
 			}
 		})
 	}
