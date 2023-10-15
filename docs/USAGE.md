@@ -12,7 +12,6 @@
     + [Create a raid <a name="introduction"></a>](#create-a-raid--a-name--introduction----a-)
     + [Create a player](#create-a-player)
     + [Get info about a player](#get-info-about-a-player)
-    + [Get info about a raid](#get-info-about-a-raid)
     + [List raids](#list-raids)
     + [Create a strike](#create-a-strike)
     + [List strikes on a player](#list-strikes-on-a-player)
