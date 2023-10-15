@@ -785,6 +785,119 @@ func TestStrike(t *testing.T) {
 	})
 }
 
+func TestRaid(t *testing.T) {
+	discordName := "testRaidDiscord"
+
+	for index := 1; index <= 5; index++ {
+		interaction := &discordgo.InteractionCreate{
+			Interaction: &discordgo.Interaction{
+				Type: discordgo.InteractionApplicationCommand,
+				Member: &discordgo.Member{
+					User: &discordgo.User{
+						Username: discordName,
+					},
+				},
+				Data: discordgo.ApplicationCommandInteractionData{
+					ID:       "mock",
+					Name:     "guildops-raid-create",
+					TargetID: "mock",
+					Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+					Options: []*discordgo.ApplicationCommandInteractionDataOption{
+						{
+							Type:  discordgo.ApplicationCommandOptionString,
+							Name:  "name",
+							Value: "raidName",
+						},
+						{
+							Type:  discordgo.ApplicationCommandOptionString,
+							Name:  "difficulty",
+							Value: "normal",
+						},
+						{
+							Name:  "date",
+							Type:  discordgo.ApplicationCommandOptionString,
+							Value: fmt.Sprintf("%02d/10/30", index),
+						},
+					},
+				},
+			},
+		}
+		t.Run(fmt.Sprintf("Create Raid on %02d/10/30", index), func(t *testing.T) {
+			msg, _ := discord.CreateRaidHandler(context.Background(), interaction)
+			assert.Equal(t, fmt.Sprintf("Raid successfully created with ID %d", index+5), msg)
+		})
+	}
+
+	interaction := &discordgo.InteractionCreate{
+		Interaction: &discordgo.Interaction{
+			Type: discordgo.InteractionApplicationCommand,
+			Member: &discordgo.Member{
+				User: &discordgo.User{
+					Username: discordName,
+				},
+			},
+			Data: discordgo.ApplicationCommandInteractionData{
+				ID:       "mock",
+				Name:     "guildops-raid-delete",
+				TargetID: "mock",
+				Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Name:  "date",
+						Type:  discordgo.ApplicationCommandOptionString,
+						Value: "02/10/30",
+					},
+					{
+						Name:  "difficulty",
+						Type:  discordgo.ApplicationCommandOptionString,
+						Value: "normal",
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("Delete Raid on 02/10/30", func(t *testing.T) {
+		msg, _ := discord.DeleteRaidHandler(context.Background(), interaction)
+		assert.Equal(t, "Raid on 02/10/30 with difficulty normal successfully deleted", msg)
+	})
+
+	interaction = &discordgo.InteractionCreate{
+		Interaction: &discordgo.Interaction{
+			Type: discordgo.InteractionApplicationCommand,
+			Member: &discordgo.Member{
+				User: &discordgo.User{
+					Username: discordName,
+				},
+			},
+			Data: discordgo.ApplicationCommandInteractionData{
+				ID:       "mock",
+				Name:     "guildops-raid-list",
+				TargetID: "mock",
+				Resolved: &discordgo.ApplicationCommandInteractionDataResolved{},
+				Options: []*discordgo.ApplicationCommandInteractionDataOption{
+					{
+						Name:  "from",
+						Type:  discordgo.ApplicationCommandOptionString,
+						Value: "01/10/30",
+					},
+					{
+						Name:  "to",
+						Type:  discordgo.ApplicationCommandOptionString,
+						Value: "05/10/30",
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("List all raids", func(t *testing.T) {
+		msg, _ := discord.ListRaidHandler(context.Background(), interaction)
+		assert.Equal(t, "Raid List:\n* raidname Tue 01/10/30 normal 6\n* raidname Thu 03/10/30 normal 8\n"+
+			"* raidname Fri 04/10/30 normal 9\n* raidname Sat 05/10/30 normal 10\n", msg)
+	})
+}
+
 func createContainer(ctx context.Context) (string, error) {
 	env := map[string]string{
 		"POSTGRES_PASSWORD": DBPass,

@@ -584,6 +584,7 @@ No absence for 28/09/23
 **Warning : it will delete all the loots, fails, strikes and absences of the raid.**
 
 It will delete the raid specified. To get the raid id, you can use `/guildops-raid-list`.
+You can also delete a raid with a date/difficulty combination. See the second example.
 
 ```shell
 /guildops-raid-delete id:906348395984977921
@@ -602,6 +603,31 @@ Raid with ID 906348395984977921 successfully deleted
 * If the id is not a number.
 
   ```Error while deleting raid: parsing "A": invalid syntax```
+
+```shell
+/guildops-raid-delete date: 30/09/23 difficulty: Mythic
+
+Raid with date 30/09/23 and difficulty mythic successfully deleted
+```
+
+**Requirements:**
+* Date must be in format : dd/mm/yy
+* Difficulty should be : Normal, Heroic, Mythic
+* Date should be a date of a raid created by `/guildops-raid-create`
+
+**Errors:**
+* If the raid does not exist.
+
+  ```Error while deleting raid: database - DeleteRaid - raid not found```
+* If the date is malformed
+
+  ``` Error while parsing date:parsing time "08/10/23A": extra text: "A"```
+* If the date is not a date of a raid created by `/guildops-raid-create`
+
+  ``` Error while deleting raid: raid not found```
+* If the difficulty is not normal, heroic or mythic
+
+  ``` Error while deleting raid: difficulty not valid. Must be Normal, Heroic or Mythic```
 
 ### Delete a loot
 

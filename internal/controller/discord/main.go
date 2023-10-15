@@ -34,7 +34,8 @@ type PlayerUseCase interface {
 
 type RaidUseCase interface {
 	CreateRaid(ctx context.Context, raidName, difficulty string, date time.Time) (entity.Raid, error)
-	DeleteRaid(ctx context.Context, raidID int) error
+	DeleteRaidWithID(ctx context.Context, raidID int) error
+	DeleteRaidOnDate(ctx context.Context, date time.Time, difficulty string) error
 	ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error)
 }
 

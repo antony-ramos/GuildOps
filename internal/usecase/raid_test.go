@@ -39,7 +39,7 @@ func TestRaidUseCase_CreateRaid(t *testing.T) {
 	})
 }
 
-func TestRaidUseCase_DeleteRaid(t *testing.T) {
+func TestRaidUseCase_DeleteRaidWithID(t *testing.T) {
 	t.Parallel()
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
@@ -51,7 +51,7 @@ func TestRaidUseCase_DeleteRaid(t *testing.T) {
 		mockBackend.On("DeleteRaid", mock.Anything, mock.Anything).
 			Return(nil)
 
-		err := raidUseCase.DeleteRaid(context.Background(), 1)
+		err := raidUseCase.DeleteRaidWithID(context.Background(), 1)
 
 		assert.NoError(t, err)
 		mockBackend.AssertExpectations(t)
@@ -66,7 +66,7 @@ func TestRaidUseCase_DeleteRaid(t *testing.T) {
 		mockBackend.On("DeleteRaid", mock.Anything, mock.Anything).
 			Return(errors.New("Backend Error"))
 
-		err := raidUseCase.DeleteRaid(context.Background(), 1)
+		err := raidUseCase.DeleteRaidWithID(context.Background(), 1)
 
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)
@@ -80,7 +80,106 @@ func TestRaidUseCase_DeleteRaid(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		err := raidUseCase.DeleteRaid(ctx, 1)
+		err := raidUseCase.DeleteRaidWithID(ctx, 1)
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+}
+
+func TestRaidUseCase_DeleteRaidOnDate(t *testing.T) {
+	t.Parallel()
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		raidUseCase := usecase.NewRaidUseCase(mockBackend)
+
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{
+				{
+					ID:         1,
+					Name:       "raid name",
+					Difficulty: "normal",
+					Date:       time.Now(),
+				},
+			}, nil)
+
+		mockBackend.On("DeleteRaid", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil)
+
+		err := raidUseCase.DeleteRaidOnDate(context.Background(), time.Now(), "normal")
+
+		assert.NoError(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+	t.Run("No raid found", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		raidUseCase := usecase.NewRaidUseCase(mockBackend)
+
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, nil)
+
+		err := raidUseCase.DeleteRaidOnDate(context.Background(), time.Now(), "normal")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+	t.Run("Backend Error on deletion", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		raidUseCase := usecase.NewRaidUseCase(mockBackend)
+
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Raid{
+				{
+					ID:         1,
+					Name:       "raid name",
+					Difficulty: "normal",
+					Date:       time.Now(),
+				},
+			}, nil)
+
+		mockBackend.On("DeleteRaid", mock.Anything, mock.Anything, mock.Anything).
+			Return(errors.New("Backend Error"))
+
+		err := raidUseCase.DeleteRaidOnDate(context.Background(), time.Now(), "normal")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+	t.Run("Backend Error on search", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		raidUseCase := usecase.NewRaidUseCase(mockBackend)
+
+		mockBackend.On("SearchRaid", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, errors.New("Backend Error"))
+
+		err := raidUseCase.DeleteRaidOnDate(context.Background(), time.Now(), "normal")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("ctx have been canceled", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		raidUseCase := usecase.NewRaidUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := raidUseCase.DeleteRaidOnDate(ctx, time.Now(), "normal")
 
 		assert.Error(t, err)
 		mockBackend.AssertExpectations(t)

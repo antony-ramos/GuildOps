@@ -41,8 +41,22 @@ func (_m *RaidUseCase) CreateRaid(ctx context.Context, raidName string, difficul
 	return r0, r1
 }
 
-// DeleteRaid provides a mock function with given fields: ctx, raidID
-func (_m *RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
+// DeleteRaidOnDate provides a mock function with given fields: ctx, date, difficulty
+func (_m *RaidUseCase) DeleteRaidOnDate(ctx context.Context, date time.Time, difficulty string) error {
+	ret := _m.Called(ctx, date, difficulty)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, string) error); ok {
+		r0 = rf(ctx, date, difficulty)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteRaidWithID provides a mock function with given fields: ctx, raidID
+func (_m *RaidUseCase) DeleteRaidWithID(ctx context.Context, raidID int) error {
 	ret := _m.Called(ctx, raidID)
 
 	var r0 error

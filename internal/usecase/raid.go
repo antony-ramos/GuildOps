@@ -46,8 +46,8 @@ func (puc RaidUseCase) CreateRaid(
 	}
 }
 
-func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
-	ctx, span := otel.Tracer("Usecase").Start(ctx, "Raid/DeleteRaid")
+func (puc RaidUseCase) DeleteRaidWithID(ctx context.Context, raidID int) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Raid/DeleteRaidWithID")
 	defer span.End()
 	span.SetAttributes(
 		attribute.Int("raidID", raidID),
@@ -62,6 +62,33 @@ func (puc RaidUseCase) DeleteRaid(ctx context.Context, raidID int) error {
 		}
 		return nil
 	}
+}
+
+func (puc RaidUseCase) DeleteRaidOnDate(ctx context.Context, date time.Time, difficulty string) error {
+	ctx, span := otel.Tracer("Usecase").Start(ctx, "Raid/DeleteRaidOnDate")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("difficulty", difficulty),
+		attribute.String("date", date.String()),
+	)
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("check if context is valid: %w", ctx.Err())
+	default:
+		raids, err := puc.backend.SearchRaid(ctx, "", date, difficulty)
+		if err != nil {
+			return fmt.Errorf("search raid with this date and difficulty combination: %w", err)
+		}
+		if len(raids) == 0 {
+			return fmt.Errorf("check if there is a raid with this date/difficulty combination: %w", err)
+		}
+		err = puc.backend.DeleteRaid(ctx, raids[0].ID)
+		if err != nil {
+			return fmt.Errorf("delete raid previously found with date/difficulty combination: %w", err)
+		}
+	}
+	return nil
 }
 
 func (puc RaidUseCase) ReadRaid(ctx context.Context, date time.Time) (entity.Raid, error) {

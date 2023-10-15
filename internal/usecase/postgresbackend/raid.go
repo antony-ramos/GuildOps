@@ -47,6 +47,26 @@ func (pg *PG) SearchRaid(
 				raids = append(raids, raid)
 			}
 		}
+		if difficulty != "" && !date.IsZero() {
+			sql, _, err := pg.Builder.Select("id", "name", "date", "difficulty").
+				From("raids").Where("difficulty = $1 and date = $2").ToSql()
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchRaid - r.Builder: %w", err)
+			}
+			rows, err := pg.Pool.Query(ctx, sql, difficulty, date)
+			if err != nil {
+				return nil, fmt.Errorf("database - SearchRaid - r.Pool.Query: %w", err)
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var raid entity.Raid
+				err := rows.Scan(&raid.ID, &raid.Name, &raid.Date, &raid.Difficulty)
+				if err != nil {
+					return nil, fmt.Errorf("database - SearchRaid - rows.Scan: %w", err)
+				}
+				raids = append(raids, raid)
+			}
+		}
 		if difficulty != "" {
 			sql, _, err := pg.Builder.Select("id", "name", "date", "difficulty").From("raids").Where("difficulty = $1").ToSql()
 			if err != nil {

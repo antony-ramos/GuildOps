@@ -54,12 +54,24 @@ var RaidDescriptors = []discordgo.ApplicationCommand{
 	},
 	{
 		Name:        "guildops-raid-delete",
-		Description: "Remove a raid",
+		Description: "Remove a raid with a ID or a date/difficulty combination",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "id",
 				Description: "ex: 902837021961355265",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "date",
+				Description: "ex: 03/09/23",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "difficulty",
+				Description: "ex: Normal",
 				Required:    true,
 			},
 		},
@@ -177,23 +189,64 @@ func (d Discord) DeleteRaidHandler(
 		optionMap[opt.Name] = opt
 	}
 
-	raidID := optionMap["id"].StringValue()
-	span.SetAttributes(
-		attribute.String("raid_id", raidID),
-	)
-	raid, err := strconv.Atoi(raidID)
-	if err != nil {
-		msg := "Error while deleting raid: " + HumanReadableError(err)
-		return msg, fmt.Errorf("delete raid convert user output id to int: %w", err)
+	var raidID string
+	_, exist := optionMap["id"]
+	if exist {
+		raidID = optionMap["id"].StringValue()
+		span.SetAttributes(
+			attribute.String("raid_id", raidID),
+		)
 	}
 
-	err = d.DeleteRaid(ctx, raid)
-	if err != nil {
-		msg := "Error while deleting raid: " + HumanReadableError(err)
-		return msg, fmt.Errorf("call delete raid usecase : %w", err)
+	var raidDate string
+	_, exist = optionMap["date"]
+	if exist {
+		raidDate = optionMap["date"].StringValue()
+		span.SetAttributes(
+			attribute.String("raid_date", raidDate),
+		)
 	}
 
-	return "Raid with ID " + raidID + " successfully deleted", nil
+	var raidDifficulty string
+	_, exist = optionMap["difficulty"]
+	if exist {
+		raidDifficulty = optionMap["difficulty"].StringValue()
+		span.SetAttributes(
+			attribute.String("raid_difficulty", raidDifficulty),
+		)
+	}
+
+	switch {
+	case raidID != "":
+		raid, err := strconv.Atoi(raidID)
+		if err != nil {
+			msg := "Error while deleting raid: " + HumanReadableError(err)
+			return msg, fmt.Errorf("delete raid convert user output id to int: %w", err)
+		}
+
+		err = d.DeleteRaidWithID(ctx, raid)
+		if err != nil {
+			msg := "Error while deleting raid: " + HumanReadableError(err)
+			return msg, fmt.Errorf("call delete raid usecase : %w", err)
+		}
+
+		return "Raid with ID " + raidID + " successfully deleted", nil
+	case raidDate != "" && raidDifficulty != "":
+		date, err := ParseDate(raidDate, "")
+		if err != nil {
+			msg := "Error while deleting raid: " + HumanReadableError(err)
+			return msg, fmt.Errorf("delete raid parse date: %w", err)
+		}
+		err = d.DeleteRaidOnDate(ctx, date[0], raidDifficulty)
+		if err != nil {
+			msg := "Error while deleting raid: " + HumanReadableError(err)
+			return msg, fmt.Errorf("call delete raid usecase : %w", err)
+		}
+		return "Raid on " + raidDate + " with difficulty " + raidDifficulty + " successfully deleted", nil
+	default:
+		msg := "Should provide either id or date and difficulty"
+		return msg, fmt.Errorf("missing parameters")
+	}
 }
 
 // ListRaidHandler call an usecase to get raids on a date range
