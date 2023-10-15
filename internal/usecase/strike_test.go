@@ -1,3 +1,4 @@
+//nolint:dupl
 package usecase_test
 
 import (
@@ -179,5 +180,133 @@ func TestStrikeUseCase_ReadStrike(t *testing.T) {
 		_, err := strikeUseCase.ReadStrikes(ctx, "playername")
 
 		assert.Error(t, err)
+	})
+
+	t.Run("error on search player", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, errors.New("error on search player"))
+
+		_, err := strikeUseCase.ReadStrikes(context.Background(), "playername")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+	t.Run("error on search strike", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
+
+		mockBackend.On("SearchStrike",
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, errors.New("error on search strike"))
+
+		_, err := strikeUseCase.ReadStrikes(context.Background(), "playername")
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("player not found", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, nil)
+
+		_, err := strikeUseCase.ReadStrikes(context.Background(), "playername")
+
+		assert.Equal(t, "player not found", err.Error())
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("no strikes found", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		player := entity.Player{
+			ID:   1,
+			Name: "playername",
+		}
+		mockBackend.On("SearchPlayer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.Player{player}, nil)
+
+		mockBackend.On("SearchStrike",
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, nil)
+
+		_, err := strikeUseCase.ReadStrikes(context.Background(), "playername")
+
+		assert.Equal(t, "no strikes found", err.Error())
+		mockBackend.AssertExpectations(t)
+	})
+}
+
+func TestStrikeUseCase_DeleteStrike(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		mockBackend.On("DeleteStrike", mock.Anything, mock.Anything).Return(nil)
+
+		err := strikeUseCase.DeleteStrike(context.Background(), 1)
+
+		assert.NoError(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Backend Error", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		mockBackend.On("DeleteStrike", mock.Anything, mock.Anything).Return(errors.New("Backend Error"))
+
+		err := strikeUseCase.DeleteStrike(context.Background(), 1)
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
+	})
+
+	t.Run("Context is done", func(t *testing.T) {
+		t.Parallel()
+
+		mockBackend := mocks.NewBackend(t)
+
+		strikeUseCase := usecase.NewStrikeUseCase(mockBackend)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := strikeUseCase.DeleteStrike(ctx, 1)
+
+		assert.Error(t, err)
+		mockBackend.AssertExpectations(t)
 	})
 }
