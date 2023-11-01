@@ -1,3 +1,4 @@
+//nolint:dupl
 package usecase_test
 
 import (
