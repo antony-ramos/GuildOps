@@ -18,7 +18,7 @@ jobs:
           python-version: '3.8'
           check-latest: true
 
-      - uses: bridgecrewio/checkov-action@ec5628816328a320ea93470f1d41ce2156b63815
+      - uses: bridgecrewio/checkov-action@327006c6ed37c385f7c6fa126bc54dcce2cccd2f
         with:
           framework: dockerfile
           skip_check: CKV_DOCKER_2
