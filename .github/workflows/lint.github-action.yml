@@ -24,4 +24,4 @@ jobs:
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint -color
       - name: Ensure SHA pinned actions
-        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@99589360fda82ecfac331cc6bfc9d7d74487359c # v2.1.6
+        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@4830be28ce81da52ec70d65c552a7403821d98d4 # v3.0.23
