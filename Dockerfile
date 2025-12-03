@@ -6,7 +6,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s -X 'main.version=${VERSION}'" ./cmd/guildops
 
-FROM docker.io/alpine:3.22.2
+FROM docker.io/alpine:3.23.0
 # renovate: datasource=repology depName=alpine_3_18/ca-certificates versioning=loose
 ARG CA_CERTIFICATES_VERSION=20230506-r0
 
