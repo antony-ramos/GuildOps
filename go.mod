@@ -3,7 +3,7 @@ module github.com/antony-ramos/guildops
 go 1.21
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.1
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/alitto/pond v1.8.3
 	github.com/bwmarrin/discordgo v0.27.1
